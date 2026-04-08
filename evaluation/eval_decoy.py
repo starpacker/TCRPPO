@@ -234,45 +234,59 @@ def _load_decoy_c(root):
 
 
 def _load_decoy_a(root):
-    path = os.path.join(root, "data", "decoy_a", "decoy_a_results.json")
-    if not os.path.isfile(path):
+    base_dir = os.path.join(root, "data", "decoy_a")
+    if not os.path.isdir(base_dir):
         return []
-    with io.open(path, encoding="utf-8") as f:
-        blob = json.load(f)
-    items = blob if isinstance(blob, list) else blob.get("results", [])
     out = []
-    for e in items:
-        out.append({
-            "peptide": e.get("sequence", ""),
-            "hla": e.get("hla_allele", "unknown"),
-            "source_protein": ", ".join((e.get("source_proteins") or [])[:3]),
-            "tier": "A",
-            "evidence_level": "",
-            "origin_target": e.get("target_sequence", ""),
-        })
+    for d in os.listdir(base_dir):
+        path = os.path.join(base_dir, d, "decoy_a_results.json")
+        if not os.path.isfile(path):
+            if d == "decoy_a_results.json":
+                path = os.path.join(base_dir, d)
+            else:
+                continue
+        with io.open(path, encoding="utf-8") as f:
+            blob = json.load(f)
+        items = blob if isinstance(blob, list) else blob.get("results", [])
+        for e in items:
+            out.append({
+                "peptide": e.get("sequence", ""),
+                "hla": e.get("hla_allele", "unknown"),
+                "source_protein": ", ".join((e.get("source_proteins") or [])[:3]),
+                "tier": "A",
+                "evidence_level": "",
+                "origin_target": e.get("target_sequence", ""),
+            })
     print("[load] Decoy A: {} entries".format(len(out)))
     return out
 
 
 def _load_decoy_b(root):
-    path = os.path.join(root, "data", "decoy_b", "final_ranked_decoys.json")
-    if not os.path.isfile(path):
-        path = os.path.join(root, "data", "decoy_b", "decoy_b_results.json")
-        if not os.path.isfile(path):
-            return []
-    with io.open(path, encoding="utf-8") as f:
-        blob = json.load(f)
-    items = blob if isinstance(blob, list) else blob.get("results", [])
+    base_dir = os.path.join(root, "data", "decoy_b")
+    if not os.path.isdir(base_dir):
+        return []
     out = []
-    for e in items:
-        out.append({
-            "peptide": e.get("sequence", ""),
-            "hla": e.get("hla_allele", "unknown"),
-            "source_protein": ", ".join((e.get("source_proteins") or [])[:3]),
-            "tier": "B",
-            "evidence_level": "",
-            "origin_target": e.get("target_sequence", ""),
-        })
+    for d in os.listdir(base_dir):
+        path = os.path.join(base_dir, d, "final_ranked_decoys.json")
+        if not os.path.isfile(path):
+            path = os.path.join(base_dir, d, "decoy_b_results.json")
+            if not os.path.isfile(path):
+                if d in ("final_ranked_decoys.json", "decoy_b_results.json"):
+                    path = os.path.join(base_dir, d)
+                else:
+                    continue
+        with io.open(path, encoding="utf-8") as f:
+            blob = json.load(f)
+        items = blob if isinstance(blob, list) else blob.get("results", [])
+        for e in items:
+            out.append({
+                "peptide": e.get("sequence", ""),
+                "hla": e.get("hla_allele", "unknown"),
+                "source_protein": ", ".join((e.get("source_proteins") or [])[:3]),
+                "tier": "B",
+                "evidence_level": "",
+                "origin_target": e.get("target_sequence", ""),
+            })
     print("[load] Decoy B: {} entries".format(len(out)))
     return out
 
