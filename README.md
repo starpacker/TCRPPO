@@ -10,7 +10,13 @@ Our DRL framework implementation is based on [stable-baseline3](https://github.c
 * Stable-baseline3==0.11.0a7
 * ERGO https://github.com/IdoSpringer/ERGO
 
+## Environment Setup
 
+This project is deployed using a Conda environment named `tcrppo`. To run the scripts correctly and avoid missing dependencies, please ensure you activate this environment before running any code:
+
+```bash
+conda activate tcrppo
+```
 
 ## Installation guide
 
@@ -27,8 +33,6 @@ Due to the file size limit in github, we cannot upload our separated TCRs datase
 ```
 mv ./tcrdb ./data/
 ```
-
-
 
 ## Training
 

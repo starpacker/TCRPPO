@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Large data & model files (download separately)
+data/tcrdb/
+code/ERGO/models/*.pt
+code/ERGO/TCR_Autoencoder/*.pt
+code/like_ratio/semantic_model
+code/like_ratio/background_model
+code/reward/ae_model
+code/reward/gmm.pkl
+code/gmm.pkl
+
+# Training outputs (too large for git)
+output/
+logs/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Evaluation outputs (regenerable)
+evaluation/figures/
+evaluation/results/
+evaluation/__pycache__/
+
+# Misc
+results/
+*.log

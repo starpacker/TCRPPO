@@ -1,4 +1,5 @@
 import time
+import pdb
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import sys
 import gym
@@ -202,7 +203,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
             try: 
                 rewards = self.reward_model.reward(new_tcrs, peptides)
             except:
-                pdb.set_trace()
+                raise
             new_obs, rewards, dones, infos = env.step((clipped_actions, rewards, resets))
             
             
