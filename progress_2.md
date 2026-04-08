@@ -737,3 +737,30 @@ The following tables directly contrast the **untrained baseline** (~1024 steps, 
 Visualizations saved in:
 - `evaluation/figures/ae_mcpas/`
 - `evaluation/figures/ae_vdjdb/`
+
+---
+
+## Phase 6: Artifacts & Model Weights Registry (Local Only)
+
+Since large model weights and output checkpoints are explicitly excluded from version control via `.gitignore`, this section permanently documents the local absolute paths of all critical model weights generated and utilized during this replication.
+
+### 1. Fully Trained PPO Agent Models (10M Steps)
+These are the final RL policies that passed the evaluation criteria in Phase 5. They contain the trained Actor-Critic MLPs.
+- **McPAS PPO Agent**: `/share/liuyutian/TCRPPO/output/ae_mcpas_mcpas_0.5_0.0_0.9_256_None/ppo_tcr.zip`
+- **VDJdb PPO Agent**: `/share/liuyutian/TCRPPO/output/ae_vdjdb_vdjdb_0.5_0.0_0.9_256_None/ppo_tcr.zip`
+- *(Sanity Check PPO Agent, 1K steps)*: `/share/liuyutian/TCRPPO/output/sanity_check_mcpas_0.5_0.0_0.9_256_None/ppo_tcr.zip`
+
+### 2. Pre-trained Affinity Models (ERGO Proxy Rewards)
+Used by the RL environment (`tcr_env.py`) to calculate the binding affinity reward.
+- **McPAS ERGO Predictor**: `/share/liuyutian/TCRPPO/code/ERGO/models/ae_mcpas1.pt`
+- **VDJdb ERGO Predictor**: `/share/liuyutian/TCRPPO/code/ERGO/models/ae_vdjdb1.pt`
+- **Base Autoencoder Scaffold**: `/share/liuyutian/TCRPPO/code/ERGO/TCR_Autoencoder/tcr_ae_dim_100.pt`
+
+### 3. Naturalness & Prior Distribution Models
+Used by the reward function (`reward.py`) to penalize unnatural sequence mutations via reconstruction error and probability density.
+- **Autoencoder (Reconstruction)**: `/share/liuyutian/TCRPPO/code/reward/ae_model`
+- **Gaussian Mixture Model (GMM Likelihood)**: `/share/liuyutian/TCRPPO/code/reward/gmm.pkl`
+- *(Alternative)* **Semantic Sequence Model**: `/share/liuyutian/TCRPPO/code/like_ratio/semantic_model`
+- *(Alternative)* **Background Sequence Model**: `/share/liuyutian/TCRPPO/code/like_ratio/background_model`
+
+> **Storage Recommendation**: It is highly recommended to periodically back up the `/share/liuyutian/TCRPPO/output/` directory and the pretrained `.pt`/`.pkl` files to cold storage, a shared drive, or HuggingFace Models, as they cannot be tracked on GitHub.
