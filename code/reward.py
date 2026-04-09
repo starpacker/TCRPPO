@@ -93,12 +93,13 @@ class Reward:
     def __get_ergo_preds(self, tcrs, peps):
         signs = [0] * len(tcrs)
         
+        batch_size = min(len(tcrs), 4096) # Use batched inference
         if "ae" in self.ergo_model_file:
-            test_batches = ae.get_full_batches(tcrs, peps, signs, tcr_atox, pep_atox, 1, self.max_len)
+            test_batches = ae.get_full_batches(tcrs, peps, signs, tcr_atox, pep_atox, batch_size, self.max_len)
             preds = ae.predict(self.ergo_model, test_batches, device)
         else:
             _tcrs, _peps = lstm.convert_data(tcrs, peps, amino_to_ix)    
-            test_batches = lstm.get_full_batches(_tcrs, _peps, signs, 1, amino_to_ix)
+            test_batches = lstm.get_full_batches(_tcrs, _peps, signs, batch_size, amino_to_ix)
             preds = lstm.predict(self.ergo_model, test_batches, device)
         
         return preds

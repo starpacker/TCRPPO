@@ -57,33 +57,38 @@ def disable_dropout(model):
 
 def _predict_no_eval_reset(model, batches, device):
     """Re-implementation of ``ae_utils.predict`` that does NOT call model.eval().
-
-    Identical body except the leading ``model.eval()`` line is removed so that
-    dropout state set by ``enable_dropout`` is preserved across the call.
+    Optimized for speed: keeps tensors on GPU until the very end.
     """
-    # NB: model.eval() intentionally NOT called here.
-    preds = []
+    all_probs = []
     index = 0
     batch_size = 0
     pep_lens = None
     for batch in batches:
         tcrs, padded_peps, pep_lens, batch_signs = batch
-        tcrs = torch.tensor(tcrs).to(device)
-        padded_peps = padded_peps.to(device)
-        pep_lens = pep_lens.to(device)
+        # Avoid redundant torch.tensor if already a tensor
+        if not isinstance(tcrs, torch.Tensor):
+            tcrs = torch.tensor(tcrs)
+        tcrs = tcrs.to(device, non_blocking=True)
+        padded_peps = padded_peps.to(device, non_blocking=True)
+        pep_lens = pep_lens.to(device, non_blocking=True)
+        
         with torch.no_grad():
             probs = model(tcrs, padded_peps, pep_lens)
-        preds.extend([t[0] for t in probs.cpu().data.tolist()])
+        all_probs.append(probs.detach().squeeze(-1))
         batch_size = len(tcrs)
         index += batch_size
 
+    # Fast GPU concat
+    preds = torch.cat(all_probs)
+    
     # Mirror the trailing-batch trimming logic from ae_utils.predict
     if pep_lens is not None and len(pep_lens) > 0:
         border = pep_lens[-1]
         if not any(k != border for k in pep_lens[border:]):
             index -= batch_size - border
             preds = preds[:index]
-    return preds
+            
+    return preds.cpu().numpy().tolist()
 
 
 @contextlib.contextmanager
@@ -132,10 +137,44 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
 
     samples = []
     try:
+        import time
+        import reward
         with _patched_ae_predict():
-            for _ in range(n_samples):
-                preds = reward_model.get_ergo_reward(list(tcrs), list(peptides))
-                samples.append(np.asarray(preds, dtype=np.float64))
+            # Build dataset ONCE!
+            tcrs_copy = list(tcrs)
+            peps_copy = list(peptides)
+            signs = [0] * len(tcrs_copy)
+            batch_size = min(len(tcrs_copy), 4096)
+            
+            t0 = time.time()
+            if "ae" in reward_model.ergo_model_file:
+                test_batches = ae.get_full_batches(
+                    tcrs_copy, peps_copy, signs, 
+                    reward.tcr_atox, reward.pep_atox, 
+                    batch_size, reward_model.max_len
+                )
+                
+                # Pre-transfer to GPU for huge speedup in the 20x loop
+                gpu_batches = []
+                for b in test_batches:
+                    t, p, l, s = b
+                    if not isinstance(t, torch.Tensor): t = torch.tensor(t)
+                    if not isinstance(p, torch.Tensor): p = torch.tensor(p)
+                    if not isinstance(l, torch.Tensor): l = torch.tensor(l)
+                    gpu_batches.append((t.to(reward.device), p.to(reward.device), l.to(reward.device), s))
+                    
+                t1 = time.time()
+                for i_samp in range(n_samples):
+                    t2 = time.time()
+                    preds = ae.predict(model, gpu_batches, reward.device)
+                    t3 = time.time()
+                    samples.append(np.asarray(preds, dtype=np.float64))
+            else:
+                _tcrs, _peps = reward.lstm.convert_data(tcrs_copy, peps_copy, reward.amino_to_ix)    
+                test_batches = reward.lstm.get_full_batches(_tcrs, _peps, signs, batch_size, reward.amino_to_ix)
+                for i_samp in range(n_samples):
+                    preds = reward.lstm.predict(model, test_batches, reward.device)
+                    samples.append(np.asarray(preds, dtype=np.float64))
     finally:
         disable_dropout(model)
 
@@ -160,6 +199,9 @@ def mc_dropout_predict_chunked(reward_model, tcrs, peptides, n_samples=20,
 
     means = np.empty(n, dtype=np.float64)
     stds = np.empty(n, dtype=np.float64)
+    
+    import sys
+    print(f"    Starting MC Dropout scoring for {n} pairs in chunks of {chunk_size}...")
     for start in range(0, n, chunk_size):
         end = min(n, start + chunk_size)
         m, s = mc_dropout_predict(
@@ -167,4 +209,9 @@ def mc_dropout_predict_chunked(reward_model, tcrs, peptides, n_samples=20,
         )
         means[start:end] = m
         stds[start:end] = s
+        
+        sys.stdout.write(f"\r    Processed {end}/{n} pairs...")
+        sys.stdout.flush()
+        
+    print() # New line after progress bar
     return means, stds

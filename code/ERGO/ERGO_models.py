@@ -163,7 +163,7 @@ class AutoencoderLSTMClassifier(nn.Module):
     def forward(self, padded_tcrs, peps, pep_lens):
         # TCR Encoder:
         # Embedding
-        concat = padded_tcrs.view(self.batch_size, self.max_len * self.input_dim)
+        concat = padded_tcrs.view(padded_tcrs.size(0), self.max_len * self.input_dim)
         encoded_tcrs = self.autoencoder.encoder(concat)
         # PEPTIDE Encoder:
         # Embedding
