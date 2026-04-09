@@ -1,0 +1,10 @@
+# Large files
+*.pt
+*.pyc
+__pycache__/
+*.tsv
+output/
+results/
+figures/
+.wandb/
+wandb/
