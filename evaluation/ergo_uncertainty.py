@@ -55,14 +55,15 @@ def disable_dropout(model):
             m.eval()
 
 
-def _predict_no_eval_reset(model, batches, device):
+def _predict_no_eval_reset(model, batches, device, expected_n=None):
     """Re-implementation of ``ae_utils.predict`` that does NOT call model.eval().
     Optimized for speed: keeps tensors on GPU until the very end.
+    
+    IMPORTANT: This version does NOT attempt automatic padding removal because
+    the original ae_utils.predict logic is buggy. Instead, if expected_n is provided,
+    we simply return exactly that many predictions.
     """
     all_probs = []
-    index = 0
-    batch_size = 0
-    pep_lens = None
     for batch in batches:
         tcrs, padded_peps, pep_lens, batch_signs = batch
         # Avoid redundant torch.tensor if already a tensor
@@ -75,20 +76,15 @@ def _predict_no_eval_reset(model, batches, device):
         with torch.no_grad():
             probs = model(tcrs, padded_peps, pep_lens)
         all_probs.append(probs.detach().squeeze(-1))
-        batch_size = len(tcrs)
-        index += batch_size
 
     # Fast GPU concat
     preds = torch.cat(all_probs)
+    result = preds.cpu().numpy().tolist()
     
-    # Mirror the trailing-batch trimming logic from ae_utils.predict
-    if pep_lens is not None and len(pep_lens) > 0:
-        border = pep_lens[-1]
-        if not any(k != border for k in pep_lens[border:]):
-            index -= batch_size - border
-            preds = preds[:index]
-            
-    return preds.cpu().numpy().tolist()
+    # If expected_n is provided, return exactly that many (handles padding correctly)
+    if expected_n is not None:
+        return result[:expected_n]
+    return result
 
 
 @contextlib.contextmanager
@@ -136,6 +132,7 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
         return preds, np.zeros_like(preds)
 
     samples = []
+    expected_n = len(tcrs)  # We expect exactly this many predictions
     try:
         import time
         import reward
@@ -166,7 +163,8 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
                 t1 = time.time()
                 for i_samp in range(n_samples):
                     t2 = time.time()
-                    preds = ae.predict(model, gpu_batches, reward.device)
+                    # Pass expected_n to ensure correct output length
+                    preds = ae.predict(model, gpu_batches, reward.device, expected_n=expected_n)
                     t3 = time.time()
                     samples.append(np.asarray(preds, dtype=np.float64))
             else:
@@ -174,6 +172,8 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
                 test_batches = reward.lstm.get_full_batches(_tcrs, _peps, signs, batch_size, reward.amino_to_ix)
                 for i_samp in range(n_samples):
                     preds = reward.lstm.predict(model, test_batches, reward.device)
+                    # Ensure correct length for LSTM too
+                    preds = preds[:expected_n]
                     samples.append(np.asarray(preds, dtype=np.float64))
     finally:
         disable_dropout(model)
