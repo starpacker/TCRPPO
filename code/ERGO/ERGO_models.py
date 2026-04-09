@@ -163,7 +163,13 @@ class AutoencoderLSTMClassifier(nn.Module):
     def forward(self, padded_tcrs, peps, pep_lens):
         # TCR Encoder:
         # Embedding
-        concat = padded_tcrs.view(self.batch_size, self.max_len * self.input_dim)
+        # Use the actual incoming batch size (padded_tcrs.size(0)) instead of
+        # the constructor-time self.batch_size. The original code crashes the
+        # moment a batch with a different size is passed in (e.g. the trailing
+        # batch of a dataset, or any chunk during decoy evaluation). This is a
+        # pure bugfix — at training time, padded_tcrs.size(0) == self.batch_size
+        # by construction, so gradient/optimisation behaviour is unchanged.
+        concat = padded_tcrs.view(padded_tcrs.size(0), self.max_len * self.input_dim)
         encoded_tcrs = self.autoencoder.encoder(concat)
         # PEPTIDE Encoder:
         # Embedding

@@ -233,10 +233,69 @@ class TCREnv(gym.Env):
         
         return self.state.squeeze(0), term_reward, terminal, info
 
+class MilestoneCheckpointCallback:
+    """Save a permanent named checkpoint at user-specified timesteps.
+
+    Stable-Baselines3 already provides ``CheckpointCallback`` which saves at
+    fixed intervals (e.g. every 50K steps) into ``rl_model_<step>_steps.zip``.
+    Those files are easy to clean up by accident — and indeed in our case
+    only the 1M and 10M checkpoints survived. This callback writes an
+    additional file ``rl_model_milestone_<step>_steps.zip`` at each
+    milestone, with the explicit intent that those files NEVER be deleted
+    so they can be re-evaluated later.
+
+    Implemented as a thin wrapper around stable_baselines3.common.callbacks
+    .BaseCallback so it can be passed alongside the regular CheckpointCallback
+    via CallbackList.
+    """
+
+    def __new__(cls, milestones, save_path, name_prefix="rl_model_milestone", verbose=1):
+        from stable_baselines3.common.callbacks import BaseCallback
+
+        class _Inner(BaseCallback):
+            def __init__(self, milestones, save_path, name_prefix, verbose):
+                super().__init__(verbose=verbose)
+                # Sorted ascending so we trigger them in order.
+                self._milestones = sorted({int(m) for m in milestones if m})
+                self._fired = set()
+                self._save_path = save_path
+                self._name_prefix = name_prefix
+
+            def _init_callback(self) -> None:
+                if self._save_path is not None:
+                    os.makedirs(self._save_path, exist_ok=True)
+                if self._milestones:
+                    print("[milestone-ckpt] will save permanent checkpoints at:",
+                          ", ".join(str(m) for m in self._milestones))
+
+            def _on_step(self) -> bool:
+                # num_timesteps is a property of BaseCallback that reflects the
+                # global env-step counter (not n_calls).
+                t = self.num_timesteps
+                # Find any milestone we just crossed and have not fired yet.
+                for m in self._milestones:
+                    if m in self._fired:
+                        continue
+                    if t >= m:
+                        path = os.path.join(
+                            self._save_path,
+                            "{}_{}_steps".format(self._name_prefix, m),
+                        )
+                        try:
+                            self.model.save(path)
+                            print("[milestone-ckpt] saved {}.zip (env step {})".format(path, t))
+                        except Exception as e:
+                            print("[milestone-ckpt] WARN failed to save {}: {}".format(path, e))
+                        self._fired.add(m)
+                return True
+
+        return _Inner(milestones, save_path, name_prefix, verbose)
+
+
 if __name__ == '__main__':
     import sys, os
     from ppo import PPO
-    from stable_baselines3.common.callbacks import CheckpointCallback
+    from stable_baselines3.common.callbacks import CheckpointCallback, CallbackList
     from subproc_vec_env import SubprocVecEnv
     from policy import PolicyNet
     from seq_embed import SeqEmbed
@@ -295,9 +354,18 @@ if __name__ == '__main__':
     parser.add_argument('--n_steps', type=int, default=256, help="number of roll out steps")
     parser.add_argument('--max_step', type=int, default=8, help="maximum number of steps")
     
-    parser.add_argument('--bad_ratio', type=float, default=0.5) 
+    parser.add_argument('--bad_ratio', type=float, default=0.5)
     parser.add_argument('--rate_for_bad_ratio', type=float, default=5.0)
-    
+
+    # checkpoint behaviour
+    parser.add_argument('--save_freq', type=int, default=50000,
+                        help="Save a regular checkpoint every N timesteps (rl_model_<step>_steps.zip)")
+    parser.add_argument('--checkpoint_milestones', type=str, default="1000000,2000000,5000000,10000000",
+                        help="Comma-separated list of timesteps at which to ALSO save a permanent "
+                             "named checkpoint (rl_model_milestone_<step>_steps.zip). These are "
+                             "intended to survive cleanup and are the canonical inputs to the "
+                             "downstream evaluation pipeline. Set to empty string to disable.")
+
     args = parser.parse_args()
 
     t1 = time.time()
@@ -357,13 +425,29 @@ if __name__ == '__main__':
                         net_arch = [args.hidden_dim, dict(vf=[args.latent_dim], pi=[args.latent_dim])], \
                         use_step = args.use_step, max_tcr_len = args.max_len)
     
-    checkpoint_callback = CheckpointCallback(save_freq=50000, save_path=path+'/', name_prefix='rl_model')
-    
+    checkpoint_callback = CheckpointCallback(
+        save_freq=args.save_freq, save_path=path + '/', name_prefix='rl_model')
+
+    milestones = []
+    if args.checkpoint_milestones:
+        for tok in args.checkpoint_milestones.split(","):
+            tok = tok.strip()
+            if not tok:
+                continue
+            try:
+                milestones.append(int(tok))
+            except ValueError:
+                print("[warn] ignoring non-integer milestone: {}".format(tok))
+    milestone_callback = MilestoneCheckpointCallback(
+        milestones=milestones, save_path=path + '/')
+
+    callbacks = CallbackList([checkpoint_callback, milestone_callback])
+
     buffer_config = dict(max_len = 5000, init_size = 1000, bad_ratio=args.bad_ratio, rate_for_bad_ratio=args.rate_for_bad_ratio)
-    
+
     model = PPO(PolicyNet, m_env, verbose=1, reward_model=reward_model, n_steps=args.n_steps, ent_coef=args.ent_coef, gamma=args.gamma, clip_range=args.clip, target_kl=args.kl_target, buffer_config=buffer_config, policy_kwargs=policy_kwargs)
-    
-    model.learn(total_timesteps=args.steps, callback=checkpoint_callback)
+
+    model.learn(total_timesteps=args.steps, callback=callbacks)
     t2 = time.time()
 
     print("finish training in %.4f" % (t2 -t1))

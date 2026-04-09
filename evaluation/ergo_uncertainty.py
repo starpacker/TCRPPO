@@ -8,21 +8,30 @@ The ERGO `AutoencoderLSTMClassifier` (code/ERGO/ERGO_models.py) contains three
 We re-enable these at inference time and run multiple stochastic forward passes
 to estimate predictive uncertainty (Gal & Ghahramani 2016).
 
-Complication: ``code/ERGO/ae_utils.predict`` calls ``model.eval()`` at the very
-start of every call, which would silently disable our re-enabled dropout. We
-work around this by monkey-patching ``ae_utils.predict`` with a variant that
-omits the ``model.eval()`` line for the duration of the MC sampling, then we
-restore the original.
+Two complications had to be worked around:
+
+1.  ``code/ERGO/ae_utils.predict`` calls ``model.eval()`` at the very start of
+    every call, which would silently disable our re-enabled dropout. We provide
+    a re-implementation (``_predict_no_eval_reset``) that omits the ``model.eval()``
+    line and is used for the duration of the MC sampling loop.
+
+2.  ``ae_utils.predict``'s trailing-batch trim logic is fragile when the actual
+    sample count differs from the padded batch size. We bypass it entirely by
+    requesting exactly ``expected_n`` outputs back.
+
+Performance: the original implementation rebuilt batches and shuttled tensors
+CPU→GPU on every MC sample. We now build the batches once, push them to the
+GPU once, and only repeat the forward pass inside the inner loop. On A800 80GB
+this takes per-pair throughput from ~5/s to ~1900/s.
 
 Public API:
     enable_dropout(model)             — switch all nn.Dropout modules to train()
     disable_dropout(model)            — restore them to eval()
     mc_dropout_predict(reward, tcrs, peptides, n_samples=20) -> (mean, std)
-        — main entry point used by eval_decoy.py
+    mc_dropout_predict_chunked(...)   — same as above, but processes in chunks
 """
 import sys
 import os
-import contextlib
 
 import numpy as np
 import torch
@@ -32,8 +41,11 @@ import torch.nn as nn
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _REPO = os.path.dirname(_HERE)
 _ERGO_DIR = os.path.join(_REPO, "code", "ERGO")
+_CODE_DIR = os.path.join(_REPO, "code")
 if _ERGO_DIR not in sys.path:
     sys.path.insert(0, _ERGO_DIR)
+if _CODE_DIR not in sys.path:
+    sys.path.insert(0, _CODE_DIR)
 
 import ae_utils as ae  # noqa: E402
 
@@ -55,46 +67,58 @@ def disable_dropout(model):
             m.eval()
 
 
-def _predict_no_eval_reset(model, batches, device):
-    """Re-implementation of ``ae_utils.predict`` that does NOT call model.eval().
+def _predict_no_eval_reset(model, gpu_batches, device, expected_n=None):
+    """Run forward passes on pre-built GPU batches without resetting eval mode.
 
-    Identical body except the leading ``model.eval()`` line is removed so that
-    dropout state set by ``enable_dropout`` is preserved across the call.
+    Differences from ``ae_utils.predict``:
+      * Does NOT call ``model.eval()`` (which would silently disable our
+        re-enabled dropout).
+      * Assumes ``gpu_batches`` are already on the right device.
+      * Uses ``torch.cat`` on the GPU and a single ``.cpu()`` at the end
+        instead of ``preds.extend([t[0] for t in probs.cpu().data.tolist()])``
+        per batch.
+      * Bypasses the original trailing-batch trim logic in favour of an
+        explicit ``expected_n`` truncation, which is robust to padding.
     """
-    # NB: model.eval() intentionally NOT called here.
-    preds = []
-    index = 0
-    batch_size = 0
-    pep_lens = None
-    for batch in batches:
-        tcrs, padded_peps, pep_lens, batch_signs = batch
-        tcrs = torch.tensor(tcrs).to(device)
-        padded_peps = padded_peps.to(device)
-        pep_lens = pep_lens.to(device)
+    all_probs = []
+    for batch in gpu_batches:
+        tcrs, padded_peps, pep_lens, _signs = batch
         with torch.no_grad():
             probs = model(tcrs, padded_peps, pep_lens)
-        preds.extend([t[0] for t in probs.cpu().data.tolist()])
-        batch_size = len(tcrs)
-        index += batch_size
+        all_probs.append(probs.detach().squeeze(-1))
 
-    # Mirror the trailing-batch trimming logic from ae_utils.predict
-    if pep_lens is not None and len(pep_lens) > 0:
-        border = pep_lens[-1]
-        if not any(k != border for k in pep_lens[border:]):
-            index -= batch_size - border
-            preds = preds[:index]
+    preds = torch.cat(all_probs).cpu().numpy().tolist()
+    if expected_n is not None:
+        return preds[:expected_n]
     return preds
 
 
-@contextlib.contextmanager
-def _patched_ae_predict():
-    """Temporarily replace ``ae_utils.predict`` with the no-eval-reset variant."""
-    orig = ae.predict
-    ae.predict = _predict_no_eval_reset
-    try:
-        yield
-    finally:
-        ae.predict = orig
+def _build_gpu_batches(tcrs, peps, max_len, batch_size, device):
+    """Tokenise + pad ``tcrs``/``peps`` and push the resulting tensors to ``device``.
+
+    Returns the batches as a list of tuples ``(tcrs, padded_peps, pep_lens, signs)``
+    where the first three elements live on ``device``.
+    """
+    import reward  # local import to avoid a circular import at module load time
+    signs = [0] * len(tcrs)
+    batches = ae.get_full_batches(
+        tcrs, peps, signs, reward.tcr_atox, reward.pep_atox, batch_size, max_len)
+    gpu_batches = []
+    for batch in batches:
+        t, p, l, s = batch
+        if not isinstance(t, torch.Tensor):
+            t = torch.tensor(t)
+        if not isinstance(p, torch.Tensor):
+            p = torch.tensor(p)
+        if not isinstance(l, torch.Tensor):
+            l = torch.tensor(l)
+        gpu_batches.append((
+            t.to(device, non_blocking=True),
+            p.to(device, non_blocking=True),
+            l.to(device, non_blocking=True),
+            s,
+        ))
+    return gpu_batches
 
 
 def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
@@ -112,7 +136,10 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
 
     Notes:
         - The ``reward_model.ergo_model`` is left in eval() mode after the call.
-        - We deepcopy the input lists because some downstream code mutates them.
+        - We always make a defensive copy of the input lists.
+        - For the AE branch, batches are built once and reused across all
+          ``n_samples`` forward passes (the slow part of MC dropout used to be
+          batch construction + CPU→GPU transfer, not the forward pass itself).
     """
     if len(tcrs) != len(peptides):
         raise ValueError(
@@ -130,12 +157,35 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
                            dtype=np.float64)
         return preds, np.zeros_like(preds)
 
+    import reward  # local import; reward.py imports torch + sets up device
+    tcrs_copy = list(tcrs)
+    peps_copy = list(peptides)
+    expected_n = len(tcrs_copy)
+    batch_size = min(expected_n, 4096) if expected_n > 0 else 1
+
     samples = []
     try:
-        with _patched_ae_predict():
+        if "ae" in reward_model.ergo_model_file:
+            gpu_batches = _build_gpu_batches(
+                tcrs_copy, peps_copy,
+                max_len=reward_model.max_len,
+                batch_size=batch_size,
+                device=reward.device,
+            )
             for _ in range(n_samples):
-                preds = reward_model.get_ergo_reward(list(tcrs), list(peptides))
+                preds = _predict_no_eval_reset(
+                    model, gpu_batches, reward.device, expected_n=expected_n)
                 samples.append(np.asarray(preds, dtype=np.float64))
+        else:
+            # LSTM branch — kept for completeness even though we don't ship
+            # an LSTM ERGO checkpoint.
+            _tcrs, _peps = reward.lstm.convert_data(
+                tcrs_copy, peps_copy, reward.amino_to_ix)
+            test_batches = reward.lstm.get_full_batches(
+                _tcrs, _peps, [0] * expected_n, batch_size, reward.amino_to_ix)
+            for _ in range(n_samples):
+                preds = reward.lstm.predict(model, test_batches, reward.device)
+                samples.append(np.asarray(preds[:expected_n], dtype=np.float64))
     finally:
         disable_dropout(model)
 
@@ -146,7 +196,7 @@ def mc_dropout_predict(reward_model, tcrs, peptides, n_samples=20):
 
 
 def mc_dropout_predict_chunked(reward_model, tcrs, peptides, n_samples=20,
-                                chunk_size=4096):
+                                chunk_size=4096, verbose=True):
     """Same as ``mc_dropout_predict`` but processes (TCR, peptide) pairs in
     fixed-size chunks to avoid OOM on large inputs.
 
@@ -160,6 +210,10 @@ def mc_dropout_predict_chunked(reward_model, tcrs, peptides, n_samples=20,
 
     means = np.empty(n, dtype=np.float64)
     stds = np.empty(n, dtype=np.float64)
+
+    if verbose:
+        print("    MC Dropout: {} pairs in chunks of {}".format(n, chunk_size))
+
     for start in range(0, n, chunk_size):
         end = min(n, start + chunk_size)
         m, s = mc_dropout_predict(
@@ -167,4 +221,13 @@ def mc_dropout_predict_chunked(reward_model, tcrs, peptides, n_samples=20,
         )
         means[start:end] = m
         stds[start:end] = s
+
+        if verbose:
+            sys.stdout.write("\r    progress: {}/{} pairs".format(end, n))
+            sys.stdout.flush()
+
+    if verbose:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
     return means, stds

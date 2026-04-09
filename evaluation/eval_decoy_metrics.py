@@ -244,6 +244,109 @@ def print_per_peptide_top(table, top_per_target=10):
 
 
 # ----------------------------------------------------------------------------
+#  Per-tier AUROC breakdown
+# ----------------------------------------------------------------------------
+def per_tier_auroc(rows):
+    """Compute AUROC of (target peptide score) vs (decoy score) **separately**
+    for each decoy tier (A/B/C/D), per target peptide AND globally.
+
+    Tier A = 1-2 aa mutants of the target — the hardest test.
+    Tier B = 2-3 aa mutants — slightly easier.
+    Tier C = global random/literature pool — sequence-unrelated decoys.
+    Tier D = other known binders — biologically plausible cross-reactivity.
+
+    A model that simply rank-orders peptides by sequence similarity will get
+    AUROC ~0.5 on Tier A but high AUROC on Tier C. A model that has learnt
+    real binding specificity should achieve >0.5 on Tier A as well.
+
+    Returns:
+        list of dicts, sorted by (target, tier).
+    """
+    by_target_tier = defaultdict(lambda: {"target": [], "decoy": []})
+    target_scores_by_target = defaultdict(list)
+    decoy_scores_by_tier = defaultdict(list)
+    target_scores_global = []
+
+    for r in rows:
+        tgt = r["target_pep"]
+        if r["is_target_pep"] == 1:
+            target_scores_by_target[tgt].append(r["ergo_mean"])
+            target_scores_global.append(r["ergo_mean"])
+        else:
+            tier = r["decoy_source_tier"] or "?"
+            by_target_tier[(tgt, tier)]["decoy"].append(r["ergo_mean"])
+            decoy_scores_by_tier[tier].append(r["ergo_mean"])
+
+    # Per-target × per-tier
+    out = []
+    for (tgt, tier), bucket in sorted(by_target_tier.items()):
+        tgt_scores = target_scores_by_target.get(tgt, [])
+        out.append({
+            "target_pep": tgt,
+            "tier": tier,
+            "n_target": len(tgt_scores),
+            "n_decoy": len(bucket["decoy"]),
+            "target_mean": safe_mean(tgt_scores),
+            "decoy_mean": safe_mean(bucket["decoy"]),
+            "auroc": auroc(tgt_scores, bucket["decoy"]),
+        })
+
+    # Global per-tier (across ALL targets)
+    global_rows = []
+    for tier in sorted(decoy_scores_by_tier.keys()):
+        global_rows.append({
+            "target_pep": "<ALL>",
+            "tier": tier,
+            "n_target": len(target_scores_global),
+            "n_decoy": len(decoy_scores_by_tier[tier]),
+            "target_mean": safe_mean(target_scores_global),
+            "decoy_mean": safe_mean(decoy_scores_by_tier[tier]),
+            "auroc": auroc(target_scores_global, decoy_scores_by_tier[tier]),
+        })
+    return out, global_rows
+
+
+def print_per_tier_table(per_tier_rows, global_rows):
+    print("\n" + "=" * 90)
+    print("PER-TIER AUROC BREAKDOWN")
+    print("=" * 90)
+    print("Tier-level breakdown reveals WHERE the model fails:")
+    print("  Tier A = 1-2 aa mutants    (hardest — sequence near target)")
+    print("  Tier B = 2-3 aa mutants    (slightly easier)")
+    print("  Tier C = unrelated random  (easiest — should be near 1.0)")
+    print("  Tier D = other binders     (biologically plausible cross-reactivity)")
+    print("-" * 90)
+
+    print("{:<14} {:<6} {:>8} {:>8} {:>11} {:>11} {:>10}".format(
+        "Target", "Tier", "#Tgt", "#Dcy", "Tgt(mean)", "Dcy(mean)", "AUROC"))
+    print("-" * 90)
+    for r in per_tier_rows:
+        print("{:<14} {:<6} {:>8d} {:>8d} {:>11.4f} {:>11.4f} {:>10.4f}".format(
+            r["target_pep"][:14],
+            r["tier"][:6],
+            r["n_target"],
+            r["n_decoy"],
+            r["target_mean"],
+            r["decoy_mean"],
+            r["auroc"],
+        ))
+
+    print("-" * 90)
+    print("GLOBAL (across all targets):")
+    for r in global_rows:
+        print("{:<14} {:<6} {:>8d} {:>8d} {:>11.4f} {:>11.4f} {:>10.4f}".format(
+            r["target_pep"][:14],
+            r["tier"][:6],
+            r["n_target"],
+            r["n_decoy"],
+            r["target_mean"],
+            r["decoy_mean"],
+            r["auroc"],
+        ))
+    print("=" * 90)
+
+
+# ----------------------------------------------------------------------------
 #  Evidence-level bucketing
 # ----------------------------------------------------------------------------
 def evidence_level_breakdown(rows):
@@ -377,6 +480,9 @@ def main():
     summary = per_target_summary(rows, high_threshold=args.high_threshold)
     print_per_target_table(summary, args.high_threshold)
 
+    per_tier_rows, per_tier_global = per_tier_auroc(rows)
+    print_per_tier_table(per_tier_rows, per_tier_global)
+
     table = per_peptide_table(rows)
     print_per_peptide_top(table, top_per_target=args.top_per_target)
 
@@ -389,6 +495,17 @@ def main():
             os.makedirs(args.out_dir)
         export_per_target_csv(summary, os.path.join(args.out_dir, "per_target_summary.csv"))
         export_per_peptide_csv(table, os.path.join(args.out_dir, "per_peptide_table.csv"))
+        # Per-tier AUROC export
+        per_tier_path = os.path.join(args.out_dir, "per_tier_auroc.csv")
+        with io.open(per_tier_path, "w", encoding="utf-8", newline="") as f:
+            fieldnames = ["target_pep", "tier", "n_target", "n_decoy",
+                          "target_mean", "decoy_mean", "auroc"]
+            w = csv.DictWriter(f, fieldnames=fieldnames)
+            w.writeheader()
+            for r in per_tier_rows + per_tier_global:
+                w.writerow({k: ("{:.6f}".format(v) if isinstance(v, float) else v)
+                            for k, v in r.items()})
+        print("[export] {}".format(per_tier_path))
 
 
 if __name__ == "__main__":
