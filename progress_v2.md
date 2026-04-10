@@ -159,3 +159,67 @@ Key metrics:
 
 ### Next step
 - Phase 4: Policy and PPO Trainer
+
+---
+
+## Phase 4: Policy and PPO Trainer — COMPLETE
+
+**Date:** 2026-04-09
+**Duration:** ~1.5 hours
+
+### What was done
+- `policy.py` — ActorCritic with 3-head autoregressive action space:
+  - Shared MLP backbone (obs_dim -> 512 -> 512)
+  - Head 1: op_type (4-way categorical)
+  - Head 2: position (max_tcr_len-way), conditioned on op embedding
+  - Head 3: token (20-way), conditioned on op + position embeddings
+  - Value head (512 -> 256 -> 1)
+  - Action masking integration
+  - Token log-prob masked to 0 for DEL/STOP ops
+  - Orthogonal weight initialization (0.01 gain for policy heads)
+- `ppo_trainer.py` — Custom PPO implementation:
+  - RolloutBuffer with pre-allocated arrays, GAE computation, minibatch shuffling
+  - PPO clipped objective with entropy bonus
+  - VecEnv integration with autoregressive rollout collection
+  - Milestone checkpointing (500K, 1M, 2M, 5M, 10M)
+  - TensorBoard logging (reward, episode length, pg_loss, vf_loss, entropy)
+  - CLI with --config, --run_name, --seed, --reward_mode overrides
+  - Full setup() builds ERGO, ESM, PMHCLoader, TCRPool, DecoySampler, RewardManager, VecEnv
+- `tests/test_policy.py` — 12 unit tests:
+  - Sampling: output shapes, action ranges, op masking, pos masking, value-only
+  - Evaluation: output shapes, log-probs negative, entropy non-negative, token masking for DEL/STOP
+  - Gradient flow through all heads
+  - RolloutBuffer: add/GAE computation, batch generation
+
+### Test results
+```
+64 passed in 197.90s
+
+Policy tests (12):
+  - Sample output shapes: PASS
+  - Action ranges valid: PASS
+  - Op masking enforced: PASS
+  - Pos masking enforced: PASS
+  - Value-only: PASS
+  - Evaluate shapes: PASS
+  - Log-probs <= 0: PASS
+  - Entropy >= 0: PASS
+  - Token log-prob masked for DEL/STOP: PASS
+  - Gradient flow: PASS
+  - RolloutBuffer GAE: PASS
+  - RolloutBuffer batches: PASS
+
+Smoke test (1024 steps, 2 envs, v1_ergo_only):
+  172 episodes completed
+  Mean reward: 0.615
+  Mean episode length: 5.6
+  Policy: 841,108 parameters
+  Checkpoints: latest.pt, final.pt, milestone_512.pt, milestone_1024.pt
+  Checkpoint load + inference: verified OK
+```
+
+### Issues encountered
+- Missing `import torch.nn.functional as F` in `ppo_trainer.py` — would have caused runtime error on vf_loss line. Fixed before first run.
+
+### Next step
+- Phase 5: Full Training Run (10M steps)
