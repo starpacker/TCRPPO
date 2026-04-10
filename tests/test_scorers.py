@@ -131,8 +131,9 @@ class TestDecoyScorer:
             decoy_library_path="/share/liuyutian/pMHC_decoy_library",
             targets=["GILGFVFTL"],
             affinity_scorer=affinity_scorer,
-            K=8,  # Small K for fast tests
+            K=32,  # Larger K for stable statistics
             tau=10.0,
+            rng=np.random.default_rng(42),
         )
 
     def test_decoy_loading(self, scorer):
