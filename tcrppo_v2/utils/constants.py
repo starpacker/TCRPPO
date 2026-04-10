@@ -36,8 +36,12 @@ OP_STOP = 3
 NUM_OPS = 4
 
 # Paths (relative to project root)
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ERGO_DIR = os.path.join(PROJECT_ROOT, "tcrppo_v2", "ERGO")
+# constants.py is at tcrppo_v2/tcrppo_v2/utils/constants.py
+# Go up 3 levels: utils/ -> tcrppo_v2/ (package) -> tcrppo_v2/ (project root)
+_THIS_FILE = os.path.abspath(__file__)
+_PACKAGE_DIR = os.path.dirname(os.path.dirname(_THIS_FILE))  # tcrppo_v2/ package
+PROJECT_ROOT = os.path.dirname(_PACKAGE_DIR)  # tcrppo_v2/ project root
+ERGO_DIR = os.path.join(_PACKAGE_DIR, "ERGO")
 ERGO_AE_FILE = os.path.join(ERGO_DIR, "TCR_Autoencoder", "tcr_ae_dim_100.pt")
 ERGO_MODEL_DIR = os.path.join(ERGO_DIR, "models")
 

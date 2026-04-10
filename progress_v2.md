@@ -33,4 +33,49 @@ ERGO predictions: [0.195, 0.074, 0.9997]  (random, random, known binder)
 - `F.sigmoid` deprecated in PyTorch 2.x. Replaced with `torch.sigmoid`.
 
 ### Next step
-- Phase 1: Build and test all scorer modules
+- Phase 2: Data pipeline
+
+---
+
+## Phase 1: Scorer Modules — COMPLETE
+
+**Date:** 2026-04-09
+**Duration:** ~1 hour
+
+### What was done
+- `scorers/base.py` — Abstract `BaseScorer` with `score()` and `score_batch()`
+- `scorers/affinity_ergo.py` — ERGO binding scorer with MC Dropout (N=10)
+  - Self-contained ERGO loading, no v1 imports
+  - MC Dropout via enable/disable on nn.Dropout modules
+  - GPU batch building reused across MC samples for efficiency
+- `scorers/decoy.py` — LogSumExp contrastive penalty
+  - Loads all 4 tiers from decoy library (A/B/C/D)
+  - Tier-weighted sampling with configurable weights
+  - Unlock schedule support for curriculum
+- `scorers/naturalness.py` — ESM perplexity with CDR3 z-score
+  - Pseudo-perplexity computation via ESM-2 logits
+  - Offline stats computation from TCRdb CDR3beta sequences
+  - Threshold-based penalty
+- `scorers/diversity.py` — Recent-buffer Levenshtein similarity penalty
+- `reward_manager.py` — 4-component reward with running z-score normalization
+  - Supports reward_mode: v2_full, v1_ergo_only, v2_no_decoy, v2_no_curriculum
+
+### Test results
+```
+19 passed in 70.79s
+
+Key metrics:
+- Known binder (CASSIRSSYEQYF) ERGO score: 0.997 (conf=0.995)
+- Random TCR mean ERGO score: 0.109
+- MC Dropout std: 0.009-0.038
+- Decoy counts for GILGFVFTL: A=591, B=50, C=1900, D=827
+- Strong binder decoy penalty: 0.659 vs weak TCR: 0.370
+- Diversity penalty for identical seq: -0.15
+```
+
+### Issues encountered
+- `ERGO_models` import failed at module level: `sys.path.insert` in `affinity_ergo.py` ran before `constants.py` resolved `ERGO_DIR` correctly. Fixed by computing paths from `__file__` with correct directory depth (3 levels up from `utils/constants.py`).
+- `scorers/__init__.py` eagerly imported all scorers, triggering the ERGO import cascade. Fixed by removing eager imports.
+
+### Next step
+- Phase 2: Data pipeline (pmhc_loader, tcr_pool, decoy_sampler, esm_cache)
