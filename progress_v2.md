@@ -657,3 +657,73 @@ The multi-component penalty (decoy=0.8, naturalness=0.5, diversity=0.2) makes co
 3. Alternatively: increase affinity weight to make editing more rewarding than penalties
 4. v2_no_decoy results (when complete) will confirm whether decoy penalty is the main culprit
 5. Final comparison table: v1 vs v2_full vs v2_no_decoy vs v2_no_curriculum
+
+---
+
+## Monitoring Log: v2_no_decoy Ablation Training — IN PROGRESS
+
+**Started:** 2026-04-10 ~16:30 UTC on GPU 7 (after v1_ergo_only completed)
+**Config:** reward_mode=v2_no_decoy (affinity + naturalness + diversity, NO decoy penalty), 2M steps, 8 envs, seed 42
+
+### Purpose
+Isolate the impact of the decoy penalty on v2_full's early termination problem. If v2_no_decoy achieves longer episodes and higher AUROC, the decoy penalty weight (0.8) is confirmed as the primary culprit.
+
+### Training progress snapshots
+
+**2026-04-11 ~10:00 UTC (37.9%, 757K steps)**
+- Step 757,760, R=+1.031, Len=5.5, Ent=3.989
+- Reward trend improving: negative early → positive at ~500K+
+- 500K milestone checkpoint saved
+
+**2026-04-11 ~12:00 UTC (42%, 839K steps)**
+- Step 839,680, R=-0.111, Len=4.6, Ent=4.214
+- Normal volatility, entropy declining (policy converging)
+
+**2026-04-11 ~14:00–18:00 UTC (42–46.6%, 839K→931K steps)**
+- Step 931,840, R=-0.660, Len=4.4, Ent=4.037
+- Progressing at ~10K steps per 15-min interval (~11 steps/sec)
+- Episode length averaging ~4.8 (slightly longer than v2_full's 4.2 but shorter than v1_ergo_only's 8.8)
+- Entropy plateau around 3.8–4.1 (policy becoming more confident)
+
+### v2_no_decoy aggregate statistics (0–931K steps)
+- **Overall mean reward:** +0.085 (slightly positive, vs v2_full's +0.010)
+- **Overall mean episode length:** 5.3 (vs v2_full's 4.2, v1_ergo_only's 8.8)
+- **Milestone checkpoints saved:** 500K
+- **Estimated completion:** ~Apr 12 mid-day UTC (at current rate of ~11 steps/sec)
+
+### Observations
+1. v2_no_decoy has longer episodes (5.3) than v2_full (4.2) but shorter than v1_ergo_only (8.8)
+2. This suggests decoy penalty IS contributing to early termination, but naturalness+diversity penalties also play a role
+3. Entropy declining slower than v2_full → less premature convergence
+4. Reward is slightly more positive overall → less "punishing" training signal
+
+### GPU status (2026-04-11 ~18:00 UTC)
+- GPU 0: **FREE** (v2_full completed ~10:15 UTC, 451 MiB idle)
+- GPU 7: **BUSY** (v2_no_decoy at 46.6%, ~58 GiB VRAM)
+- GPUs 1-6: **BUSY** (other users' jobs at 100% util)
+
+### What's blocking
+- v2_no_curriculum ablation cannot launch until GPU 7 frees up (v2_no_decoy still at 46.6%)
+- Could launch v2_no_curriculum on GPU 0 (free), but would need to verify no conflicts
+- Alternatively: wait for v2_no_decoy to complete (~Apr 12), then launch v2_no_curriculum on GPU 7
+
+### Pending actions
+1. **When v2_no_decoy completes**: Run 3-tier evaluation immediately
+2. **Launch v2_no_curriculum**: On GPU 0 (free now) or GPU 7 (after v2_no_decoy)
+3. **Design next v2_full_v2**: With reduced penalty weights based on findings
+4. **Complete comparison table**: All ablations side-by-side with 3-tier metrics
+
+### Full project timeline
+| Date | Event |
+|------|-------|
+| Apr 09 | Phase 0-4 complete: scaffolding, scorers, data, env, policy, PPO |
+| Apr 10 03:53 | v2_full training launched (GPU 0, 2M steps) |
+| Apr 10 03:53 | v1_ergo_only training launched (GPU 7, 2M steps) |
+| Apr 10 08:00–14:00 | Pre-training design changes: decoy generation, graduated loading, ban L1, expand to 163 peptides, NetTCR, 3-tier eval |
+| Apr 10 ~16:30 | v1_ergo_only completed → AUROC **0.8075** (beat 0.65 target!) |
+| Apr 10 ~16:30 | v2_no_decoy ablation launched (GPU 7, 2M steps) |
+| Apr 10 ~17:00 | v1_ergo_only 3-tier eval completed (5/12 cross-validated by NetTCR) |
+| Apr 11 ~10:15 | v2_full completed → AUROC **0.5733** (early termination problem) |
+| Apr 11 ~10:25 | v2_full Tier 1 eval completed, results saved |
+| Apr 11 ~10:30 | Analysis: early termination root cause identified (penalty weights) |
+| Apr 11 ~18:00 | v2_no_decoy at 46.6% (931K/2M), GPU 0 free |
