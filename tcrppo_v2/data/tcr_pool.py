@@ -38,13 +38,13 @@ class TCRPool:
         self.l0_mutation_range = l0_mutation_range
         self.l1_top_k = l1_top_k
 
-        # Default curriculum from design spec
+        # Default curriculum: L0 + L2 only (L1 banned — too heavyweight)
         if curriculum_schedule is None:
             curriculum_schedule = [
-                {"until": 1_000_000, "L0": 0.7, "L1": 0.2, "L2": 0.1},
-                {"until": 3_000_000, "L0": 0.4, "L1": 0.4, "L2": 0.2},
-                {"until": 6_000_000, "L0": 0.2, "L1": 0.4, "L2": 0.4},
-                {"until": None, "L0": 0.1, "L1": 0.3, "L2": 0.6},
+                {"until": 1_000_000, "L0": 0.7, "L1": 0.0, "L2": 0.3},
+                {"until": 3_000_000, "L0": 0.4, "L1": 0.0, "L2": 0.6},
+                {"until": 6_000_000, "L0": 0.2, "L1": 0.0, "L2": 0.8},
+                {"until": None, "L0": 0.1, "L1": 0.0, "L2": 0.9},
             ]
         self.curriculum_schedule = curriculum_schedule
 
@@ -111,6 +111,38 @@ class TCRPool:
                             self.l0_seeds[target] = binders
                 except Exception:
                     pass
+
+    def load_l0_from_dir(self, l0_dir: str) -> None:
+        """Load L0 seeds from a directory of per-target text files.
+
+        Each file is named <peptide>.txt with one CDR3b sequence per line.
+        Merges with existing L0 seeds (deduplicates).
+        """
+        if not os.path.isdir(l0_dir):
+            return
+        for fname in os.listdir(l0_dir):
+            if not fname.endswith(".txt"):
+                continue
+            target = fname[:-4]
+            filepath = os.path.join(l0_dir, fname)
+            with open(filepath) as f:
+                seqs = [line.strip() for line in f if line.strip()]
+            # Filter to valid TCR-like sequences
+            valid = [
+                s for s in seqs
+                if is_valid_tcr(s) and MIN_TCR_LEN <= len(s) <= MAX_TCR_LEN
+            ]
+            if not valid:
+                continue
+            if target in self.l0_seeds:
+                # Merge and deduplicate
+                existing = set(self.l0_seeds[target])
+                for s in valid:
+                    if s not in existing:
+                        self.l0_seeds[target].append(s)
+                        existing.add(s)
+            else:
+                self.l0_seeds[target] = valid
 
     def get_curriculum_weights(self, step: int) -> Tuple[float, float, float]:
         """Get L0/L1/L2 sampling weights for current training step."""

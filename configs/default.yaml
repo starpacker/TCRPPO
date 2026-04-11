@@ -1,6 +1,6 @@
 # === PPO ===
 total_timesteps: 10_000_000
-n_envs: 20
+n_envs: 8
 n_steps: 128
 batch_size: 256
 n_epochs: 4
@@ -19,10 +19,14 @@ max_pep_len: 25
 max_steps_per_episode: 8
 hla_pseudoseq_len: 34
 
+# === Policy Network ===
+hidden_dim: 512
+
 # === ESM State Encoder ===
 esm_model: "esm2_t33_650M_UR50D"
 esm_frozen: true
 esm_device: "cuda"
+esm_tcr_cache_size: 4096
 
 # === Reward Weights (relative, after z-score normalization) ===
 w_affinity: 1.0
@@ -43,7 +47,7 @@ ergo_model_file: "ae_mcpas1.pt"
 affinity_mc_samples: 10
 
 # === Decoy Scorer ===
-decoy_K: 32
+decoy_K: 8
 decoy_tau: 10.0
 decoy_tier_weights:
   A: 3
@@ -58,6 +62,7 @@ decoy_unlock_schedule:
 
 # === Naturalness Scorer (ESM Perplexity) ===
 naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
 
 # === Diversity Scorer ===
 diversity_buffer_size: 512

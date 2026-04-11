@@ -1,4 +1,8 @@
-"""pMHC loader: target peptides + HLA pseudosequence encoding."""
+"""pMHC loader: target peptides + HLA pseudosequence encoding.
+
+Loads target peptides from tc-hard dataset (163 MHCI peptides with CDR3b data)
+plus decoy library metadata. Supports eval-only (12 McPAS) and full training modes.
+"""
 
 import json
 import os
@@ -8,12 +12,13 @@ import numpy as np
 
 from tcrppo_v2.utils.constants import (
     AMINO_ACIDS, MAX_PEP_LEN, HLA_PSEUDOSEQ_LEN, DECOY_LIBRARY_PATH,
+    PROJECT_ROOT,
 )
 
-# HLA pseudosequences (34 residues, NetMHC-style contact positions)
+# HLA pseudosequences (NetMHC-style contact positions)
 # Source: NetMHCpan 4.1 pseudosequences for common alleles
 HLA_PSEUDOSEQUENCES: Dict[str, str] = {
-    "HLA-A*02:01": "YFAMYQENAAHTLRWEPYSEGAEYLERTCEW",  # 30 residues (trimmed)
+    "HLA-A*02:01": "YFAMYQENAAHTLRWEPYSEGAEYLERTCEW",
     "HLA-A*03:01": "YFAMYQENDAHTLRWEAYSEGAEYLERTCEW",
     "HLA-A*11:01": "YFAMYQENDAHTLRWEAYSEGAEYLERTCKW",
     "HLA-B*07:02": "YFAMYQENDSHTLRWEPYSEEAEYLERTCEW",
@@ -38,6 +43,29 @@ EVAL_TARGETS: Dict[str, str] = {
     "RLRAEAQVK":  "HLA-A*03:01",   # CMV IE1
 }
 
+# Path to tc-hard extracted targets JSON
+TC_HARD_TARGETS_PATH = os.path.join(PROJECT_ROOT, "data", "tc_hard_targets.json")
+
+
+def load_tc_hard_targets(path: str = TC_HARD_TARGETS_PATH) -> Dict[str, str]:
+    """Load peptide -> HLA mapping from tc-hard extracted data.
+
+    Returns dict of {peptide: hla_allele} for all 163 MHCI peptides
+    with >=10 unique CDR3b sequences in tc-hard.
+    """
+    if not os.path.exists(path):
+        return {}
+    with open(path) as f:
+        data = json.load(f)
+    return {pep: info["hla"] for pep, info in data.items()}
+
+
+# Legacy alias for backward compatibility with tests
+TRAINING_TARGETS: Dict[str, str] = {
+    pep: hla for pep, hla in load_tc_hard_targets().items()
+    if pep not in EVAL_TARGETS
+}
+
 
 class PMHCLoader:
     """Load target peptides and their HLA pseudosequences."""
@@ -46,15 +74,27 @@ class PMHCLoader:
         self,
         targets: Optional[List[str]] = None,
         decoy_library_path: str = DECOY_LIBRARY_PATH,
+        mode: str = "eval",
+        tc_hard_path: str = TC_HARD_TARGETS_PATH,
     ):
         """Initialize with target peptides.
 
         Args:
-            targets: List of peptide sequences. If None, uses all 12 eval targets.
+            targets: List of peptide sequences. If None, determined by mode.
             decoy_library_path: Path to the decoy library (for candidate_targets.json).
+            mode: "eval" for 12 eval targets only,
+                  "train" for all tc-hard targets (163 peptides).
+            tc_hard_path: Path to tc-hard extracted targets JSON.
         """
         if targets is None:
-            targets = list(EVAL_TARGETS.keys())
+            if mode == "train":
+                tc_hard = load_tc_hard_targets(tc_hard_path)
+                # All tc-hard targets (includes eval targets)
+                all_targets = dict(EVAL_TARGETS)
+                all_targets.update(tc_hard)
+                targets = list(all_targets.keys())
+            else:
+                targets = list(EVAL_TARGETS.keys())
 
         self.targets = targets
         self.target_hla: Dict[str, str] = {}
@@ -80,13 +120,16 @@ class PMHCLoader:
 
     def _resolve_hla(self, peptide: str) -> str:
         """Resolve HLA allele for a peptide."""
-        # Check hardcoded eval targets first
         if peptide in EVAL_TARGETS:
             return EVAL_TARGETS[peptide]
-        # Check JSON data
+        if peptide in TRAINING_TARGETS:
+            return TRAINING_TARGETS[peptide]
+        # Check tc-hard data loaded at init time
+        tc_hard = load_tc_hard_targets()
+        if peptide in tc_hard:
+            return tc_hard[peptide]
         if peptide in self._hla_from_json:
             return self._hla_from_json[peptide]
-        # Default to HLA-A*02:01 (most common in immunology studies)
         return "HLA-A*02:01"
 
     def _get_pseudoseq(self, hla: str) -> str:

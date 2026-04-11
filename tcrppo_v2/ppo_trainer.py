@@ -30,7 +30,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 from tcrppo_v2.utils.constants import (
     ERGO_MODEL_DIR, ERGO_AE_FILE, NUM_OPS, NUM_AMINO_ACIDS,
-    MAX_TCR_LEN, OP_SUB, OP_INS, OP_STOP,
+    MAX_TCR_LEN, OP_SUB, OP_INS, OP_STOP, PROJECT_ROOT,
 )
 from tcrppo_v2.policy import ActorCritic
 
@@ -195,11 +195,12 @@ class PPOTrainer:
         from tcrppo_v2.utils.esm_cache import ESMCache
         from tcrppo_v2.data.pmhc_loader import PMHCLoader, EVAL_TARGETS
         from tcrppo_v2.data.tcr_pool import TCRPool
-        from tcrppo_v2.data.decoy_sampler import DecoySampler
         from tcrppo_v2.reward_manager import RewardManager
         from tcrppo_v2.env import VecTCREditEnv
 
-        targets = list(EVAL_TARGETS.keys())
+        # pMHC loader — train mode loads all tc-hard targets (~163)
+        pmhc_loader = PMHCLoader(mode="train")
+        targets = pmhc_loader.get_target_list()
 
         # ERGO scorer
         model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
@@ -218,36 +219,74 @@ class PPOTrainer:
         )
         print(f"  ESM-2 loaded (dim={esm_cache.embed_dim})")
 
-        # pMHC loader
-        pmhc_loader = PMHCLoader(targets=targets)
+        print(f"  pMHC loader: {len(targets)} targets")
 
-        # TCR pool
+        # TCR pool (no L1 seeds — L1 curriculum is banned)
         tcr_pool = TCRPool(
-            l1_seeds_dir=self.config.get("l1_seeds_dir", "data/l1_seeds"),
+            l1_seeds_dir=None,
             curriculum_schedule=self.config.get("curriculum_schedule"),
             seed=self.seed,
         )
-        # Load L0 seeds from decoy D
+        # Load L0 seeds from decoy D + tc-hard known binders
         decoy_lib_path = self.config.get("decoy_library_path", "/share/liuyutian/pMHC_decoy_library")
         tcr_pool.load_l0_from_decoy_d(decoy_lib_path, targets)
+        # Also load tc-hard CDR3b binders as L0 seeds
+        l0_tchard_dir = os.path.join(PROJECT_ROOT, "data", "l0_seeds_tchard")
+        if os.path.isdir(l0_tchard_dir):
+            tcr_pool.load_l0_from_dir(l0_tchard_dir)
+        l0_targets = tcr_pool.get_l0_targets()
         print(f"  TCR pool: {tcr_pool.num_tcrdb_seqs} seqs, "
-              f"L0 targets={tcr_pool.get_l0_targets()}, "
-              f"L1 targets={tcr_pool.get_l1_targets()}")
+              f"L0 targets={len(l0_targets)}/{len(targets)}")
 
-        # Decoy sampler
-        decoy_sampler = None
+        # Decoy scorer (for reward, with LogSumExp penalty)
+        decoy_scorer = None
+        self.decoy_scorer = None
         if self.reward_mode in ("v2_full",):
-            decoy_sampler = DecoySampler(
+            from tcrppo_v2.scorers.decoy import DecoyScorer
+            decoy_scorer = DecoyScorer(
                 decoy_library_path=decoy_lib_path,
                 targets=targets,
                 tier_weights=self.config.get("decoy_tier_weights"),
-                unlock_schedule=self.config.get("decoy_unlock_schedule"),
-                seed=self.seed,
+                K=self.config.get("decoy_K", 32),
+                tau=self.config.get("decoy_tau", 10.0),
+                affinity_scorer=affinity_scorer,
+                rng=np.random.default_rng(self.seed),
             )
+            # Start with only tier A unlocked
+            decoy_scorer.set_unlocked_tiers(["A"])
+            self.decoy_scorer = decoy_scorer
+            print(f"  Decoy scorer loaded (K={decoy_scorer.K})")
+
+        # Naturalness scorer
+        naturalness_scorer = None
+        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum"):
+            from tcrppo_v2.scorers.naturalness import NaturalnessScorer
+            stats_file = self.config.get("cdr3_ppl_stats", "data/cdr3_ppl_stats.json")
+            naturalness_scorer = NaturalnessScorer(
+                esm_model=esm_cache.model,
+                esm_alphabet=esm_cache.alphabet,
+                esm_batch_converter=esm_cache.batch_converter,
+                device=self.device,
+                stats_file=stats_file,
+            )
+            print("  Naturalness scorer loaded")
+
+        # Diversity scorer
+        diversity_scorer = None
+        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum"):
+            from tcrppo_v2.scorers.diversity import DiversityScorer
+            diversity_scorer = DiversityScorer(
+                buffer_size=self.config.get("diversity_buffer_size", 512),
+                similarity_threshold=self.config.get("diversity_threshold", 0.85),
+            )
+            print("  Diversity scorer loaded")
 
         # Reward manager
         reward_manager = RewardManager(
             affinity_scorer=affinity_scorer,
+            decoy_scorer=decoy_scorer,
+            naturalness_scorer=naturalness_scorer,
+            diversity_scorer=diversity_scorer,
             reward_mode=self.reward_mode,
             w_affinity=self.config.get("w_affinity", 1.0),
             w_decoy=self.config.get("w_decoy", 0.8),
@@ -264,7 +303,6 @@ class PPOTrainer:
             pmhc_loader=pmhc_loader,
             tcr_pool=tcr_pool,
             reward_manager=reward_manager,
-            decoy_sampler=decoy_sampler,
             reward_mode=self.reward_mode,
         )
         print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}")
@@ -316,6 +354,9 @@ class PPOTrainer:
         next_milestone_idx = 0
 
         while global_step < self.total_timesteps:
+            # Update decoy tier unlock schedule
+            self._update_decoy_schedule(global_step)
+
             # Collect rollout
             self.buffer.reset()
             self.policy.eval()
@@ -472,6 +513,20 @@ class PPOTrainer:
 
         if self.logger:
             self.logger.close()
+
+    def _update_decoy_schedule(self, global_step: int) -> None:
+        """Update decoy tier unlock based on training progress."""
+        if self.decoy_scorer is None:
+            return
+        if global_step < 2_000_000:
+            tiers = ["A"]
+        elif global_step < 5_000_000:
+            tiers = ["A", "B"]
+        elif global_step < 8_000_000:
+            tiers = ["A", "B", "D"]
+        else:
+            tiers = ["A", "B", "D", "C"]
+        self.decoy_scorer.set_unlocked_tiers(tiers)
 
     def save_checkpoint(self, name: str) -> None:
         """Save model checkpoint."""

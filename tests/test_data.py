@@ -21,6 +21,16 @@ class TestPMHCLoader:
         assert len(targets) == 12
         assert "GILGFVFTL" in targets
 
+    def test_train_mode_targets(self):
+        from tcrppo_v2.data.pmhc_loader import PMHCLoader
+        loader = PMHCLoader(mode="train")
+        targets = loader.get_target_list()
+        # tc-hard provides ~163 targets, should be well over 100
+        assert len(targets) > 100, f"Expected >100 train targets, got {len(targets)}"
+        # All 12 eval targets must be included
+        for t in ["GILGFVFTL", "NLVPMVATV", "GLCTLVAML", "KLGGALQAK"]:
+            assert t in targets
+
     def test_hla_assignment(self):
         from tcrppo_v2.data.pmhc_loader import PMHCLoader
         loader = PMHCLoader()
@@ -75,13 +85,13 @@ class TestTCRPool:
 
     def test_curriculum_weights(self, pool):
         w0 = pool.get_curriculum_weights(0)
-        assert w0 == (0.7, 0.2, 0.1)
+        assert w0 == (0.7, 0.0, 0.3)
 
         w1 = pool.get_curriculum_weights(2_000_000)
-        assert w1 == (0.4, 0.4, 0.2)
+        assert w1 == (0.4, 0.0, 0.6)
 
         w2 = pool.get_curriculum_weights(7_000_000)
-        assert w2 == (0.1, 0.3, 0.6)
+        assert w2 == (0.1, 0.0, 0.9)
 
     def test_l2_sampling(self, pool):
         """Without L0/L1 seeds, should fall back to L2."""
@@ -95,6 +105,23 @@ class TestTCRPool:
             "GILGFVFTL", step=0, reward_mode="v2_no_curriculum"
         )
         assert level == "L2"
+
+    def test_l0_from_tchard(self):
+        """L0 seeds load from tc-hard directory."""
+        from tcrppo_v2.data.tcr_pool import TCRPool
+        import os
+        pool = TCRPool(seed=42)
+        l0_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "data", "l0_seeds_tchard"
+        )
+        if os.path.isdir(l0_dir):
+            pool.load_l0_from_dir(l0_dir)
+            l0_targets = pool.get_l0_targets()
+            assert len(l0_targets) > 50, f"Expected >50 L0 targets from tc-hard, got {len(l0_targets)}"
+            # GILGFVFTL should have lots of L0 seeds
+            assert "GILGFVFTL" in l0_targets
+            assert len(pool.l0_seeds["GILGFVFTL"]) > 100
 
 
 # --- Decoy Sampler ---

@@ -24,6 +24,8 @@ class DecoySampler:
         tier_weights: Optional[Dict[str, int]] = None,
         unlock_schedule: Optional[Dict[int, List[str]]] = None,
         seed: int = 42,
+        decoy_a_min_count: int = 10,
+        decoy_d_max_count: int = 50,
     ):
         """Initialize decoy sampler.
 
@@ -33,9 +35,13 @@ class DecoySampler:
             tier_weights: Sampling weights per tier (default: A:3, B:3, D:2, C:1).
             unlock_schedule: Dict mapping step -> list of unlocked tiers.
             seed: Random seed.
+            decoy_a_min_count: Minimum decoys before expanding hamming distance.
+            decoy_d_max_count: Maximum tier D entries (random subsample if exceeded).
         """
         self.rng = np.random.default_rng(seed)
         self.decoy_library_path = decoy_library_path
+        self.decoy_a_min_count = decoy_a_min_count
+        self.decoy_d_max_count = decoy_d_max_count
 
         if tier_weights is None:
             tier_weights = {"A": 3, "B": 3, "D": 2, "C": 1}
@@ -81,23 +87,15 @@ class DecoySampler:
         """Load tier A, B, D decoys for a specific target."""
         self.decoys[target] = {"A": [], "B": [], "C": [], "D": []}
 
-        # Tier A: point mutants
+        # Tier A: graduated hamming distance (hd<=2 -> <=3 -> <=4)
         a_path = os.path.join(
             self.decoy_library_path, "data", "decoy_a", target, "decoy_a_results.json"
         )
         if os.path.exists(a_path):
             with open(a_path) as f:
                 data = json.load(f)
-            if isinstance(data, list):
-                for entry in data:
-                    seq = entry.get("sequence", entry.get("decoy_sequence", ""))
-                    if seq and all(c in AMINO_ACIDS for c in seq):
-                        self.decoys[target]["A"].append(seq)
-            elif isinstance(data, dict):
-                for entry in data.get("entries", data.get("results", [])):
-                    seq = entry.get("sequence", entry.get("decoy_sequence", ""))
-                    if seq and all(c in AMINO_ACIDS for c in seq):
-                        self.decoys[target]["A"].append(seq)
+            entries = data if isinstance(data, list) else data.get("entries", data.get("results", []))
+            self.decoys[target]["A"] = self._filter_tier_a(entries)
 
         # Tier B: 2-3 AA mutants
         b_path = os.path.join(
@@ -120,20 +118,57 @@ class DecoySampler:
         # Tier C: use global pool
         self.decoys[target]["C"] = self.tier_c_global
 
-        # Tier D: VDJdb/IEDB known binders
+        # Tier D: known binders (capped to decoy_d_max_count)
         d_path = os.path.join(
             self.decoy_library_path, "data", "decoy_d", target, "decoy_d_results.csv"
         )
         if os.path.exists(d_path):
             try:
+                d_seqs = []
                 with open(d_path, newline="") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         seq = row.get("sequence", "")
                         if seq and all(c in AMINO_ACIDS for c in seq):
-                            self.decoys[target]["D"].append(seq)
+                            d_seqs.append(seq)
+                if len(d_seqs) > self.decoy_d_max_count:
+                    indices = self.rng.choice(
+                        len(d_seqs), size=self.decoy_d_max_count, replace=False
+                    )
+                    d_seqs = [d_seqs[i] for i in indices]
+                self.decoys[target]["D"] = d_seqs
             except Exception:
                 pass
+
+    def _filter_tier_a(self, entries: list) -> List[str]:
+        """Filter tier A entries using graduated hamming distance.
+
+        Strategy: hd<=2 first; if < min_count, expand to hd<=3, then hd<=4.
+        Falls back to all entries if hamming_distance field is missing.
+        """
+        has_hd = any("hamming_distance" in e for e in entries if isinstance(e, dict))
+        if not has_hd:
+            return [
+                e.get("sequence", e.get("decoy_sequence", ""))
+                for e in entries
+                if isinstance(e, dict)
+                and e.get("sequence", e.get("decoy_sequence", ""))
+                and all(c in AMINO_ACIDS for c in e.get("sequence", e.get("decoy_sequence", "")))
+            ]
+
+        seqs = []
+        for max_hd in (2, 3, 4):
+            seqs = [
+                e.get("sequence", e.get("decoy_sequence", ""))
+                for e in entries
+                if isinstance(e, dict)
+                and e.get("sequence", e.get("decoy_sequence", ""))
+                and all(c in AMINO_ACIDS for c in e.get("sequence", e.get("decoy_sequence", "")))
+                and e.get("hamming_distance", 999) <= max_hd
+            ]
+            if len(seqs) >= self.decoy_a_min_count:
+                return seqs
+        return seqs
 
     def update_unlocked_tiers(self, step: int) -> None:
         """Update unlocked tiers based on training step."""
