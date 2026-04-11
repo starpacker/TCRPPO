@@ -537,15 +537,15 @@ The improvement comes entirely from architectural changes:
 - `tcrppo_v2/plot_results.py` — result visualization
 - `tests/test_evaluation.py` — unit tests for all evaluation components
 
-### Active training runs (2026-04-11 ~03:00 UTC)
+### Active training runs (updated 2026-04-11 ~10:00 UTC)
 
-| Run | Steps | % | ERGO Reward | Notes |
-|-----|-------|---|-------------|-------|
-| v2_full_run1 (GPU 0, PID 1357701) | 1,648,640 / 2M | **82.4%** | R≈0.3, Ent=3.6 | Past 75%, converging |
-| v2_no_decoy (GPU 7, PID 3419299) | 563,200 / 2M | **28.2%** | R≈0.3, Ent=4.3 | Slower (heavier scorer) |
+| Run | Steps | % | Recent R | Ent | Notes |
+|-----|-------|---|----------|-----|-------|
+| v2_full_run1 (GPU 0) | 1,884,160 / 2M | **94.2%** | +0.062 | 3.6 | ~120K steps to go |
+| v2_no_decoy (GPU 7) | 757,760 / 2M | **37.9%** | +1.031 | 4.0 | Improving steadily |
 
-- v2_full: Est. completion ~Apr 11 09:00 UTC
-- v2_no_decoy: Est. completion ~Apr 12 20:00 UTC
+- v2_full: Est. completion within ~30 minutes
+- v2_no_decoy: Est. completion ~Apr 12
 
 ### Completed ablation (for reference)
 
@@ -557,9 +557,65 @@ The improvement comes entirely from architectural changes:
 | v2_no_decoy | in progress | — | — |
 | v2_no_curriculum | pending | — | — |
 
+### v2_full Training Dynamics Analysis (2026-04-11 ~10:00 UTC)
+
+**Current status**: Step 1,884,160 / 2M (94.2%), ~5% remaining
+
+#### Reward normalization — negative rewards are EXPECTED
+
+v2_full uses z-score normalization in `reward_manager.py`:
+- Each reward component: `normalized = (raw_value - running_mean) / running_std`
+- Window = 10,000, warmup = 1,000 steps
+- By design, normalized rewards oscillate around zero
+
+**v2_full reward statistics by phase:**
+
+| Phase | Steps | Mean R | Mean Entropy | Mean Len |
+|-------|-------|--------|--------------|----------|
+| Early | 0-500K | +0.022 | 6.20 → 4.96 | ~5.4 |
+| Mid-early | 500K-1M | -0.004 | 4.51 → 3.97 | ~5.1 |
+| Mid-late | 1M-1.5M | +0.037 | 3.96 → 3.58 | ~4.3 |
+| Late | 1.5M-1.88M | -0.023 | 3.58 → 3.58 | ~4.1 |
+| **Overall** | 0-1.88M | **+0.010** | — | ~4.7 |
+
+Overall mean ≈ 0.01 (near zero), as z-score normalization dictates.
+
+**Cross-run comparison (reward scales are NOT comparable):**
+
+| Run | Reward type | Mean R (late phase) | Explanation |
+|-----|-------------|---------------------|-------------|
+| v1_ergo_only | Raw ERGO score | 3.6 | Unnormalized, single-component |
+| v2_full | Z-score normalized | -0.023 | 4-component, normalized to mean=0 |
+| v2_no_decoy | Z-score normalized | +0.202 | 3-component (no decoy), normalized |
+
+**Key insight**: Comparing v2_full R=-0.5 to v1_ergo_only R=3.6 is meaningless — different scales.
+
+#### Potential concern: Short episode lengths
+
+| Run | Mean episode length | Notes |
+|-----|-------------------|-------|
+| v1_ergo_only | 8.8 steps | Terminal reward only |
+| v2_full | 4.2 steps | Delta reward, 4 penalties |
+| v2_no_decoy | 5.0 steps | Delta reward, 3 penalties |
+
+v2_full episodes are ~2x shorter than v1_ergo_only. Possible explanations:
+1. With multiple penalty terms, continued editing becomes "risky" — policy learns to stop early
+2. Delta reward gives per-step credit, so fewer edits suffice for good reward
+3. Entropy declining to 3.5-3.6 suggests policy is converging (potentially too narrow)
+
+**Whether short episodes are a problem depends on TCR quality** — only 3-tier evaluation will tell.
+
+#### v2_no_decoy progress update
+
+Step 757,760 / 2M (37.9%), R=+1.031 (recent), Ent=3.989
+- Reward trend improving steadily: -0.086 (early) → +0.202 (500K+)
+- Episode length ~5.0 steps (between v2_full and v1_ergo_only)
+- Estimated completion: ~Apr 12
+
 ### Next steps
-1. Wait for v2_full completion → run 3-tier eval → populate comparison table
-2. v2_no_decoy still at 28% — will need another ~40h to complete
+1. v2_full approaching completion (~120K steps remaining) → run 3-tier eval immediately
+2. v2_no_decoy at 38% — estimated 30+ more hours
 3. Launch v2_no_curriculum on GPU 0 when v2_full finishes
 4. TULIP-TCR blocked by network — skipped for now (NetTCR provides independent Tier 2)
+5. Compare short-episode TCR quality vs long-episode quality to determine if episode length matters
 5. Final comparison table: v1 vs v2_full vs v2_no_decoy vs v2_no_curriculum
