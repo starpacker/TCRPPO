@@ -553,8 +553,8 @@ The improvement comes entirely from architectural changes:
 |-----|----------------|-------------------|----------------|
 | v1_baseline | 0.4538 | — | — |
 | v1_ergo_only (2M steps) | **0.8075** | 0.5754 | **+78%** |
-| v2_full_run1 | in progress | — | — |
-| v2_no_decoy | in progress | — | — |
+| v2_full_run1 (2M steps) | **0.5733** | pending | **+26%** |
+| v2_no_decoy | in progress (41%) | — | — |
 | v2_no_curriculum | pending | — | — |
 
 ### v2_full Training Dynamics Analysis (2026-04-11 ~10:00 UTC)
@@ -618,4 +618,42 @@ Step 757,760 / 2M (37.9%), R=+1.031 (recent), Ent=3.989
 3. Launch v2_no_curriculum on GPU 0 when v2_full finishes
 4. TULIP-TCR blocked by network — skipped for now (NetTCR provides independent Tier 2)
 5. Compare short-episode TCR quality vs long-episode quality to determine if episode length matters
+
+### v2_full Evaluation Results (2026-04-11 ~10:30 UTC)
+
+**Training completed**: 2,000,896 steps, 469,727 episodes. `final.pt` saved.
+
+**Tier 1: ERGO AUROC (per-target)**
+
+| Target | v1 Baseline | v1_ergo_only | v2_full | Mean Steps | Verdict |
+|--------|-------------|--------------|---------|------------|---------|
+| GILGFVFTL | 0.3200 | 0.8698 | **0.7701** | 2.2 | OK |
+| NLVPMVATV | 0.4022 | 0.9954 | **0.9856** | 8.0 | Excellent |
+| GLCTLVAML | 0.6778 | 0.8766 | **0.4039** | 2.1 | REGRESSION |
+| LLWNGPMAV | 0.3472 | 0.7990 | **0.4673** | 2.3 | Below ergo_only |
+| YLQPRTFLL | 0.3028 | 0.6432 | **0.4565** | 2.1 | Moderate |
+| FLYALALLL | 0.4133 | 0.5974 | **0.4085** | 2.1 | Below baseline! |
+| SLYNTVATL | 0.8776 | 0.8960 | **0.5431** | 2.2 | REGRESSION from v1! |
+| KLGGALQAK | 0.5200 | 0.7776 | **0.4994** | 2.2 | Below baseline |
+| AVFDRKSDAK | 0.4561 | 0.8230 | **0.6247** | 5.3 | Good |
+| IVTDFSVIK | 0.3022 | 0.8516 | **0.8799** | 7.6 | Excellent |
+| SPRWYFYYL | 0.6056 | 0.6700 | **0.2451** | 2.0 | BAD regression |
+| RLRAEAQVK | 0.2311 | 0.7902 | **0.5950** | 2.0 | Good vs v1 |
+| **Mean** | **0.4538** | **0.8075** | **0.5733** | **3.5** | **+26% vs v1** |
+
+**Key finding: Early termination problem**
+
+Clear correlation between episode length and AUROC:
+- Steps >= 5: NLVPMVATV (0.99), IVTDFSVIK (0.88), AVFDRKSDAK (0.62) → **mean 0.83**
+- Steps ~2: remaining 9 targets → **mean 0.49** (barely above random)
+
+The multi-component penalty (decoy=0.8, naturalness=0.5, diversity=0.2) makes continued editing "risky". The policy learns to stop after ~2 steps to avoid accumulating penalties, resulting in barely-modified seed TCRs with poor specificity.
+
+**Root cause**: Penalty weights too aggressive relative to affinity reward. Policy converges to a "stop early" local optimum.
+
+**Proposed fixes for next training round:**
+1. Lower penalty weights: decoy 0.8→0.4, naturalness 0.5→0.2, diversity 0.2→0.1
+2. Add minimum-steps bonus or early-stopping penalty (e.g., -1.0 reward if STOP before step 3)
+3. Alternatively: increase affinity weight to make editing more rewarding than penalties
+4. v2_no_decoy results (when complete) will confirm whether decoy penalty is the main culprit
 5. Final comparison table: v1 vs v2_full vs v2_no_decoy vs v2_no_curriculum
