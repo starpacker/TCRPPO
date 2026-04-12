@@ -176,6 +176,28 @@ class RewardManager:
                 self.weights["affinity"] * norm_aff
                 - self.weights["decoy"] * norm_decoy
             )
+        # NEW: Raw reward modes (no z-score normalization)
+        elif self.reward_mode == "raw_decoy":
+            # Test 1 Phase 2 & Test 2: raw affinity - light decoy penalty
+            total = aff_score - self.weights["decoy"] * decoy_score
+        elif self.reward_mode == "v1_ergo_stepwise":
+            # Test 3: raw ERGO score per-step (absolute, not delta)
+            total = aff_score
+        elif self.reward_mode == "raw_multi_penalty":
+            # Test 4: raw affinity with multiple light penalties
+            total = (aff_score
+                    - self.weights["decoy"] * decoy_score
+                    - self.weights["naturalness"] * nat_score
+                    - self.weights["diversity"] * div_score)
+        elif self.reward_mode == "threshold_penalty":
+            # Test 5: conditional penalties based on affinity threshold
+            if aff_score < 0.5:
+                total = aff_score  # Pure affinity signal
+            else:
+                total = (aff_score
+                        - self.weights["decoy"] * decoy_score
+                        - self.weights["naturalness"] * nat_score
+                        - self.weights["diversity"] * div_score)
         else:
             total = (
                 self.weights["affinity"] * norm_aff
@@ -283,6 +305,24 @@ class RewardManager:
                     self.weights["affinity"] * norm_aff
                     - self.weights["decoy"] * norm_decoy
                 )
+            # NEW: Raw reward modes (no z-score normalization)
+            elif self.reward_mode == "raw_decoy":
+                total = aff_score - self.weights["decoy"] * decoy_score
+            elif self.reward_mode == "v1_ergo_stepwise":
+                total = aff_score
+            elif self.reward_mode == "raw_multi_penalty":
+                total = (aff_score
+                        - self.weights["decoy"] * decoy_score
+                        - self.weights["naturalness"] * nat_score
+                        - self.weights["diversity"] * div_score)
+            elif self.reward_mode == "threshold_penalty":
+                if aff_score < 0.5:
+                    total = aff_score
+                else:
+                    total = (aff_score
+                            - self.weights["decoy"] * decoy_score
+                            - self.weights["naturalness"] * nat_score
+                            - self.weights["diversity"] * div_score)
             else:
                 total = (
                     self.weights["affinity"] * norm_aff

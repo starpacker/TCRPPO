@@ -574,6 +574,10 @@ def main():
     parser.add_argument("--w_diversity", type=float, default=None, help="Diversity weight")
     parser.add_argument("--min_steps", type=int, default=None, help="Min steps before STOP")
     parser.add_argument("--min_steps_penalty", type=float, default=None, help="Penalty for early STOP")
+    # Two-phase training support
+    parser.add_argument("--resume_from", default=None, help="Checkpoint path to resume from")
+    parser.add_argument("--resume_change_reward_mode", default=None, help="Change reward mode on resume")
+    parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -606,6 +610,21 @@ def main():
     config.setdefault("run_name", "v2_run")
 
     trainer = PPOTrainer(config)
+
+    # Two-phase training: resume from checkpoint and optionally change reward mode
+    if args.resume_from:
+        print(f"Resuming from checkpoint: {args.resume_from}")
+        trainer.load_checkpoint(args.resume_from)
+
+        if args.resume_change_reward_mode:
+            print(f"Changing reward mode to: {args.resume_change_reward_mode}")
+            trainer.reward_manager.reward_mode = args.resume_change_reward_mode
+            config["reward_mode"] = args.resume_change_reward_mode
+
+        if args.resume_reset_optimizer:
+            print("Resetting optimizer")
+            trainer.optimizer = torch.optim.Adam(trainer.policy.parameters(), lr=config["learning_rate"])
+
     trainer.train()
 
 
