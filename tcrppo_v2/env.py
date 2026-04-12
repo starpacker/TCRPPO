@@ -31,6 +31,8 @@ class TCREditEnv:
         max_tcr_len: int = MAX_TCR_LEN,
         min_tcr_len: int = MIN_TCR_LEN,
         reward_mode: str = "v2_full",
+        min_steps: int = 0,
+        min_steps_penalty: float = 0.0,
     ):
         """Initialize environment.
 
@@ -55,6 +57,8 @@ class TCREditEnv:
         self.max_tcr_len = max_tcr_len
         self.min_tcr_len = min_tcr_len
         self.reward_mode = reward_mode
+        self.min_steps = min_steps
+        self.min_steps_penalty = min_steps_penalty
 
         # State dimensions
         self.esm_dim = esm_cache.output_dim  # 1280
@@ -178,6 +182,12 @@ class TCREditEnv:
             initial_affinity=self.initial_affinity,
             target=self.target,
         )
+
+        # Min-steps penalty: penalize STOP before min_steps
+        if op_type == OP_STOP and self.min_steps > 0 and self.step_count < self.min_steps:
+            reward += self.min_steps_penalty
+            components["min_steps_penalty"] = self.min_steps_penalty
+
         self.cumulative_delta += reward
         info["reward_components"] = components
 
@@ -342,6 +352,8 @@ class VecTCREditEnv:
         decoy_sampler=None,
         max_steps: int = MAX_STEPS_PER_EPISODE,
         reward_mode: str = "v2_full",
+        min_steps: int = 0,
+        min_steps_penalty: float = 0.0,
     ):
         """Create n_envs parallel environments sharing scorers."""
         self.n_envs = n_envs
@@ -354,6 +366,8 @@ class VecTCREditEnv:
                 decoy_sampler=decoy_sampler,
                 max_steps=max_steps,
                 reward_mode=reward_mode,
+                min_steps=min_steps,
+                min_steps_penalty=min_steps_penalty,
             )
             for _ in range(n_envs)
         ]

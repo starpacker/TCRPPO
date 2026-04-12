@@ -121,7 +121,7 @@ class RewardManager:
         # Decoy penalty (computed every N calls to reduce ERGO overhead)
         if (
             self.decoy_scorer is not None
-            and self.reward_mode in ("v2_full",)
+            and self.reward_mode in ("v2_full", "v2_decoy_only")
         ):
             if self._call_count % self.decoy_eval_freq == 0:
                 decoy_score, decoy_conf = self.decoy_scorer.score(tcr, peptide, target=target)
@@ -169,6 +169,13 @@ class RewardManager:
         # v1_ergo_only: only affinity, terminal reward (not delta)
         if self.reward_mode == "v1_ergo_only":
             total = components.get("affinity_raw", 0.0)
+        elif self.reward_mode == "v1_ergo_delta":
+            total = aff_delta
+        elif self.reward_mode == "v2_decoy_only":
+            total = (
+                self.weights["affinity"] * norm_aff
+                - self.weights["decoy"] * norm_decoy
+            )
         else:
             total = (
                 self.weights["affinity"] * norm_aff
@@ -227,7 +234,7 @@ class RewardManager:
             components["affinity_delta"] = aff_delta
 
             # Decoy
-            if self.decoy_scorer is not None and self.reward_mode in ("v2_full",):
+            if self.decoy_scorer is not None and self.reward_mode in ("v2_full", "v2_decoy_only"):
                 if self._call_count % self.decoy_eval_freq == 0:
                     decoy_score, _ = self.decoy_scorer.score(tcrs[i], peptides[i], target=targets[i])
                     self._last_decoy_score = decoy_score
@@ -269,6 +276,13 @@ class RewardManager:
 
             if self.reward_mode == "v1_ergo_only":
                 total = aff_score
+            elif self.reward_mode == "v1_ergo_delta":
+                total = aff_delta
+            elif self.reward_mode == "v2_decoy_only":
+                total = (
+                    self.weights["affinity"] * norm_aff
+                    - self.weights["decoy"] * norm_decoy
+                )
             else:
                 total = (
                     self.weights["affinity"] * norm_aff

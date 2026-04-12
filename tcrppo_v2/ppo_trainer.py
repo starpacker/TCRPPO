@@ -189,6 +189,13 @@ class PPOTrainer:
         """Initialize all components."""
         print(f"Setting up PPO trainer: {self.run_name}")
         print(f"  reward_mode={self.reward_mode}, n_envs={self.n_envs}")
+        print(f"  weights: aff={self.config.get('w_affinity', 1.0)}, "
+              f"decoy={self.config.get('w_decoy', 0.8)}, "
+              f"nat={self.config.get('w_naturalness', 0.5)}, "
+              f"div={self.config.get('w_diversity', 0.2)}")
+        if self.config.get("min_steps", 0) > 0:
+            print(f"  min_steps={self.config['min_steps']}, "
+                  f"penalty={self.config.get('min_steps_penalty', 0.0)}")
 
         # Build scorers
         from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
@@ -241,7 +248,7 @@ class PPOTrainer:
         # Decoy scorer (for reward, with LogSumExp penalty)
         decoy_scorer = None
         self.decoy_scorer = None
-        if self.reward_mode in ("v2_full",):
+        if self.reward_mode in ("v2_full", "v2_decoy_only"):
             from tcrppo_v2.scorers.decoy import DecoyScorer
             decoy_scorer = DecoyScorer(
                 decoy_library_path=decoy_lib_path,
@@ -304,6 +311,8 @@ class PPOTrainer:
             tcr_pool=tcr_pool,
             reward_manager=reward_manager,
             reward_mode=self.reward_mode,
+            min_steps=self.config.get("min_steps", 0),
+            min_steps_penalty=self.config.get("min_steps_penalty", 0.0),
         )
         print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}")
 
@@ -559,6 +568,12 @@ def main():
     parser.add_argument("--total_timesteps", type=int, default=None, help="Total timesteps")
     parser.add_argument("--n_envs", type=int, default=None, help="Num envs")
     parser.add_argument("--device", default="cuda", help="Device")
+    parser.add_argument("--w_affinity", type=float, default=None, help="Affinity weight")
+    parser.add_argument("--w_decoy", type=float, default=None, help="Decoy weight")
+    parser.add_argument("--w_naturalness", type=float, default=None, help="Naturalness weight")
+    parser.add_argument("--w_diversity", type=float, default=None, help="Diversity weight")
+    parser.add_argument("--min_steps", type=int, default=None, help="Min steps before STOP")
+    parser.add_argument("--min_steps_penalty", type=float, default=None, help="Penalty for early STOP")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -575,6 +590,18 @@ def main():
     if args.n_envs:
         config["n_envs"] = args.n_envs
     config["device"] = args.device
+    if args.w_affinity is not None:
+        config["w_affinity"] = args.w_affinity
+    if args.w_decoy is not None:
+        config["w_decoy"] = args.w_decoy
+    if args.w_naturalness is not None:
+        config["w_naturalness"] = args.w_naturalness
+    if args.w_diversity is not None:
+        config["w_diversity"] = args.w_diversity
+    if args.min_steps is not None:
+        config["min_steps"] = args.min_steps
+    if args.min_steps_penalty is not None:
+        config["min_steps_penalty"] = args.min_steps_penalty
 
     config.setdefault("run_name", "v2_run")
 
