@@ -16,12 +16,13 @@
 | 4 | exp2_light | ✅ DONE | 500K | 0.4660 | -0.3415 | v2_full | d=0.2, n=0.1, v=0.05, z-norm | 2 | Even light penalties fail with z-norm |
 | 5 | exp3_ergo_delta | ✅ DONE | 500K | 0.5004 | -0.3071 | v1_ergo_delta | Raw delta per-step, no penalties | 1 | Long edits (7.9 steps) but poor binding |
 | 6 | exp4_min_steps | ✅ DONE | 500K | 0.4768 | -0.3307 | v2_full | d=0.4, n=0.2, v=0.1, min_steps=3 | 3 | Min-steps doesn't fix z-norm issue |
-| 7 | v2_no_decoy | 🔄 TRAINING | 1.31M/2M | TBD | TBD | v2_no_decoy | No decoy, has nat+div, z-norm | 7 | Ablation study |
-| 8 | test1_two_phase | 🔄 TRAINING | 1M/2M | TBD | TBD | v1_ergo_only → raw_decoy | Phase1: 1M pure ERGO, Phase2: 1M +decoy | 0 | **NEW** PID 1830808 |
-| 9 | test2_min6_raw | 🔄 TRAINING | 0/2M | TBD | TBD | raw_decoy | min_steps=6, raw reward, d=0.05 | 1 | **NEW** PID 1831087 |
-| 10 | test3_stepwise | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_stepwise | Raw ERGO per-step (absolute score) | 2 | **NEW** PID 1831409 |
-| 11 | test4_raw_multi | 🔄 TRAINING | 0/2M | TBD | TBD | raw_multi_penalty | raw - 0.05d - 0.02n - 0.01v | 3 | **NEW** PID 1831700 |
-| 12 | test5_threshold | 🔄 TRAINING | 0/2M | TBD | TBD | threshold_penalty | Conditional penalties at aff>0.5 | 4 | **NEW** PID 1832408 |
+| 7 | v2_no_decoy | 🔄 TRAINING | 1.35M/2M | TBD | TBD | v2_no_decoy | No decoy, has nat+div, z-norm | 7 | Ablation study |
+| 8 | test1_two_phase | 🔄 TRAINING | 102K/2M | TBD | TBD | v1_ergo_only → raw_decoy | Phase1: 1M pure ERGO, Phase2: 1M +decoy | 0 | **NEW** PID 1830808 |
+| 9 | test2_min6_raw | 🔄 TRAINING | 112K/2M | TBD | TBD | raw_decoy | min_steps=6, raw reward, d=0.05 | 1 | **NEW** PID 1831087 |
+| 10 | test3_stepwise | 🔄 TRAINING | 112K/2M | TBD | TBD | v1_ergo_stepwise | Raw ERGO per-step (absolute score) | 2 | **NEW** PID 1831409 |
+| 11 | test4_raw_multi | 🔄 TRAINING | 112K/2M | TBD | TBD | raw_multi_penalty | raw - 0.05d - 0.02n - 0.01v | 3 | **NEW** PID 1831700 |
+| 12 | test5_threshold | 🔄 TRAINING | 112K/2M | TBD | TBD | threshold_penalty | Conditional penalties at aff>0.5 | 4 | **NEW** PID 1832408 |
+| 13 | test6_pure_v2 | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | A1+A2+A10 only, NO curriculum | 5 | **NEW** PID 2809807, isolate arch contribution |
 
 ---
 
