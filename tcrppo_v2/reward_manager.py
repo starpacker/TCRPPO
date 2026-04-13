@@ -121,7 +121,7 @@ class RewardManager:
         # Decoy penalty (computed every N calls to reduce ERGO overhead)
         if (
             self.decoy_scorer is not None
-            and self.reward_mode in ("v2_full", "v2_decoy_only")
+            and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty")
         ):
             if self._call_count % self.decoy_eval_freq == 0:
                 decoy_score, decoy_conf = self.decoy_scorer.score(tcr, peptide, target=target)
@@ -136,7 +136,7 @@ class RewardManager:
         # Naturalness penalty (computed every N calls to save ESM forward passes)
         if (
             self.naturalness_scorer is not None
-            and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum")
+            and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")
         ):
             self._call_count += 1
             if self._call_count % self.naturalness_eval_freq == 0:
@@ -152,7 +152,7 @@ class RewardManager:
         # Diversity penalty
         if (
             self.diversity_scorer is not None
-            and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum")
+            and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")
         ):
             div_score, div_conf = self.diversity_scorer.score(tcr)
             components["diversity_raw"] = div_score
@@ -256,7 +256,7 @@ class RewardManager:
             components["affinity_delta"] = aff_delta
 
             # Decoy
-            if self.decoy_scorer is not None and self.reward_mode in ("v2_full", "v2_decoy_only"):
+            if self.decoy_scorer is not None and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty"):
                 if self._call_count % self.decoy_eval_freq == 0:
                     decoy_score, _ = self.decoy_scorer.score(tcrs[i], peptides[i], target=targets[i])
                     self._last_decoy_score = decoy_score
@@ -269,7 +269,7 @@ class RewardManager:
 
             # Naturalness
             if (self.naturalness_scorer is not None
-                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum")):
+                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
                 self._call_count += 1
                 if self._call_count % self.naturalness_eval_freq == 0:
                     nat_score, _ = self.naturalness_scorer.score(tcrs[i])
@@ -283,7 +283,7 @@ class RewardManager:
 
             # Diversity
             if (self.diversity_scorer is not None
-                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum")):
+                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
                 div_score, _ = self.diversity_scorer.score(tcrs[i])
                 components["diversity_raw"] = div_score
             else:

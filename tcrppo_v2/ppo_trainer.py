@@ -248,7 +248,8 @@ class PPOTrainer:
         # Decoy scorer (for reward, with LogSumExp penalty)
         decoy_scorer = None
         self.decoy_scorer = None
-        if self.reward_mode in ("v2_full", "v2_decoy_only"):
+        # Load decoy scorer for any mode that uses decoy penalty
+        if self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty"):
             from tcrppo_v2.scorers.decoy import DecoyScorer
             decoy_scorer = DecoyScorer(
                 decoy_library_path=decoy_lib_path,
@@ -266,7 +267,7 @@ class PPOTrainer:
 
         # Naturalness scorer
         naturalness_scorer = None
-        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum"):
+        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
             from tcrppo_v2.scorers.naturalness import NaturalnessScorer
             stats_file = self.config.get("cdr3_ppl_stats", "data/cdr3_ppl_stats.json")
             naturalness_scorer = NaturalnessScorer(
@@ -280,7 +281,7 @@ class PPOTrainer:
 
         # Diversity scorer
         diversity_scorer = None
-        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum"):
+        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
             from tcrppo_v2.scorers.diversity import DiversityScorer
             diversity_scorer = DiversityScorer(
                 buffer_size=self.config.get("diversity_buffer_size", 512),
@@ -289,7 +290,7 @@ class PPOTrainer:
             print("  Diversity scorer loaded")
 
         # Reward manager
-        reward_manager = RewardManager(
+        self.reward_manager = RewardManager(
             affinity_scorer=affinity_scorer,
             decoy_scorer=decoy_scorer,
             naturalness_scorer=naturalness_scorer,
@@ -309,7 +310,7 @@ class PPOTrainer:
             esm_cache=esm_cache,
             pmhc_loader=pmhc_loader,
             tcr_pool=tcr_pool,
-            reward_manager=reward_manager,
+            reward_manager=self.reward_manager,
             reward_mode=self.reward_mode,
             min_steps=self.config.get("min_steps", 0),
             min_steps_penalty=self.config.get("min_steps_penalty", 0.0),
@@ -353,8 +354,23 @@ class PPOTrainer:
         print(f"\nStarting training for {self.total_timesteps:,} timesteps...")
         self.setup()
 
+        # Handle two-phase training (resume from checkpoint)
+        resume_step = 0
+        if getattr(self, '_resume_from', None):
+            print(f"Resuming from checkpoint: {self._resume_from}")
+            resume_step = self.load_checkpoint(self._resume_from)
+            print(f"  Resumed at step {resume_step:,}")
+
+            if getattr(self, '_resume_change_reward_mode', None):
+                print(f"  Changing reward mode to: {self._resume_change_reward_mode}")
+                self.reward_manager.reward_mode = self._resume_change_reward_mode
+
+            if getattr(self, '_resume_reset_optimizer', False):
+                print("  Resetting optimizer")
+                self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
+
         obs = self.vec_env.reset()
-        global_step = 0
+        global_step = resume_step
         n_updates = 0
         episode_rewards = []
         episode_lengths = []
@@ -546,11 +562,19 @@ class PPOTrainer:
             "config": self.config,
         }, path)
 
-    def load_checkpoint(self, path: str) -> None:
-        """Load model checkpoint."""
+    def load_checkpoint(self, path: str) -> int:
+        """Load model checkpoint. Returns the step count from the checkpoint filename, or 0."""
         ckpt = torch.load(path, map_location=self.device)
         self.policy.load_state_dict(ckpt["policy_state_dict"])
         self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+
+        # Try to extract step count from filename (e.g. milestone_1000000.pt)
+        import re
+        basename = os.path.basename(path)
+        match = re.search(r'(\d+)', basename)
+        if match and 'milestone' in basename:
+            return int(match.group(1))
+        return 0
 
 
 def load_config(config_path: str) -> dict:
@@ -611,19 +635,10 @@ def main():
 
     trainer = PPOTrainer(config)
 
-    # Two-phase training: resume from checkpoint and optionally change reward mode
-    if args.resume_from:
-        print(f"Resuming from checkpoint: {args.resume_from}")
-        trainer.load_checkpoint(args.resume_from)
-
-        if args.resume_change_reward_mode:
-            print(f"Changing reward mode to: {args.resume_change_reward_mode}")
-            trainer.reward_manager.reward_mode = args.resume_change_reward_mode
-            config["reward_mode"] = args.resume_change_reward_mode
-
-        if args.resume_reset_optimizer:
-            print("Resetting optimizer")
-            trainer.optimizer = torch.optim.Adam(trainer.policy.parameters(), lr=config["learning_rate"])
+    # Two-phase training: store resume args for processing after setup()
+    trainer._resume_from = args.resume_from
+    trainer._resume_change_reward_mode = args.resume_change_reward_mode
+    trainer._resume_reset_optimizer = args.resume_reset_optimizer
 
     trainer.train()
 
