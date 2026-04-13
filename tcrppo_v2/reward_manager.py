@@ -169,6 +169,8 @@ class RewardManager:
         # v1_ergo_only: only affinity, terminal reward (not delta)
         if self.reward_mode == "v1_ergo_only":
             total = components.get("affinity_raw", 0.0)
+        elif self.reward_mode == "v1_ergo_squared":
+            total = components.get("affinity_raw", 0.0) ** 2
         elif self.reward_mode == "v1_ergo_delta":
             total = aff_delta
         elif self.reward_mode == "v2_decoy_only":
@@ -298,6 +300,8 @@ class RewardManager:
 
             if self.reward_mode == "v1_ergo_only":
                 total = aff_score
+            elif self.reward_mode == "v1_ergo_squared":
+                total = aff_score ** 2
             elif self.reward_mode == "v1_ergo_delta":
                 total = aff_delta
             elif self.reward_mode == "v2_decoy_only":

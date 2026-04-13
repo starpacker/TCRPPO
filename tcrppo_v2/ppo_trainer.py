@@ -602,6 +602,8 @@ def main():
     parser.add_argument("--resume_from", default=None, help="Checkpoint path to resume from")
     parser.add_argument("--resume_change_reward_mode", default=None, help="Change reward mode on resume")
     parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
+    parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
+    parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -630,6 +632,10 @@ def main():
         config["min_steps"] = args.min_steps
     if args.min_steps_penalty is not None:
         config["min_steps_penalty"] = args.min_steps_penalty
+    if args.hidden_dim is not None:
+        config["hidden_dim"] = args.hidden_dim
+    if args.learning_rate is not None:
+        config["learning_rate"] = args.learning_rate
 
     config.setdefault("run_name", "v2_run")
 

@@ -13,6 +13,10 @@
 | 4 | test4_raw_multi | 3 | 1831700 | raw_multi_penalty | d=0.05, n=0.02, v=0.01 | test4_raw_multi_train.log |
 | 5 | test5_threshold | 4 | 1832408 | threshold_penalty | 阈值0.5条件惩罚 | test5_threshold_train.log |
 | 6 | test6_pure_v2 | 5 | 2809807 | v1_ergo_only | **A1+A2+A10 only, NO L0** | test6_pure_v2_arch_train.log |
+| 7 | test7_v1ergo_repro | 2 | 4096146 | v1_ergo_only | **复现验证 seed=123** | test7_v1ergo_repro_train.log |
+| 8 | test8_longer_5M | 0 | 2113269 | v1_ergo_only | **5M步长训练** | test8_longer_5M_train.log |
+| 9 | test9_squared | TBD | TBD | v1_ergo_squared | **reward=ergo^2** | test9_squared_train.log |
+| 10 | test10_big_slow | TBD | TBD | v1_ergo_only | **lr=1e-4, hidden=768, 3M** | test10_big_slow_train.log |
 
 ## 代码修改
 

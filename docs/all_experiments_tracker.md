@@ -23,6 +23,10 @@
 | 11 | test4_raw_multi | 🔄 TRAINING | 112K/2M | TBD | TBD | raw_multi_penalty | raw - 0.05d - 0.02n - 0.01v | 3 | **NEW** PID 1831700 |
 | 12 | test5_threshold | 🔄 TRAINING | 112K/2M | TBD | TBD | threshold_penalty | Conditional penalties at aff>0.5 | 4 | **NEW** PID 1832408 |
 | 13 | test6_pure_v2 | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | A1+A2+A10 only, NO curriculum | 5 | **NEW** PID 2809807, isolate arch contribution |
+| 14 | test7_v1ergo_repro | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | seed=123, reproduction test | 2 | Verify 0.8075 is reproducible |
+| 15 | test8_longer_5M | 🔄 TRAINING | 0/5M | TBD | TBD | v1_ergo_only | **5M steps** (2.5x longer) | 0 | PID 2113269, test convergence |
+| 16 | test9_squared | ⏳ QUEUED | 0/2M | TBD | TBD | v1_ergo_squared | **reward=ergo^2** | TBD | Waiting for GPU |
+| 17 | test10_big_slow | ⏳ QUEUED | 0/3M | TBD | TBD | v1_ergo_only | **lr=1e-4, hidden=768, 3M** | TBD | Waiting for GPU |
 
 ---
 
