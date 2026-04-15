@@ -1,7 +1,7 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-04-12  
-**Baseline:** v1_ergo_only = **0.8075 AUROC** (best result so far)  
+**Last Updated:** 2026-04-14  
+**Baseline:** v1_ergo_only = **0.8075 AUROC** (best result so far, but seed-dependent — repro got 0.5462)  
 **Target:** Beat 0.8075 while adding specificity (decoy resistance)
 
 ---
@@ -10,23 +10,26 @@
 
 | # | Experiment Name | Status | Steps | Mean AUROC | vs Baseline | Reward Mode | Key Config | GPU | Notes |
 |---|----------------|--------|-------|-----------|-------------|-------------|-----------|-----|-------|
-| 1 | v1_ergo_only_ablation | ✅ DONE | 2M | **0.8075** | baseline | v1_ergo_only | Raw ERGO terminal, no penalties | - | **BEST** - but may overfit ERGO scorer |
+| 1 | v1_ergo_only_ablation | ✅ DONE | 2M | **0.8075** | baseline | v1_ergo_only | Raw ERGO terminal, no penalties | - | **BEST** - seed=42, possibly lucky |
 | 2 | v2_full_run1 | ✅ DONE | 2M | 0.5840 | -0.2235 | v2_full | d=0.8, n=0.5, v=0.2, z-norm | - | Early stopping (avg 2 steps) |
 | 3 | exp1_decoy_only | ✅ DONE | 500K | 0.4898 | -0.3177 | v2_decoy_only | d=0.3, z-norm | 0 | Z-norm compressed affinity |
 | 4 | exp2_light | ✅ DONE | 500K | 0.4660 | -0.3415 | v2_full | d=0.2, n=0.1, v=0.05, z-norm | 2 | Even light penalties fail with z-norm |
 | 5 | exp3_ergo_delta | ✅ DONE | 500K | 0.5004 | -0.3071 | v1_ergo_delta | Raw delta per-step, no penalties | 1 | Long edits (7.9 steps) but poor binding |
 | 6 | exp4_min_steps | ✅ DONE | 500K | 0.4768 | -0.3307 | v2_full | d=0.4, n=0.2, v=0.1, min_steps=3 | 3 | Min-steps doesn't fix z-norm issue |
 | 7 | v2_no_decoy | 🔄 TRAINING | 1.35M/2M | TBD | TBD | v2_no_decoy | No decoy, has nat+div, z-norm | 7 | Ablation study |
-| 8 | test1_two_phase | 🔄 TRAINING | 102K/2M | TBD | TBD | v1_ergo_only → raw_decoy | Phase1: 1M pure ERGO, Phase2: 1M +decoy | 0 | **NEW** PID 1830808 |
-| 9 | test2_min6_raw | 🔄 TRAINING | 112K/2M | TBD | TBD | raw_decoy | min_steps=6, raw reward, d=0.05 | 1 | **NEW** PID 1831087 |
-| 10 | test3_stepwise | 🔄 TRAINING | 112K/2M | TBD | TBD | v1_ergo_stepwise | Raw ERGO per-step (absolute score) | 2 | **NEW** PID 1831409 |
-| 11 | test4_raw_multi | 🔄 TRAINING | 112K/2M | TBD | TBD | raw_multi_penalty | raw - 0.05d - 0.02n - 0.01v | 3 | **NEW** PID 1831700 |
-| 12 | test5_threshold | 🔄 TRAINING | 112K/2M | TBD | TBD | threshold_penalty | Conditional penalties at aff>0.5 | 4 | **NEW** PID 1832408 |
-| 13 | test6_pure_v2 | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | A1+A2+A10 only, NO curriculum | 5 | **NEW** PID 2809807, isolate arch contribution |
-| 14 | test7_v1ergo_repro | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | seed=123, reproduction test | 2 | Verify 0.8075 is reproducible |
-| 15 | test8_longer_5M | 🔄 TRAINING | 0/5M | TBD | TBD | v1_ergo_only | **5M steps** (2.5x longer) | 0 | PID 2113269, test convergence |
-| 16 | test9_squared | ⏳ QUEUED | 0/2M | TBD | TBD | v1_ergo_squared | **reward=ergo^2** | TBD | Waiting for GPU |
-| 17 | test10_big_slow | ⏳ QUEUED | 0/3M | TBD | TBD | v1_ergo_only | **lr=1e-4, hidden=768, 3M** | TBD | Waiting for GPU |
+| 8 | test1_two_phase | ✅ DONE | 2M | 0.5668 | -0.2407 | v1_ergo_only → raw_decoy | Phase1: 1M pure ERGO, Phase2: 1M +decoy | 0 | Decoy penalty in P2 degraded binding |
+| 9 | test2_min6_raw | ✅ DONE | 2M | 0.5562 | -0.2513 | raw_decoy | min_steps=6, raw reward, d=0.05 | 1 | Raw decoy penalty still hurts |
+| 10 | test3_stepwise | ✅ DONE | 2M | 0.5717 | -0.2358 | v1_ergo_stepwise | Raw ERGO per-step (absolute score) | 2 | Per-step reward underperforms terminal |
+| 11 | test4_raw_multi | ✅ DONE | 2M | 0.5812 | -0.2263 | raw_multi_penalty | raw - 0.05d - 0.02n - 0.01v | 3 | Multi-penalty still hurts |
+| 12 | test5_threshold | ✅ DONE | 2M | 0.5697 | -0.2378 | threshold_penalty | Conditional penalties at aff>0.5 | 4 | Threshold gating doesn't help |
+| 13 | test6_pure_v2 | ✅ DONE | 2M | 0.5894 | -0.2181 | v1_ergo_only | A1+A2+A10 only, NO curriculum | 5 | Pure v2 arch without L0 curriculum |
+| 14 | test7_v1ergo_repro | ✅ DONE | 2M | 0.5462 | -0.2613 | v1_ergo_only | seed=123, reproduction test | 2 | **Repro FAILED** — seed matters! |
+| 15 | test8_longer_5M | 🔄 TRAINING | 2.2M/5M | TBD | TBD | v1_ergo_only | **5M steps** (2.5x longer) | 0 | ~44% complete |
+| 16 | test9_squared | 🔄 TRAINING | 1.3M/2M | TBD | TBD | v1_ergo_squared | **reward=ergo^2** | 1 | ~66% complete |
+| 17 | test10_big_slow | 🔄 TRAINING | 0.19M/3M | TBD | TBD | v1_ergo_only | **lr=1e-4, hidden=768, 3M** | 6 | ~6% complete |
+| 18 | test11_nettcr_pure | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR as sole scorer**, seed=42 | 2 | Break ERGO train-eval coupling |
+| 19 | test12_nettcr_seed123 | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR scorer**, seed=123 | 3 | Seed sensitivity with NetTCR |
+| 20 | test13_ensemble_reward | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR ensemble** (50/50), seed=42 | 4 | Dual-scorer robustness |
 
 ---
 

@@ -367,6 +367,68 @@ Before declaring any phase complete, verify:
 3. Progress file updated with actual results
 4. Git commit created and pushed
 
+### 5.7 Experiment Documentation Standards
+
+Every experiment MUST be documented for reproducibility. Follow this protocol:
+
+#### At Launch
+
+1. `ppo_trainer.py` auto-saves `output/<run_name>/experiment.json` containing:
+   - Full config (seed, reward_mode, weights, lr, hidden_dim, etc.)
+   - CLI command used to launch
+   - Git commit hash
+   - GPU assignment
+   - Timestamp
+
+2. Add a row to `docs/all_experiments_tracker.md` with:
+   - Experiment name, status, reward mode, key config, GPU
+
+#### At Completion
+
+1. Run evaluation:
+   ```bash
+   python tcrppo_v2/test_tcrs.py --checkpoint output/<name>/checkpoints/final.pt \
+       --n_tcrs 50 --n_decoys 50 --output_dir results/<name>/
+   ```
+2. Evaluation saves `results/<name>/eval_results.json` with per-target AUROC, scores, generated TCRs
+3. Update `output/<name>/experiment.json` with eval results (use `scripts/archive_experiments.py` or manually)
+4. Update `docs/all_experiments_tracker.md` with AUROC and status
+
+#### Archive Format
+
+Each `output/<run_name>/experiment.json` must contain:
+```json
+{
+  "name": "<run_name>",
+  "status": "completed|training|failed",
+  "archived_at": "ISO timestamp",
+  "git_commit": "<hash>",
+  "gpu": <int>,
+  "config": {
+    "seed": 42,
+    "reward_mode": "<mode>",
+    "total_timesteps": 2000000,
+    "n_envs": 8,
+    "learning_rate": 3e-4,
+    "hidden_dim": 512,
+    "max_steps": 8,
+    "affinity_scorer": "ergo|nettcr|ensemble",
+    "weights": {"affinity": 1.0, "decoy": 0.0, "naturalness": 0.0, "diversity": 0.0},
+    "use_delta_reward": false,
+    "use_znorm": false
+  },
+  "results": {
+    "mean_auroc": 0.55,
+    "per_target": {"GILGFVFTL": {"auroc": 0.54, ...}, ...}
+  },
+  "notes": "Brief description of what this experiment tests"
+}
+```
+
+#### Archival Script
+
+Run `python scripts/archive_experiments.py` to retroactively archive experiments that lack `experiment.json`. The script reconstructs configs from training logs and eval results.
+
 ---
 
 ## 6. V1 Baseline Reference (READ-ONLY)

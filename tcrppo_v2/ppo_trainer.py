@@ -198,7 +198,6 @@ class PPOTrainer:
                   f"penalty={self.config.get('min_steps_penalty', 0.0)}")
 
         # Build scorers
-        from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
         from tcrppo_v2.utils.esm_cache import ESMCache
         from tcrppo_v2.data.pmhc_loader import PMHCLoader, EVAL_TARGETS
         from tcrppo_v2.data.tcr_pool import TCRPool
@@ -209,15 +208,40 @@ class PPOTrainer:
         pmhc_loader = PMHCLoader(mode="train")
         targets = pmhc_loader.get_target_list()
 
-        # ERGO scorer
-        model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
-        affinity_scorer = AffinityERGOScorer(
-            model_file=model_file,
-            ae_file=ERGO_AE_FILE,
-            device=self.device,
-            mc_samples=self.config.get("affinity_mc_samples", 10),
-        )
-        print("  ERGO loaded")
+        # Affinity scorer — selected by config["affinity_model"]
+        affinity_model = self.config.get("affinity_model", "ergo")
+        if affinity_model == "nettcr":
+            from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
+            affinity_scorer = AffinityNetTCRScorer(device=self.device)
+            print("  NetTCR loaded")
+        elif affinity_model == "ensemble":
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
+            from tcrppo_v2.scorers.affinity_ensemble import EnsembleAffinityScorer
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            ergo_scorer = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=self.device,
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+            )
+            print("  ERGO loaded")
+            nettcr_scorer = AffinityNetTCRScorer(device=self.device)
+            print("  NetTCR loaded")
+            affinity_scorer = EnsembleAffinityScorer(
+                scorers=[ergo_scorer, nettcr_scorer],
+                weights=[0.5, 0.5],
+            )
+        else:  # default: ergo
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            affinity_scorer = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=self.device,
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+            )
+            print("  ERGO loaded")
 
         # ESM cache
         esm_cache = ESMCache(
@@ -349,10 +373,59 @@ class PPOTrainer:
         self.ckpt_dir = os.path.join(self.output_dir, self.run_name, "checkpoints")
         os.makedirs(self.ckpt_dir, exist_ok=True)
 
+    def _save_experiment_json(self) -> None:
+        """Save experiment config to output/<run_name>/experiment.json at launch."""
+        import subprocess
+        git_hash = "unknown"
+        try:
+            git_hash = subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+        except Exception:
+            pass
+
+        from datetime import datetime
+        archive = {
+            "name": self.run_name,
+            "status": "training",
+            "launched_at": datetime.now().isoformat(),
+            "git_commit": git_hash,
+            "config": {
+                "seed": self.seed,
+                "reward_mode": self.reward_mode,
+                "total_timesteps": self.total_timesteps,
+                "n_envs": self.n_envs,
+                "learning_rate": self.lr,
+                "hidden_dim": self.config.get("hidden_dim", 512),
+                "max_steps": self.config.get("max_steps", 8),
+                "affinity_scorer": self.config.get("affinity_model", "ergo"),
+                "weights": {
+                    "affinity": self.config.get("w_affinity", 1.0),
+                    "decoy": self.config.get("w_decoy", 0.8),
+                    "naturalness": self.config.get("w_naturalness", 0.5),
+                    "diversity": self.config.get("w_diversity", 0.2),
+                },
+                "use_znorm": self.reward_mode in ("v2_full", "v2_decoy_only", "v2_no_decoy"),
+            },
+            "notes": "",
+        }
+        if self.config.get("min_steps", 0) > 0:
+            archive["config"]["min_steps"] = self.config["min_steps"]
+            archive["config"]["min_steps_penalty"] = self.config.get("min_steps_penalty", 0.0)
+
+        out_dir = os.path.join(self.output_dir, self.run_name)
+        os.makedirs(out_dir, exist_ok=True)
+        out_file = os.path.join(out_dir, "experiment.json")
+        with open(out_file, "w") as f:
+            json.dump(archive, f, indent=2)
+        print(f"  Saved experiment.json to {out_file}")
+
     def train(self) -> None:
         """Main training loop."""
         print(f"\nStarting training for {self.total_timesteps:,} timesteps...")
         self.setup()
+        self._save_experiment_json()
 
         # Handle two-phase training (resume from checkpoint)
         resume_step = 0
@@ -604,6 +677,7 @@ def main():
     parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
     parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
     parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
+    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, ensemble")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -636,6 +710,8 @@ def main():
         config["hidden_dim"] = args.hidden_dim
     if args.learning_rate is not None:
         config["learning_rate"] = args.learning_rate
+    if args.affinity_scorer is not None:
+        config["affinity_model"] = args.affinity_scorer
 
     config.setdefault("run_name", "v2_run")
 
