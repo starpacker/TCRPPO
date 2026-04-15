@@ -324,8 +324,6 @@ class PPOTrainer:
             w_decoy=self.config.get("w_decoy", 0.8),
             w_naturalness=self.config.get("w_naturalness", 0.5),
             w_diversity=self.config.get("w_diversity", 0.2),
-            norm_window=self.config.get("norm_window", 10000),
-            norm_warmup=self.config.get("norm_warmup", 1000),
         )
 
         # VecEnv
@@ -406,7 +404,7 @@ class PPOTrainer:
                     "naturalness": self.config.get("w_naturalness", 0.5),
                     "diversity": self.config.get("w_diversity", 0.2),
                 },
-                "use_znorm": self.reward_mode in ("v2_full", "v2_decoy_only", "v2_no_decoy"),
+                "use_znorm": False,  # z-norm removed in bugfix
             },
             "notes": "",
         }
@@ -490,21 +488,36 @@ class PPOTrainer:
                     )
                     lp_np = log_probs.cpu().numpy()
 
+                # Track which envs are already done BEFORE stepping
+                # (these will auto-reset and produce phantom transitions)
+                was_done = np.array([env.done for env in self.vec_env.envs], dtype=bool)
+
                 # Step environments
                 actions = [(int(ops_np[i]), int(pos_np[i]), int(tok_np[i])) for i in range(self.n_envs)]
                 next_obs, rewards, dones, infos = self.vec_env.step(actions)
 
-                # Store in buffer
-                self.buffer.add(obs, ops_np, pos_np, tok_np, lp_np,
-                               rewards, dones, val_np, op_masks, pos_masks)
+                # Fix phantom transitions: envs that were done before stepping
+                # got auto-reset with reward=0, done=False. Mark them done=True
+                # so GAE correctly cuts the bootstrap at episode boundaries.
+                effective_dones = dones | was_done
 
-                # Track episode stats
-                ep_reward_buf += rewards
-                ep_length_buf += 1
+                # Store in buffer (with corrected dones)
+                self.buffer.add(obs, ops_np, pos_np, tok_np, lp_np,
+                               rewards, effective_dones.astype(np.float32),
+                               val_np, op_masks, pos_masks)
+
+                # Track episode stats (skip phantom transitions)
                 for i in range(self.n_envs):
-                    if dones[i]:
+                    if not was_done[i]:
+                        ep_reward_buf[i] += rewards[i]
+                        ep_length_buf[i] += 1
+                    if dones[i] and not was_done[i]:
                         episode_rewards.append(ep_reward_buf[i])
                         episode_lengths.append(ep_length_buf[i])
+                        ep_reward_buf[i] = 0.0
+                        ep_length_buf[i] = 0
+                    elif was_done[i]:
+                        # Auto-reset happened, start fresh counter
                         ep_reward_buf[i] = 0.0
                         ep_length_buf[i] = 0
 

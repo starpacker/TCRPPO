@@ -184,6 +184,11 @@ class ActorCritic(nn.Module):
         tok_log_prob = tok_log_prob * needs_token.float()
         tok_entropy = tok_entropy * needs_token.float()
 
+        # Mask position log-prob for STOP (position is meaningless)
+        needs_position = (op_actions != OP_STOP)
+        pos_log_prob = pos_log_prob * needs_position.float()
+        pos_entropy = pos_entropy * needs_position.float()
+
         # Total log-prob = sum of all heads
         total_log_prob = op_log_prob + pos_log_prob + tok_log_prob
         total_entropy = op_entropy + pos_entropy + tok_entropy

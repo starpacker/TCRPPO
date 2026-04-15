@@ -1,4 +1,4 @@
-"""Reward manager: combine all scorers with running normalization."""
+"""Reward manager: combine all scorers into a single reward signal."""
 
 from collections import deque
 from typing import Dict, List, Optional, Tuple
@@ -6,31 +6,10 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 
-class RunningNormalizer:
-    """Running mean/std normalizer with warmup period."""
-
-    def __init__(self, window: int = 10000, warmup: int = 1000):
-        self.buffer: deque = deque(maxlen=window)
-        self.warmup = warmup
-
-    def normalize(self, value: float) -> float:
-        """Normalize value using running statistics."""
-        self.buffer.append(value)
-        if len(self.buffer) < self.warmup:
-            return value
-        mean = np.mean(self.buffer)
-        std = np.std(self.buffer) + 1e-8
-        return (value - mean) / std
-
-    @property
-    def is_warmed_up(self) -> bool:
-        return len(self.buffer) >= self.warmup
-
-
 class RewardManager:
-    """Combine multiple scorer signals with z-score normalization.
+    """Combine multiple scorer signals into reward.
 
-    R_t = w1 * delta_affinity - w2 * R_decoy - w3 * R_naturalness - w4 * R_diversity
+    R_t = w1 * affinity - w2 * R_decoy - w3 * R_naturalness - w4 * R_diversity
     """
 
     def __init__(
@@ -47,8 +26,6 @@ class RewardManager:
         norm_warmup: int = 1000,
         use_delta_reward: bool = True,
         reward_mode: str = "v2_full",
-        naturalness_eval_freq: int = 4,
-        decoy_eval_freq: int = 2,
     ):
         self.affinity_scorer = affinity_scorer
         self.decoy_scorer = decoy_scorer
@@ -63,19 +40,6 @@ class RewardManager:
         }
         self.use_delta_reward = use_delta_reward
         self.reward_mode = reward_mode
-        self.naturalness_eval_freq = naturalness_eval_freq
-        self.decoy_eval_freq = decoy_eval_freq
-        self._call_count = 0
-        self._last_nat_score = 0.0
-        self._last_decoy_score = 0.0
-
-        # Per-component normalizers
-        self.normalizers = {
-            "affinity": RunningNormalizer(norm_window, norm_warmup),
-            "decoy": RunningNormalizer(norm_window, norm_warmup),
-            "naturalness": RunningNormalizer(norm_window, norm_warmup),
-            "diversity": RunningNormalizer(norm_window, norm_warmup),
-        }
 
     def compute_reward(
         self,
@@ -84,136 +48,80 @@ class RewardManager:
         initial_affinity: float = 0.0,
         target: Optional[str] = None,
     ) -> Tuple[float, Dict[str, float]]:
-        """Compute combined reward for a TCR-peptide pair.
-
-        Args:
-            tcr: Current TCR CDR3beta sequence
-            peptide: Target peptide
-            initial_affinity: Affinity score at episode start (for delta reward)
-            target: Target identifier for decoy sampling
-
-        Returns:
-            (total_reward, component_dict) where component_dict has raw scores.
-        """
+        """Compute combined reward for a TCR-peptide pair."""
         target = target or peptide
         components = {}
 
         # Affinity
         if self.affinity_scorer is not None and self.reward_mode != "disabled":
-            # Use fast scoring (no MC Dropout) for training speed
             if hasattr(self.affinity_scorer, 'score_batch_fast'):
                 preds = self.affinity_scorer.score_batch_fast([tcr], [peptide])
                 aff_score = preds[0]
-                aff_conf = 1.0
             else:
-                aff_score, aff_conf = self.affinity_scorer.score(tcr, peptide)
-            if self.use_delta_reward:
-                aff_delta = aff_score - initial_affinity
-            else:
-                aff_delta = aff_score
+                aff_score, _ = self.affinity_scorer.score(tcr, peptide)
+            aff_delta = aff_score - initial_affinity if self.use_delta_reward else aff_score
             components["affinity_raw"] = aff_score
-            components["affinity_conf"] = aff_conf
             components["affinity_delta"] = aff_delta
         else:
+            aff_score = 0.0
             aff_delta = 0.0
             components["affinity_raw"] = 0.0
 
-        # Decoy penalty (computed every N calls to reduce ERGO overhead)
-        if (
-            self.decoy_scorer is not None
-            and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty")
-        ):
-            if self._call_count % self.decoy_eval_freq == 0:
-                decoy_score, decoy_conf = self.decoy_scorer.score(tcr, peptide, target=target)
-                self._last_decoy_score = decoy_score
-            else:
-                decoy_score = self._last_decoy_score
+        # Decoy penalty — always computed (no frequency gating)
+        if (self.decoy_scorer is not None
+                and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty")):
+            decoy_score, _ = self.decoy_scorer.score(tcr, peptide, target=target)
             components["decoy_raw"] = decoy_score
         else:
             decoy_score = 0.0
             components["decoy_raw"] = 0.0
 
-        # Naturalness penalty (computed every N calls to save ESM forward passes)
-        if (
-            self.naturalness_scorer is not None
-            and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")
-        ):
-            self._call_count += 1
-            if self._call_count % self.naturalness_eval_freq == 0:
-                nat_score, nat_conf = self.naturalness_scorer.score(tcr)
-                self._last_nat_score = nat_score
-            else:
-                nat_score = self._last_nat_score
+        # Naturalness penalty — always computed (no frequency gating)
+        if (self.naturalness_scorer is not None
+                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
+            nat_score, _ = self.naturalness_scorer.score(tcr)
             components["naturalness_raw"] = nat_score
         else:
             nat_score = 0.0
             components["naturalness_raw"] = 0.0
 
         # Diversity penalty
-        if (
-            self.diversity_scorer is not None
-            and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")
-        ):
-            div_score, div_conf = self.diversity_scorer.score(tcr)
+        if (self.diversity_scorer is not None
+                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
+            div_score, _ = self.diversity_scorer.score(tcr)
             components["diversity_raw"] = div_score
         else:
             div_score = 0.0
             components["diversity_raw"] = 0.0
 
-        # Normalize
-        norm_aff = self.normalizers["affinity"].normalize(aff_delta)
-        norm_decoy = self.normalizers["decoy"].normalize(decoy_score)
-        norm_nat = self.normalizers["naturalness"].normalize(nat_score)
-        norm_div = self.normalizers["diversity"].normalize(div_score)
-
-        # v1_ergo_only: only affinity, terminal reward (not delta)
+        # Compute total reward — ALL modes use raw scores, NO z-norm
         if self.reward_mode == "v1_ergo_only":
-            total = components.get("affinity_raw", 0.0)
+            total = aff_score
         elif self.reward_mode == "v1_ergo_squared":
-            total = components.get("affinity_raw", 0.0) ** 2
+            total = aff_score ** 2
         elif self.reward_mode == "v1_ergo_delta":
             total = aff_delta
-        elif self.reward_mode == "v2_decoy_only":
-            total = (
-                self.weights["affinity"] * norm_aff
-                - self.weights["decoy"] * norm_decoy
-            )
-        # NEW: Raw reward modes (no z-score normalization)
-        elif self.reward_mode == "raw_decoy":
-            # Test 1 Phase 2 & Test 2: raw affinity - light decoy penalty
-            total = aff_score - self.weights["decoy"] * decoy_score
         elif self.reward_mode == "v1_ergo_stepwise":
-            # Test 3: raw ERGO score per-step (absolute, not delta)
             total = aff_score
-        elif self.reward_mode == "raw_multi_penalty":
-            # Test 4: raw affinity with multiple light penalties
+        elif self.reward_mode in ("v2_decoy_only", "raw_decoy"):
+            total = aff_score - self.weights["decoy"] * decoy_score
+        elif self.reward_mode in ("raw_multi_penalty", "v2_full", "v2_no_decoy", "v2_no_curriculum"):
             total = (aff_score
                     - self.weights["decoy"] * decoy_score
                     - self.weights["naturalness"] * nat_score
                     - self.weights["diversity"] * div_score)
         elif self.reward_mode == "threshold_penalty":
-            # Test 5: conditional penalties based on affinity threshold
             if aff_score < 0.5:
-                total = aff_score  # Pure affinity signal
+                total = aff_score
             else:
                 total = (aff_score
                         - self.weights["decoy"] * decoy_score
                         - self.weights["naturalness"] * nat_score
                         - self.weights["diversity"] * div_score)
         else:
-            total = (
-                self.weights["affinity"] * norm_aff
-                - self.weights["decoy"] * norm_decoy
-                - self.weights["naturalness"] * norm_nat
-                - self.weights["diversity"] * norm_div
-            )
+            total = aff_score  # Fallback: raw affinity
 
         components["total"] = total
-        components["norm_affinity"] = norm_aff
-        components["norm_decoy"] = norm_decoy
-        components["norm_naturalness"] = norm_nat
-        components["norm_diversity"] = norm_div
-
         return total, components
 
     def compute_reward_batch(
@@ -223,10 +131,7 @@ class RewardManager:
         initial_affinities: List[float],
         targets: Optional[List[str]] = None,
     ) -> Tuple[List[float], List[Dict[str, float]]]:
-        """Compute rewards for a batch of TCR-peptide pairs.
-
-        Batches ERGO inference across all envs for efficiency.
-        """
+        """Compute rewards for a batch of TCR-peptide pairs."""
         n = len(tcrs)
         targets = targets or peptides
 
@@ -245,39 +150,27 @@ class RewardManager:
         else:
             aff_scores = [0.0] * n
 
-        # Process each sample (decoy/naturalness/diversity are per-sample)
+        # Process each sample — always compute all scorers (no frequency gating)
         for i in range(n):
             components = {}
             aff_score = aff_scores[i]
-
-            if self.use_delta_reward:
-                aff_delta = aff_score - initial_affinities[i]
-            else:
-                aff_delta = aff_score
+            aff_delta = aff_score - initial_affinities[i] if self.use_delta_reward else aff_score
             components["affinity_raw"] = aff_score
             components["affinity_delta"] = aff_delta
 
-            # Decoy
-            if self.decoy_scorer is not None and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty"):
-                if self._call_count % self.decoy_eval_freq == 0:
-                    decoy_score, _ = self.decoy_scorer.score(tcrs[i], peptides[i], target=targets[i])
-                    self._last_decoy_score = decoy_score
-                else:
-                    decoy_score = self._last_decoy_score
+            # Decoy — always computed for every sample
+            if (self.decoy_scorer is not None
+                    and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty")):
+                decoy_score, _ = self.decoy_scorer.score(tcrs[i], peptides[i], target=targets[i])
                 components["decoy_raw"] = decoy_score
             else:
                 decoy_score = 0.0
                 components["decoy_raw"] = 0.0
 
-            # Naturalness
+            # Naturalness — always computed for every sample
             if (self.naturalness_scorer is not None
                     and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
-                self._call_count += 1
-                if self._call_count % self.naturalness_eval_freq == 0:
-                    nat_score, _ = self.naturalness_scorer.score(tcrs[i])
-                    self._last_nat_score = nat_score
-                else:
-                    nat_score = self._last_nat_score
+                nat_score, _ = self.naturalness_scorer.score(tcrs[i])
                 components["naturalness_raw"] = nat_score
             else:
                 nat_score = 0.0
@@ -292,29 +185,18 @@ class RewardManager:
                 div_score = 0.0
                 components["diversity_raw"] = 0.0
 
-            # Normalize
-            norm_aff = self.normalizers["affinity"].normalize(aff_delta)
-            norm_decoy = self.normalizers["decoy"].normalize(decoy_score)
-            norm_nat = self.normalizers["naturalness"].normalize(nat_score)
-            norm_div = self.normalizers["diversity"].normalize(div_score)
-
+            # Total reward — NO z-norm, all raw
             if self.reward_mode == "v1_ergo_only":
                 total = aff_score
             elif self.reward_mode == "v1_ergo_squared":
                 total = aff_score ** 2
             elif self.reward_mode == "v1_ergo_delta":
                 total = aff_delta
-            elif self.reward_mode == "v2_decoy_only":
-                total = (
-                    self.weights["affinity"] * norm_aff
-                    - self.weights["decoy"] * norm_decoy
-                )
-            # NEW: Raw reward modes (no z-score normalization)
-            elif self.reward_mode == "raw_decoy":
-                total = aff_score - self.weights["decoy"] * decoy_score
             elif self.reward_mode == "v1_ergo_stepwise":
                 total = aff_score
-            elif self.reward_mode == "raw_multi_penalty":
+            elif self.reward_mode in ("v2_decoy_only", "raw_decoy"):
+                total = aff_score - self.weights["decoy"] * decoy_score
+            elif self.reward_mode in ("raw_multi_penalty", "v2_full", "v2_no_decoy", "v2_no_curriculum"):
                 total = (aff_score
                         - self.weights["decoy"] * decoy_score
                         - self.weights["naturalness"] * nat_score
@@ -328,12 +210,7 @@ class RewardManager:
                             - self.weights["naturalness"] * nat_score
                             - self.weights["diversity"] * div_score)
             else:
-                total = (
-                    self.weights["affinity"] * norm_aff
-                    - self.weights["decoy"] * norm_decoy
-                    - self.weights["naturalness"] * norm_nat
-                    - self.weights["diversity"] * norm_div
-                )
+                total = aff_score  # Fallback
 
             components["total"] = total
             all_rewards.append(total)

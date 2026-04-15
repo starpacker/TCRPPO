@@ -13,7 +13,7 @@ vf_coef: 0.5
 max_grad_norm: 0.5
 
 # === Environment ===
-max_tcr_len: 27
+max_tcr_len: 20
 min_tcr_len: 8
 max_pep_len: 25
 max_steps_per_episode: 8
@@ -28,7 +28,7 @@ esm_frozen: true
 esm_device: "cuda"
 esm_tcr_cache_size: 4096
 
-# === Reward Weights (relative, after z-score normalization) ===
+# === Reward Weights (raw, no z-score normalization) ===
 w_affinity: 1.0
 w_decoy: 0.8
 w_naturalness: 0.5
@@ -36,10 +36,6 @@ w_diversity: 0.2
 
 # === Credit Assignment ===
 use_delta_reward: true
-
-# === Reward Normalization ===
-norm_window: 10000
-norm_warmup: 1000
 
 # === Affinity Scorer (ERGO) ===
 affinity_model: "ergo"
@@ -68,14 +64,11 @@ cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
 diversity_buffer_size: 512
 diversity_similarity_threshold: 0.85
 
-# === Curriculum ===
+# === Curriculum (DISABLED — pure L2 random TCRdb) ===
 l0_mutation_range: [3, 5]
 l1_top_k: 500
 curriculum_schedule:
-  - {until: 1000000,  L0: 0.7, L1: 0.2, L2: 0.1}
-  - {until: 3000000,  L0: 0.4, L1: 0.4, L2: 0.2}
-  - {until: 6000000,  L0: 0.2, L1: 0.4, L2: 0.4}
-  - {until: null,      L0: 0.1, L1: 0.3, L2: 0.6}
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
 
 # === Target Sampling ===
 target_sampling: "difficulty_weighted"

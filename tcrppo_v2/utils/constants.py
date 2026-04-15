@@ -19,7 +19,7 @@ ERGO_TCR_ATOX = {aa: i for i, aa in enumerate(AMINO_ACIDS + ["X"])}
 ERGO_PEP_ATOX = {aa: i for i, aa in enumerate(["PAD"] + AMINO_ACIDS)}
 
 # Sequence length limits
-MAX_TCR_LEN = 27
+MAX_TCR_LEN = 20
 MIN_TCR_LEN = 8
 MAX_PEP_LEN = 25
 ERGO_MAX_LEN = 28  # ERGO pads to 28
