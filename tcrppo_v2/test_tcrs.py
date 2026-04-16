@@ -38,10 +38,13 @@ from tcrppo_v2.data.tcr_pool import TCRPool
 from tcrppo_v2.reward_manager import RewardManager
 
 
-def load_policy(checkpoint_path: str, obs_dim: int, hidden_dim: int, device: str) -> ActorCritic:
+def load_policy(checkpoint_path: str, obs_dim: int, hidden_dim: int, device: str, max_tcr_len: int = MAX_TCR_LEN) -> ActorCritic:
     """Load trained policy from checkpoint."""
-    policy = ActorCritic(obs_dim=obs_dim, hidden_dim=hidden_dim).to(device)
     ckpt = torch.load(checkpoint_path, map_location=device)
+    # Use max_tcr_len from checkpoint config if available
+    if "config" in ckpt:
+        max_tcr_len = ckpt["config"].get("max_tcr_len", max_tcr_len)
+    policy = ActorCritic(obs_dim=obs_dim, hidden_dim=hidden_dim, max_tcr_len=max_tcr_len).to(device)
     policy.load_state_dict(ckpt["policy_state_dict"])
     policy.eval()
     return policy
@@ -226,6 +229,12 @@ def main():
         reward_mode="v1_ergo_only",
     )
 
+    # Load checkpoint config for max_tcr_len
+    ckpt_preview = torch.load(args.checkpoint, map_location="cpu")
+    ckpt_config = ckpt_preview.get("config", {})
+    max_tcr_len_from_ckpt = ckpt_config.get("max_tcr_len", MAX_TCR_LEN)
+    del ckpt_preview
+
     # Create single env for generation
     env = TCREditEnv(
         esm_cache=esm_cache,
@@ -233,6 +242,7 @@ def main():
         tcr_pool=tcr_pool,
         reward_manager=reward_manager,
         max_steps=config.get("max_steps_per_episode", MAX_STEPS_PER_EPISODE),
+        max_tcr_len=max_tcr_len_from_ckpt,
     )
 
     # Load policy

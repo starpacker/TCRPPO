@@ -8,3 +8,14 @@ results/
 figures/
 .wandb/
 wandb/
+
+# Database caches
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Trained model weights
+runs/
+
+# Claude session state
+.claude/scheduled_tasks.lock

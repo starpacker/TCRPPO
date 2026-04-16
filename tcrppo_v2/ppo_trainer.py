@@ -214,6 +214,16 @@ class PPOTrainer:
             from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
             affinity_scorer = AffinityNetTCRScorer(device=self.device)
             print("  NetTCR loaded")
+        elif affinity_model == "tfold":
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
+            affinity_scorer = AffinityTFoldScorer(
+                device=self.device,
+                gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
+                cache_only=self.config.get("tfold_cache_only", False),
+                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
+            )
+            print(f"  tFold V3.4 loaded (cache={affinity_scorer.cache_stats['cache_size']} entries, "
+                  f"cache_only={affinity_scorer.cache_only})")
         elif affinity_model == "ensemble":
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
@@ -232,6 +242,64 @@ class PPOTrainer:
                 scorers=[ergo_scorer, nettcr_scorer],
                 weights=[0.5, 0.5],
             )
+        elif affinity_model == "tcbind":
+            from tcrppo_v2.scorers.affinity_tcbind import AffinityTCBindScorer
+            tcbind_weights = self.config.get(
+                "tcbind_weights", "runs/binding_classifier_v2/best_model.pt"
+            )
+            affinity_scorer = AffinityTCBindScorer(
+                weights_path=tcbind_weights,
+                device=self.device,
+            )
+            print(f"  TCBind loaded ({tcbind_weights})")
+        elif affinity_model == "ensemble_ergo_tcbind":
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            from tcrppo_v2.scorers.affinity_tcbind import AffinityTCBindScorer
+            from tcrppo_v2.scorers.affinity_ensemble import EnsembleAffinityScorer
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            ergo_scorer = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=self.device,
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+            )
+            print("  ERGO loaded")
+            tcbind_weights = self.config.get(
+                "tcbind_weights", "runs/binding_classifier_v2/best_model.pt"
+            )
+            tcbind_scorer = AffinityTCBindScorer(
+                weights_path=tcbind_weights,
+                device=self.device,
+            )
+            print(f"  TCBind loaded ({tcbind_weights})")
+            affinity_scorer = EnsembleAffinityScorer(
+                scorers=[ergo_scorer, tcbind_scorer],
+                weights=[0.5, 0.5],
+            )
+        elif affinity_model == "ensemble_ergo_tfold":
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
+            from tcrppo_v2.scorers.affinity_ensemble import EnsembleAffinityScorer
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            ergo_scorer = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=self.device,
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+            )
+            print("  ERGO loaded")
+            tfold_scorer = AffinityTFoldScorer(
+                device=self.device,
+                gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
+                cache_only=self.config.get("tfold_cache_only", False),
+                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
+            )
+            print(f"  tFold V3.4 loaded (cache={tfold_scorer.cache_stats['cache_size']} entries, "
+                  f"cache_only={tfold_scorer.cache_only})")
+            affinity_scorer = EnsembleAffinityScorer(
+                scorers=[ergo_scorer, tfold_scorer],
+                weights=[0.5, 0.5],
+            )
         else:  # default: ergo
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
@@ -248,7 +316,7 @@ class PPOTrainer:
             device=self.device,
             tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
         )
-        print(f"  ESM-2 loaded (dim={esm_cache.embed_dim})")
+        print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)")
 
         print(f"  pMHC loader: {len(targets)} targets")
 
@@ -690,7 +758,9 @@ def main():
     parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
     parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
     parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
-    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, ensemble")
+    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
+    parser.add_argument("--tfold_cache_only", action="store_true", help="tFold: skip server extraction for cache misses")
+    parser.add_argument("--tfold_cache_miss_score", type=float, default=None, help="tFold: score for cache misses (default 0.5)")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -725,6 +795,10 @@ def main():
         config["learning_rate"] = args.learning_rate
     if args.affinity_scorer is not None:
         config["affinity_model"] = args.affinity_scorer
+    if args.tfold_cache_only:
+        config["tfold_cache_only"] = True
+    if args.tfold_cache_miss_score is not None:
+        config["tfold_cache_miss_score"] = args.tfold_cache_miss_score
 
     config.setdefault("run_name", "v2_run")
 

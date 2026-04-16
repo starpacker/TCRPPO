@@ -1,6 +1,6 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-04-14  
+**Last Updated:** 2026-04-16  
 **Baseline:** v1_ergo_only = **0.8075 AUROC** (best result so far, but seed-dependent — repro got 0.5462)  
 **Target:** Beat 0.8075 while adding specificity (decoy resistance)
 
@@ -27,9 +27,14 @@
 | 15 | test8_longer_5M | 🔄 TRAINING | 2.2M/5M | TBD | TBD | v1_ergo_only | **5M steps** (2.5x longer) | 0 | ~44% complete |
 | 16 | test9_squared | 🔄 TRAINING | 1.3M/2M | TBD | TBD | v1_ergo_squared | **reward=ergo^2** | 1 | ~66% complete |
 | 17 | test10_big_slow | 🔄 TRAINING | 0.19M/3M | TBD | TBD | v1_ergo_only | **lr=1e-4, hidden=768, 3M** | 6 | ~6% complete |
-| 18 | test11_nettcr_pure | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR as sole scorer**, seed=42 | 2 | Break ERGO train-eval coupling |
-| 19 | test12_nettcr_seed123 | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR scorer**, seed=123 | 3 | Seed sensitivity with NetTCR |
-| 20 | test13_ensemble_reward | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR ensemble** (50/50), seed=42 | 4 | Dual-scorer robustness |
+| 18 | test11_nettcr_pure | ❌ CRASHED | 143K/2M | TBD | TBD | v1_ergo_only | **NetTCR as sole scorer**, seed=42 | 2 | Crashed early — relaunched as test11_nettcr |
+| 19 | test12_nettcr_seed123 | ❌ CRASHED | 153K/2M | TBD | TBD | v1_ergo_only | **NetTCR scorer**, seed=123 | 3 | Crashed early |
+| 20 | test13_ensemble_reward | ❌ CRASHED | 143K/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR ensemble** (50/50), seed=42 | 4 | Crashed early — relaunched as test13_ensemble_ergo_nettcr |
+| 21 | test14_bugfix_v1ergo | 🔄 TRAINING | 409K/2M | TBD | TBD | v1_ergo_only | **ERGO**, seed=42, bugfix run | 0 | Current best baseline rerun |
+| 22 | test15_tcbind | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **TCBind BiLSTM v2** scorer, seed=42 | 0 | tc-hard trained classifier, 0.5886 AUC |
+| 23 | test11_nettcr | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR** scorer, seed=42 | 0 | Break ERGO train-eval coupling |
+| 24 | test16_ensemble_ergo_tcbind | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+TCBind** (50/50), seed=42 | 0 | Dual-scorer: ERGO + sequence classifier |
+| 25 | test13_ensemble_ergo_nettcr | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR** (50/50), seed=42 | 0 | Dual-scorer: ERGO + NetTCR CNN |
 
 ---
 
