@@ -170,7 +170,7 @@ class PMHCLoader:
         """Sample a random target uniformly."""
         if rng is None:
             rng = np.random.default_rng()
-        return rng.choice(self.targets)
+        return self.targets[rng.integers(len(self.targets))]
 
     def sample_target_weighted(
         self,

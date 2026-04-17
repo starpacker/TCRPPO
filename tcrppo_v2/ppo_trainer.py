@@ -311,12 +311,23 @@ class PPOTrainer:
             )
             print("  ERGO loaded")
 
-        # ESM cache
-        esm_cache = ESMCache(
-            device=self.device,
-            tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
-        )
-        print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)")
+        # State encoder (ESM-2 or lightweight BiLSTM)
+        encoder_type = self.config.get("encoder", "esm2")
+        if encoder_type == "lightweight":
+            from tcrppo_v2.utils.lightweight_encoder import LightweightEncoder
+            encoder_dim = self.config.get("encoder_dim", 256)
+            esm_cache = LightweightEncoder(
+                device=self.device,
+                encoder_output_dim=encoder_dim,
+                tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
+            )
+            print(f"  Lightweight encoder (dim={esm_cache.output_dim})")
+        else:
+            esm_cache = ESMCache(
+                device=self.device,
+                tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
+            )
+            print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)")
 
         print(f"  pMHC loader: {len(targets)} targets")
 
@@ -357,19 +368,22 @@ class PPOTrainer:
             self.decoy_scorer = decoy_scorer
             print(f"  Decoy scorer loaded (K={decoy_scorer.K})")
 
-        # Naturalness scorer
+        # Naturalness scorer (requires ESM-2 model — skip for lightweight encoder)
         naturalness_scorer = None
         if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
-            from tcrppo_v2.scorers.naturalness import NaturalnessScorer
-            stats_file = self.config.get("cdr3_ppl_stats", "data/cdr3_ppl_stats.json")
-            naturalness_scorer = NaturalnessScorer(
-                esm_model=esm_cache.model,
-                esm_alphabet=esm_cache.alphabet,
-                esm_batch_converter=esm_cache.batch_converter,
-                device=self.device,
-                stats_file=stats_file,
-            )
-            print("  Naturalness scorer loaded")
+            if encoder_type == "lightweight":
+                print("  Naturalness scorer SKIPPED (lightweight encoder has no ESM-2 model)")
+            else:
+                from tcrppo_v2.scorers.naturalness import NaturalnessScorer
+                stats_file = self.config.get("cdr3_ppl_stats", "data/cdr3_ppl_stats.json")
+                naturalness_scorer = NaturalnessScorer(
+                    esm_model=esm_cache.model,
+                    esm_alphabet=esm_cache.alphabet,
+                    esm_batch_converter=esm_cache.batch_converter,
+                    device=self.device,
+                    stats_file=stats_file,
+                )
+                print("  Naturalness scorer loaded")
 
         # Diversity scorer
         diversity_scorer = None
@@ -406,6 +420,15 @@ class PPOTrainer:
             min_steps_penalty=self.config.get("min_steps_penalty", 0.0),
         )
         print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}")
+
+        # Warmup: pre-cache all pMHC embeddings so encode_pmhc is 0ms during training
+        import time as _time
+        _t0 = _time.time()
+        for _pep in targets:
+            _pmhc_str = pmhc_loader.get_pmhc_string(_pep)
+            esm_cache.encode_pmhc(_pmhc_str)
+        _elapsed = _time.time() - _t0
+        print(f"  pMHC warmup: {len(targets)} targets cached in {_elapsed:.1f}s")
 
         # Policy
         self.policy = ActorCritic(
@@ -761,6 +784,8 @@ def main():
     parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
     parser.add_argument("--tfold_cache_only", action="store_true", help="tFold: skip server extraction for cache misses")
     parser.add_argument("--tfold_cache_miss_score", type=float, default=None, help="tFold: score for cache misses (default 0.5)")
+    parser.add_argument("--encoder", default=None, choices=["esm2", "lightweight"], help="State encoder: esm2 (default) or lightweight (CPU-friendly BiLSTM)")
+    parser.add_argument("--encoder_dim", type=int, default=None, help="Lightweight encoder output dim (default 256)")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -799,6 +824,10 @@ def main():
         config["tfold_cache_only"] = True
     if args.tfold_cache_miss_score is not None:
         config["tfold_cache_miss_score"] = args.tfold_cache_miss_score
+    if args.encoder is not None:
+        config["encoder"] = args.encoder
+    if args.encoder_dim is not None:
+        config["encoder_dim"] = args.encoder_dim
 
     config.setdefault("run_name", "v2_run")
 

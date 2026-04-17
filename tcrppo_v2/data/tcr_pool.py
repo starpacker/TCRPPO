@@ -200,7 +200,8 @@ class TCRPool:
 
     def _sample_l0(self, target: str) -> str:
         """Sample from L0: known binder with random mutations."""
-        binder = self.rng.choice(self.l0_seeds[target])
+        seeds = self.l0_seeds[target]
+        binder = seeds[self.rng.integers(len(seeds))]
         n_mutations = self.rng.integers(
             self.l0_mutation_range[0], self.l0_mutation_range[1] + 1
         )
@@ -209,15 +210,16 @@ class TCRPool:
 
     def _sample_l1(self, target: str) -> str:
         """Sample from L1: pre-computed ERGO top-K."""
-        return self.rng.choice(self.l1_seeds[target])
+        seeds = self.l1_seeds[target]
+        return seeds[self.rng.integers(len(seeds))]
 
     def _sample_l2(self) -> str:
         """Sample from L2: random TCRdb sequence."""
-        return self.rng.choice(self.tcrdb_seqs)
+        return self.tcrdb_seqs[self.rng.integers(len(self.tcrdb_seqs))]
 
     def get_random_tcr(self) -> str:
         """Get a random TCRdb sequence (for general use)."""
-        return self.rng.choice(self.tcrdb_seqs)
+        return self.tcrdb_seqs[self.rng.integers(len(self.tcrdb_seqs))]
 
     @property
     def num_tcrdb_seqs(self) -> int:
