@@ -1,10 +1,14 @@
 """Generate TCRs using trained policy and evaluate specificity.
 
+Supports multi-scorer evaluation: ERGO, TCBind, NetTCR, tFold.
+
 Usage:
     python tcrppo_v2/test_tcrs.py \
         --checkpoint output/v2_full_run1/checkpoints/final.pt \
         --config configs/default.yaml \
-        --n_tcrs 50 \
+        --n_tcrs 20 \
+        --n_decoys 50 \
+        --scorers ergo,tcbind,nettcr,tfold \
         --output_dir results/v2_full_run1
 """
 
@@ -57,10 +61,7 @@ def generate_tcrs(
     n_tcrs: int,
     device: str,
 ) -> List[Dict]:
-    """Generate TCRs for a target peptide using the trained policy.
-
-    Returns list of dicts with tcr, initial_tcr, n_steps, reward_components.
-    """
+    """Generate TCRs for a target peptide using the trained policy."""
     results = []
     for i in range(n_tcrs):
         obs = env.reset(peptide=peptide)
@@ -93,83 +94,157 @@ def generate_tcrs(
     return results
 
 
-def evaluate_specificity(
+def _score_tcrs_with_scorer(scorer, tcrs: List[str], peptide: str, scorer_name: str) -> List[float]:
+    """Score a list of TCRs against a peptide using one scorer."""
+    if hasattr(scorer, 'score_batch_fast'):
+        peptides = [peptide] * len(tcrs)
+        return scorer.score_batch_fast(tcrs, peptides)
+    elif hasattr(scorer, 'score_batch'):
+        peptides = [peptide] * len(tcrs)
+        scores, _ = scorer.score_batch(tcrs, peptides)
+        return scores
+    else:
+        scores = []
+        for tcr in tcrs:
+            s, _ = scorer.score(tcr, peptide)
+            scores.append(s)
+        return scores
+
+
+def evaluate_specificity_multi(
     tcrs: List[str],
     target_peptide: str,
-    affinity_scorer: AffinityERGOScorer,
+    scorers: Dict,
     decoy_scorer: DecoyScorer,
     n_decoys: int = 50,
-) -> Dict:
-    """Evaluate specificity of generated TCRs.
+) -> Dict[str, Dict]:
+    """Evaluate specificity using multiple scorers.
 
-    For each TCR:
-    - Score against target peptide (positive)
-    - Score against N decoy peptides (negative)
-    - Compute AUROC: can we distinguish target from decoys?
-
-    Returns dict with per-TCR and aggregate metrics.
+    For each scorer independently: score TCRs against target and decoys, compute AUROC.
     """
     if not tcrs:
-        return {"auroc": 0.0, "mean_target_score": 0.0, "mean_decoy_score": 0.0}
+        return {name: {"auroc": 0.0, "mean_target_score": 0.0, "mean_decoy_score": 0.0}
+                for name in scorers}
 
-    all_target_scores = []
-    all_decoy_scores = []
+    # Sample decoys once (shared across all scorers)
+    decoy_peps = decoy_scorer.sample_decoys(target_peptide, k=n_decoys)
 
-    for tcr in tcrs:
-        # Target score (using MC Dropout for more reliable estimate)
-        target_score, target_conf = affinity_scorer.score(tcr, target_peptide)
-        all_target_scores.append(target_score)
+    results = {}
+    for scorer_name, scorer in scorers.items():
+        # Score against target
+        target_scores = _score_tcrs_with_scorer(scorer, tcrs, target_peptide, scorer_name)
 
-        # Decoy scores
-        decoy_peps = decoy_scorer.sample_decoys(target_peptide, k=n_decoys)
+        # Score against decoys
+        all_decoy_scores = []
         if decoy_peps:
-            tcr_batch = [tcr] * len(decoy_peps)
-            if hasattr(affinity_scorer, 'score_batch'):
-                scores, _ = affinity_scorer.score_batch(tcr_batch, decoy_peps)
-            else:
-                scores = []
-                for dp in decoy_peps:
-                    s, _ = affinity_scorer.score(tcr, dp)
-                    scores.append(s)
-            all_decoy_scores.extend(scores)
+            for tcr in tcrs:
+                decoy_scores = _score_tcrs_with_scorer(
+                    scorer, [tcr] * len(decoy_peps), decoy_peps[0], scorer_name
+                )
+                # Actually score each decoy peptide individually
+                tcr_batch = [tcr] * len(decoy_peps)
+                if hasattr(scorer, 'score_batch_fast'):
+                    decoy_scores = scorer.score_batch_fast(tcr_batch, decoy_peps)
+                elif hasattr(scorer, 'score_batch'):
+                    decoy_scores, _ = scorer.score_batch(tcr_batch, decoy_peps)
+                else:
+                    decoy_scores = []
+                    for dp in decoy_peps:
+                        s, _ = scorer.score(tcr, dp)
+                        decoy_scores.append(s)
+                all_decoy_scores.extend(decoy_scores)
 
-    # Compute AUROC
-    # Labels: 1 = target (positive), 0 = decoy (negative)
-    # Good specificity = target scores > decoy scores = high AUROC
-    n_pos = len(all_target_scores)
-    n_neg = len(all_decoy_scores)
+        n_pos = len(target_scores)
+        n_neg = len(all_decoy_scores)
 
-    if n_pos == 0 or n_neg == 0:
-        return {"auroc": 0.5, "mean_target_score": 0.0, "mean_decoy_score": 0.0}
+        if n_pos == 0 or n_neg == 0:
+            results[scorer_name] = {
+                "auroc": 0.5, "mean_target_score": 0.0, "mean_decoy_score": 0.0
+            }
+            continue
 
-    labels = np.array([1] * n_pos + [0] * n_neg)
-    scores = np.array(all_target_scores + all_decoy_scores)
+        labels = np.array([1] * n_pos + [0] * n_neg)
+        scores_arr = np.array(target_scores + all_decoy_scores)
 
-    try:
-        auroc = roc_auc_score(labels, scores)
-    except ValueError:
-        auroc = 0.5
+        try:
+            auroc = roc_auc_score(labels, scores_arr)
+        except ValueError:
+            auroc = 0.5
 
-    return {
-        "auroc": float(auroc),
-        "mean_target_score": float(np.mean(all_target_scores)),
-        "mean_decoy_score": float(np.mean(all_decoy_scores)),
-        "std_target_score": float(np.std(all_target_scores)),
-        "std_decoy_score": float(np.std(all_decoy_scores)),
-        "n_tcrs": n_pos,
-        "n_decoys_per_tcr": n_decoys,
-    }
+        results[scorer_name] = {
+            "auroc": float(auroc),
+            "mean_target_score": float(np.mean(target_scores)),
+            "mean_decoy_score": float(np.mean(all_decoy_scores)),
+            "std_target_score": float(np.std(target_scores)),
+            "std_decoy_score": float(np.std(all_decoy_scores)),
+            "n_tcrs": n_pos,
+            "n_decoys_per_tcr": n_decoys,
+        }
+
+    return results
+
+
+def load_scorers(scorer_names: List[str], device: str, config: dict) -> Dict:
+    """Load requested scorers by name."""
+    scorers = {}
+
+    for name in scorer_names:
+        name = name.strip().lower()
+        if name == "ergo":
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            scorers["ergo"] = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=device,
+                mc_samples=config.get("affinity_mc_samples", 10),
+            )
+            print("  Loaded ERGO scorer")
+
+        elif name == "tcbind":
+            from tcrppo_v2.scorers.affinity_tcbind import AffinityTCBindScorer
+            tcbind_weights = config.get(
+                "tcbind_weights", "runs/binding_classifier_v2/best_model.pt"
+            )
+            scorers["tcbind"] = AffinityTCBindScorer(
+                weights_path=tcbind_weights,
+                device=device,
+            )
+            print(f"  Loaded TCBind scorer ({tcbind_weights})")
+
+        elif name == "nettcr":
+            from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
+            scorers["nettcr"] = AffinityNetTCRScorer(device=device)
+            print("  Loaded NetTCR scorer")
+
+        elif name == "tfold":
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
+            gpu_id = int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0])
+            scorers["tfold"] = AffinityTFoldScorer(
+                device=device,
+                gpu_id=gpu_id,
+                cache_only=True,  # eval uses cache only — no slow server calls
+                cache_miss_score=0.5,
+            )
+            stats = scorers["tfold"].cache_stats
+            print(f"  Loaded tFold scorer (cache_only, {stats['cache_size']} cached entries)")
+
+        else:
+            print(f"  WARNING: Unknown scorer '{name}', skipping")
+
+    return scorers
 
 
 def main():
     parser = argparse.ArgumentParser(description="TCRPPO v2 TCR Generation & Evaluation")
     parser.add_argument("--checkpoint", required=True, help="Path to model checkpoint")
     parser.add_argument("--config", default="configs/default.yaml", help="Config file")
-    parser.add_argument("--n_tcrs", type=int, default=50, help="TCRs to generate per target")
+    parser.add_argument("--n_tcrs", type=int, default=20, help="TCRs to generate per target")
     parser.add_argument("--n_decoys", type=int, default=50, help="Decoys per TCR for AUROC")
     parser.add_argument("--output_dir", default="results/eval", help="Output directory")
     parser.add_argument("--device", default="cuda", help="Device")
     parser.add_argument("--targets", nargs="+", default=None, help="Specific targets to evaluate")
+    parser.add_argument("--scorers", default="ergo,tcbind,nettcr,tfold",
+                        help="Comma-separated scorers: ergo,tcbind,nettcr,tfold")
     args = parser.parse_args()
 
     import yaml
@@ -179,24 +254,46 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
     device = args.device
     targets = args.targets or list(EVAL_TARGETS.keys())
+    scorer_names = [s.strip() for s in args.scorers.split(",") if s.strip()]
 
     print(f"Evaluating checkpoint: {args.checkpoint}")
     print(f"Targets: {targets}")
     print(f"N TCRs per target: {args.n_tcrs}")
     print(f"N decoys per TCR: {args.n_decoys}")
+    print(f"Scorers: {scorer_names}")
 
-    # Load components
-    print("Loading ERGO scorer...")
-    model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
-    affinity_scorer = AffinityERGOScorer(
-        model_file=model_file,
-        ae_file=ERGO_AE_FILE,
-        device=device,
-        mc_samples=config.get("affinity_mc_samples", 10),
-    )
+    # Load checkpoint config to determine encoder type and max_tcr_len
+    ckpt_preview = torch.load(args.checkpoint, map_location="cpu")
+    ckpt_config = ckpt_preview.get("config", {})
+    max_tcr_len_from_ckpt = ckpt_config.get("max_tcr_len", MAX_TCR_LEN)
+    encoder_type = ckpt_config.get("encoder", "esm2")
+    encoder_dim = ckpt_config.get("encoder_dim", 256)
+    del ckpt_preview
 
-    print("Loading ESM cache...")
-    esm_cache = ESMCache(device=device, tcr_cache_size=config.get("esm_tcr_cache_size", 4096))
+    # Load scorers
+    print("Loading scorers...")
+    scorers = load_scorers(scorer_names, device, config)
+
+    if not scorers:
+        print("ERROR: No scorers loaded successfully. Exiting.")
+        sys.exit(1)
+
+    # Use first scorer as the "primary" for reward manager compatibility
+    primary_scorer_name = list(scorers.keys())[0]
+    primary_scorer = scorers[primary_scorer_name]
+
+    # State encoder: match what the checkpoint was trained with
+    if encoder_type == "lightweight":
+        from tcrppo_v2.utils.lightweight_encoder import LightweightEncoder
+        print(f"Loading lightweight encoder (dim={encoder_dim})...")
+        esm_cache = LightweightEncoder(
+            device=device,
+            encoder_output_dim=encoder_dim,
+            tcr_cache_size=config.get("esm_tcr_cache_size", 4096),
+        )
+    else:
+        print("Loading ESM cache...")
+        esm_cache = ESMCache(device=device, tcr_cache_size=config.get("esm_tcr_cache_size", 4096))
 
     print("Loading pMHC loader...")
     pmhc_loader = PMHCLoader(targets=targets)
@@ -211,13 +308,15 @@ def main():
     tcr_pool.load_l0_from_decoy_d(decoy_lib_path, targets)
 
     print("Loading decoy scorer...")
+    # Use ERGO scorer for decoy sampling if available, otherwise primary scorer
+    decoy_affinity = scorers.get("ergo", primary_scorer)
     decoy_scorer = DecoyScorer(
         decoy_library_path=decoy_lib_path,
         targets=targets,
         tier_weights=config.get("decoy_tier_weights"),
         K=config.get("decoy_K", 32),
         tau=config.get("decoy_tau", 10.0),
-        affinity_scorer=affinity_scorer,
+        affinity_scorer=decoy_affinity,
         rng=np.random.default_rng(config.get("seed", 42)),
     )
     # Unlock all tiers for evaluation
@@ -225,15 +324,9 @@ def main():
 
     # Minimal reward manager (just for env compatibility)
     reward_manager = RewardManager(
-        affinity_scorer=affinity_scorer,
+        affinity_scorer=primary_scorer,
         reward_mode="v1_ergo_only",
     )
-
-    # Load checkpoint config for max_tcr_len
-    ckpt_preview = torch.load(args.checkpoint, map_location="cpu")
-    ckpt_config = ckpt_preview.get("config", {})
-    max_tcr_len_from_ckpt = ckpt_config.get("max_tcr_len", MAX_TCR_LEN)
-    del ckpt_preview
 
     # Create single env for generation
     env = TCREditEnv(
@@ -256,7 +349,8 @@ def main():
 
     # Generate and evaluate per target
     all_results = {}
-    aurocs = []
+    # aurocs[scorer_name] = list of per-target AUROCs
+    aurocs_per_scorer = {name: [] for name in scorers}
 
     for peptide in targets:
         print(f"\n{'='*60}")
@@ -279,15 +373,19 @@ def main():
         mean_reward = np.mean([t["cumulative_reward"] for t in trajectories])
         print(f"  Mean steps: {mean_steps:.1f}, Mean reward: {mean_reward:.3f}")
 
-        # Evaluate specificity
+        # Evaluate specificity with all scorers
         t0 = time.time()
-        spec_results = evaluate_specificity(
-            unique_tcrs, peptide, affinity_scorer, decoy_scorer, args.n_decoys
+        spec_results = evaluate_specificity_multi(
+            unique_tcrs, peptide, scorers, decoy_scorer, args.n_decoys
         )
         eval_time = time.time() - t0
-        print(f"  AUROC: {spec_results['auroc']:.4f}")
-        print(f"  Target score: {spec_results['mean_target_score']:.4f} +/- {spec_results.get('std_target_score', 0):.4f}")
-        print(f"  Decoy score: {spec_results['mean_decoy_score']:.4f} +/- {spec_results.get('std_decoy_score', 0):.4f}")
+
+        # Print per-scorer results
+        for scorer_name, sr in spec_results.items():
+            print(f"  [{scorer_name:>7}] AUROC: {sr['auroc']:.4f}  "
+                  f"Target: {sr['mean_target_score']:.4f}  "
+                  f"Decoy: {sr['mean_decoy_score']:.4f}")
+            aurocs_per_scorer[scorer_name].append(sr["auroc"])
         print(f"  Eval time: {eval_time:.1f}s")
 
         all_results[peptide] = {
@@ -297,26 +395,47 @@ def main():
             "mean_steps": float(mean_steps),
             "mean_reward": float(mean_reward),
         }
-        aurocs.append(spec_results["auroc"])
 
-    # Summary
+    # Summary table
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
-    print(f"{'Target':<15} {'AUROC':>8} {'Target Score':>13} {'Decoy Score':>12} {'Unique':>7}")
-    print("-" * 60)
+
+    # Header
+    scorer_list = list(scorers.keys())
+    header = f"{'Target':<15}"
+    for sn in scorer_list:
+        header += f" {sn:>8}"
+    header += f" {'Unique':>7}"
+    print(header)
+    print("-" * (15 + 9 * len(scorer_list) + 8))
+
     for peptide in targets:
         r = all_results[peptide]
-        s = r["specificity"]
-        print(f"{peptide:<15} {s['auroc']:>8.4f} {s['mean_target_score']:>13.4f} {s['mean_decoy_score']:>12.4f} {r['n_unique']:>7}")
+        line = f"{peptide:<15}"
+        for sn in scorer_list:
+            auroc = r["specificity"][sn]["auroc"]
+            line += f" {auroc:>8.4f}"
+        line += f" {r['n_unique']:>7}"
+        print(line)
 
-    mean_auroc = float(np.mean(aurocs))
-    print(f"\nMean AUROC: {mean_auroc:.4f}")
-    print(f"v1 baseline: 0.4538")
-    print(f"Delta: {mean_auroc - 0.4538:+.4f}")
+    # Mean AUROCs
+    print("-" * (15 + 9 * len(scorer_list) + 8))
+    mean_line = f"{'Mean AUROC':<15}"
+    mean_aurocs = {}
+    for sn in scorer_list:
+        mean_val = float(np.mean(aurocs_per_scorer[sn]))
+        mean_aurocs[sn] = mean_val
+        mean_line += f" {mean_val:>8.4f}"
+    print(mean_line)
+
+    # v1 baseline comparison
+    print(f"\nv1 baseline (ERGO): 0.4538")
+    for sn in scorer_list:
+        delta = mean_aurocs[sn] - 0.4538
+        print(f"  {sn}: {mean_aurocs[sn]:.4f} (delta: {delta:+.4f})")
 
     # Save results
-    # Convert trajectories to serializable format
     save_results = {}
     for peptide, r in all_results.items():
         save_results[peptide] = {
@@ -328,12 +447,12 @@ def main():
         }
 
     save_results["_summary"] = {
-        "mean_auroc": mean_auroc,
+        "mean_auroc": mean_aurocs,
         "v1_baseline": 0.4538,
-        "delta": mean_auroc - 0.4538,
         "checkpoint": args.checkpoint,
         "n_tcrs": args.n_tcrs,
         "n_decoys": args.n_decoys,
+        "scorers": scorer_names,
     }
 
     output_file = os.path.join(args.output_dir, "eval_results.json")

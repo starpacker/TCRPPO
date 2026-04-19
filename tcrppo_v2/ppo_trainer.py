@@ -139,6 +139,56 @@ class RolloutBuffer:
         self.ptr = 0
 
 
+class EliteBuffer:
+    """Tracks best TCRs found during training for tFold re-scoring.
+
+    Stores completed episodes whose ERGO score exceeds a threshold.
+    The top-K entries are periodically re-scored with tFold to provide
+    correction gradients that prevent ERGO exploitation.
+    """
+
+    def __init__(self, max_size: int = 500, score_threshold: float = 0.7):
+        self.max_size = max_size
+        self.score_threshold = score_threshold
+        # Each entry: (ergo_score, tcr, peptide, last_obs, last_op, last_pos, last_tok, last_logprob)
+        self.buffer: List[Tuple] = []
+        self.seen: set = set()
+
+    def add_episode(
+        self,
+        tcr: str,
+        peptide: str,
+        ergo_score: float,
+        last_obs: np.ndarray,
+        last_op: int,
+        last_pos: int,
+        last_tok: int,
+        last_logprob: float,
+    ) -> None:
+        """Add a completed episode if it exceeds the score threshold."""
+        if ergo_score < self.score_threshold:
+            return
+        key = (tcr, peptide)
+        if key in self.seen:
+            return
+        self.seen.add(key)
+        self.buffer.append((ergo_score, tcr, peptide, last_obs, last_op, last_pos, last_tok, last_logprob))
+        if len(self.buffer) > self.max_size:
+            self.buffer.sort(key=lambda x: x[0], reverse=True)
+            removed = self.buffer[self.max_size:]
+            self.buffer = self.buffer[:self.max_size]
+            for item in removed:
+                self.seen.discard((item[1], item[2]))
+
+    def get_top_k(self, k: int = 32) -> List[Tuple]:
+        """Get top-K entries by ERGO score."""
+        self.buffer.sort(key=lambda x: x[0], reverse=True)
+        return self.buffer[:k]
+
+    def __len__(self) -> int:
+        return len(self.buffer)
+
+
 class PPOTrainer:
     """Custom PPO implementation for autoregressive TCR editing."""
 
@@ -178,12 +228,22 @@ class PPOTrainer:
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
 
+        # tFold correction config
+        self.tfold_correction = config.get("tfold_correction", False)
+        self.tfold_rescore_interval = config.get("tfold_rescore_interval", 50)
+        self.tfold_top_k = config.get("tfold_top_k", 32)
+        self.tfold_correction_alpha = config.get("tfold_correction_alpha", 2.0)
+        self.elite_buffer_size = config.get("elite_buffer_size", 500)
+        self.elite_score_threshold = config.get("elite_score_threshold", 0.7)
+
         # Will be initialized in setup()
         self.policy = None
         self.optimizer = None
         self.vec_env = None
         self.buffer = None
         self.logger = None
+        self.tfold_scorer = None
+        self.elite_buffer = None
 
     def setup(self) -> None:
         """Initialize all components."""
@@ -320,6 +380,7 @@ class PPOTrainer:
                 device=self.device,
                 encoder_output_dim=encoder_dim,
                 tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
+                disk_cache_path=self.config.get("esm_cache_path"),
             )
             print(f"  Lightweight encoder (dim={esm_cache.output_dim})")
         else:
@@ -430,6 +491,30 @@ class PPOTrainer:
         _elapsed = _time.time() - _t0
         print(f"  pMHC warmup: {len(targets)} targets cached in {_elapsed:.1f}s")
 
+        # tFold correction: load tFold scorer + elite buffer
+        if self.tfold_correction:
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
+            cuda_env = os.environ.get("CUDA_VISIBLE_DEVICES", "0").strip()
+            gpu_id = int(cuda_env.split(",")[0]) if cuda_env else 0
+            tfold_cache_path = self.config.get("tfold_cache_path")
+            self.tfold_scorer = AffinityTFoldScorer(
+                device=self.device,
+                gpu_id=gpu_id,
+                cache_only=False,  # full scoring with server
+                cache_miss_score=0.5,
+                cache_path=tfold_cache_path,
+            )
+            self.elite_buffer = EliteBuffer(
+                max_size=self.elite_buffer_size,
+                score_threshold=self.elite_score_threshold,
+            )
+            stats = self.tfold_scorer.cache_stats
+            print(f"  tFold correction enabled (cache={stats['cache_size']}, "
+                  f"interval={self.tfold_rescore_interval}, top_k={self.tfold_top_k}, "
+                  f"alpha={self.tfold_correction_alpha})")
+            print(f"  Elite buffer: max_size={self.elite_buffer_size}, "
+                  f"threshold={self.elite_score_threshold}")
+
         # Policy
         self.policy = ActorCritic(
             obs_dim=self.vec_env.obs_dim,
@@ -496,9 +581,16 @@ class PPOTrainer:
                     "diversity": self.config.get("w_diversity", 0.2),
                 },
                 "use_znorm": False,  # z-norm removed in bugfix
+                "tfold_correction": self.tfold_correction,
             },
             "notes": "",
         }
+        if self.tfold_correction:
+            archive["config"]["tfold_rescore_interval"] = self.tfold_rescore_interval
+            archive["config"]["tfold_top_k"] = self.tfold_top_k
+            archive["config"]["tfold_correction_alpha"] = self.tfold_correction_alpha
+            archive["config"]["elite_buffer_size"] = self.elite_buffer_size
+            archive["config"]["elite_score_threshold"] = self.elite_score_threshold
         if self.config.get("min_steps", 0) > 0:
             archive["config"]["min_steps"] = self.config["min_steps"]
             archive["config"]["min_steps_penalty"] = self.config.get("min_steps_penalty", 0.0)
@@ -539,6 +631,10 @@ class PPOTrainer:
         ep_reward_buf = np.zeros(self.n_envs)
         ep_length_buf = np.zeros(self.n_envs, dtype=int)
         next_milestone_idx = 0
+
+        # Per-env trackers for elite buffer (last obs/action before STOP)
+        ep_last_obs = [None] * self.n_envs
+        ep_last_action = [None] * self.n_envs  # (op, pos, tok, logprob)
 
         while global_step < self.total_timesteps:
             # Update decoy tier unlock schedule
@@ -602,15 +698,44 @@ class PPOTrainer:
                     if not was_done[i]:
                         ep_reward_buf[i] += rewards[i]
                         ep_length_buf[i] += 1
+                        # Track last obs/action for elite buffer
+                        ep_last_obs[i] = obs[i].copy()
+                        ep_last_action[i] = (int(ops_np[i]), int(pos_np[i]), int(tok_np[i]), float(lp_np[i]))
                     if dones[i] and not was_done[i]:
                         episode_rewards.append(ep_reward_buf[i])
                         episode_lengths.append(ep_length_buf[i])
+                        # Submit to elite buffer if tFold correction enabled
+                        if self.elite_buffer is not None and ep_last_obs[i] is not None:
+                            env_i = self.vec_env.envs[i]
+                            final_tcr = env_i.current_tcr
+                            peptide = env_i.peptide
+                            # Use the affinity component from the terminal reward
+                            ergo_score = ep_reward_buf[i] / max(ep_length_buf[i], 1)
+                            # Better: get the raw affinity score for the final TCR
+                            scorer = self.reward_manager.affinity_scorer
+                            if scorer is not None and hasattr(scorer, 'score_batch_fast'):
+                                ergo_score = scorer.score_batch_fast([final_tcr], [peptide])[0]
+                            op, pos, tok, lp = ep_last_action[i]
+                            self.elite_buffer.add_episode(
+                                tcr=final_tcr,
+                                peptide=peptide,
+                                ergo_score=ergo_score,
+                                last_obs=ep_last_obs[i],
+                                last_op=op,
+                                last_pos=pos,
+                                last_tok=tok,
+                                last_logprob=lp,
+                            )
                         ep_reward_buf[i] = 0.0
                         ep_length_buf[i] = 0
+                        ep_last_obs[i] = None
+                        ep_last_action[i] = None
                     elif was_done[i]:
                         # Auto-reset happened, start fresh counter
                         ep_reward_buf[i] = 0.0
                         ep_length_buf[i] = 0
+                        ep_last_obs[i] = None
+                        ep_last_action[i] = None
 
                 obs = next_obs
                 global_step += self.n_envs
@@ -672,6 +797,12 @@ class PPOTrainer:
 
             n_updates += 1
 
+            # tFold correction: re-score elite TCRs and run correction gradient
+            if (self.tfold_correction and self.elite_buffer is not None
+                    and n_updates % self.tfold_rescore_interval == 0
+                    and len(self.elite_buffer) >= self.tfold_top_k):
+                self._run_tfold_correction(global_step)
+
             # Logging
             if n_batches > 0:
                 avg_pg = total_pg_loss / n_batches
@@ -730,6 +861,109 @@ class PPOTrainer:
             tiers = ["A", "B", "D", "C"]
         self.decoy_scorer.set_unlocked_tiers(tiers)
 
+    def _run_tfold_correction(self, global_step: int) -> None:
+        """Re-score top-K elite TCRs with tFold and run correction gradient steps."""
+        import time as _time
+        t0 = _time.time()
+
+        top_k = self.elite_buffer.get_top_k(self.tfold_top_k)
+        if not top_k:
+            return
+
+        # Extract data from elite entries
+        ergo_scores = [e[0] for e in top_k]
+        tcrs = [e[1] for e in top_k]
+        peptides = [e[2] for e in top_k]
+        obs_list = [e[3] for e in top_k]
+        ops_list = [e[4] for e in top_k]
+        pos_list = [e[5] for e in top_k]
+        tok_list = [e[6] for e in top_k]
+        old_lps = [e[7] for e in top_k]
+
+        # Re-score with tFold
+        tfold_scores = self.tfold_scorer.score_batch_fast(tcrs, peptides)
+
+        # Compute correction advantages: alpha * (tfold - ergo)
+        corrections = []
+        for i in range(len(top_k)):
+            diff = tfold_scores[i] - ergo_scores[i]
+            corrections.append(self.tfold_correction_alpha * diff)
+
+        # Build correction batch tensors
+        batch_obs = torch.FloatTensor(np.stack(obs_list)).to(self.device)
+        batch_ops = torch.LongTensor(ops_list).to(self.device)
+        batch_pos = torch.LongTensor(pos_list).to(self.device)
+        batch_tok = torch.LongTensor(tok_list).to(self.device)
+        batch_old_lps = torch.FloatTensor(old_lps).to(self.device)
+        batch_advantages = torch.FloatTensor(corrections).to(self.device)
+
+        # Normalize correction advantages
+        if len(batch_advantages) > 1:
+            adv_std = batch_advantages.std()
+            if adv_std > 1e-8:
+                batch_advantages = batch_advantages / (adv_std + 1e-8)
+
+        # Generate action masks for these obs (all ops allowed, all positions allowed)
+        batch_op_masks = torch.ones(len(top_k), NUM_OPS, dtype=torch.bool, device=self.device)
+        batch_pos_masks = torch.ones(len(top_k), MAX_TCR_LEN, dtype=torch.bool, device=self.device)
+
+        # Run 2 correction gradient steps
+        self.policy.train()
+        correction_losses = []
+        for _ in range(2):
+            log_probs, entropy, values, _ = self.policy(
+                batch_obs,
+                action_masks={
+                    "op_mask": batch_op_masks,
+                    "pos_mask": batch_pos_masks,
+                },
+                actions=(batch_ops, batch_pos, batch_tok),
+            )
+
+            ratio = torch.exp(log_probs - batch_old_lps)
+            pg_loss1 = -batch_advantages * ratio
+            pg_loss2 = -batch_advantages * torch.clamp(
+                ratio, 1.0 - self.clip_range, 1.0 + self.clip_range
+            )
+            pg_loss = torch.max(pg_loss1, pg_loss2).mean()
+
+            entropy_loss = -entropy.mean()
+            loss = pg_loss + self.entropy_coef * entropy_loss
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+            self.optimizer.step()
+            correction_losses.append(pg_loss.item())
+
+        elapsed = _time.time() - t0
+
+        # Log stats
+        mean_ergo = np.mean(ergo_scores)
+        mean_tfold = np.mean(tfold_scores)
+        mean_correction = np.mean(corrections)
+        n_positive = sum(1 for c in corrections if c > 0)
+        n_negative = sum(1 for c in corrections if c < 0)
+
+        print(
+            f"  [tFold correction] K={len(top_k)} | "
+            f"ERGO={mean_ergo:.3f} | tFold={mean_tfold:.3f} | "
+            f"corr={mean_correction:+.3f} | "
+            f"+{n_positive}/-{n_negative} | "
+            f"loss={np.mean(correction_losses):.4f} | "
+            f"elite_buf={len(self.elite_buffer)} | "
+            f"{elapsed:.1f}s"
+        )
+
+        if self.logger:
+            self.logger.add_scalar("tfold/mean_ergo_score", mean_ergo, global_step)
+            self.logger.add_scalar("tfold/mean_tfold_score", mean_tfold, global_step)
+            self.logger.add_scalar("tfold/mean_correction", mean_correction, global_step)
+            self.logger.add_scalar("tfold/correction_loss", np.mean(correction_losses), global_step)
+            self.logger.add_scalar("tfold/elite_buffer_size", len(self.elite_buffer), global_step)
+            self.logger.add_scalar("tfold/n_positive", n_positive, global_step)
+            self.logger.add_scalar("tfold/n_negative", n_negative, global_step)
+
     def save_checkpoint(self, name: str) -> None:
         """Save model checkpoint."""
         path = os.path.join(self.ckpt_dir, f"{name}.pt")
@@ -786,6 +1020,15 @@ def main():
     parser.add_argument("--tfold_cache_miss_score", type=float, default=None, help="tFold: score for cache misses (default 0.5)")
     parser.add_argument("--encoder", default=None, choices=["esm2", "lightweight"], help="State encoder: esm2 (default) or lightweight (CPU-friendly BiLSTM)")
     parser.add_argument("--encoder_dim", type=int, default=None, help="Lightweight encoder output dim (default 256)")
+    parser.add_argument("--esm_cache_path", type=str, default=None, help="Path to ESM cache DB (default: data/esm_cache.db)")
+    parser.add_argument("--tfold_cache_path", type=str, default=None, help="Path to tFold feature cache DB")
+    # tFold correction
+    parser.add_argument("--tfold_correction", action="store_true", help="Enable tFold elite re-scoring correction")
+    parser.add_argument("--tfold_rescore_interval", type=int, default=None, help="Re-score elite TCRs every N rollouts (default 50)")
+    parser.add_argument("--tfold_top_k", type=int, default=None, help="Top-K elite TCRs to re-score (default 32)")
+    parser.add_argument("--tfold_correction_alpha", type=float, default=None, help="Correction advantage scale (default 2.0)")
+    parser.add_argument("--elite_buffer_size", type=int, default=None, help="Max elite buffer size (default 500)")
+    parser.add_argument("--elite_score_threshold", type=float, default=None, help="Min ERGO score for elite (default 0.7)")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -828,6 +1071,22 @@ def main():
         config["encoder"] = args.encoder
     if args.encoder_dim is not None:
         config["encoder_dim"] = args.encoder_dim
+    if args.esm_cache_path is not None:
+        config["esm_cache_path"] = args.esm_cache_path
+    if args.tfold_cache_path is not None:
+        config["tfold_cache_path"] = args.tfold_cache_path
+    if args.tfold_correction:
+        config["tfold_correction"] = True
+    if args.tfold_rescore_interval is not None:
+        config["tfold_rescore_interval"] = args.tfold_rescore_interval
+    if args.tfold_top_k is not None:
+        config["tfold_top_k"] = args.tfold_top_k
+    if args.tfold_correction_alpha is not None:
+        config["tfold_correction_alpha"] = args.tfold_correction_alpha
+    if args.elite_buffer_size is not None:
+        config["elite_buffer_size"] = args.elite_buffer_size
+    if args.elite_score_threshold is not None:
+        config["elite_score_threshold"] = args.elite_score_threshold
 
     config.setdefault("run_name", "v2_run")
 

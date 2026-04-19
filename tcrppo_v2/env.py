@@ -222,7 +222,12 @@ class TCREditEnv:
         return "".join(seq)
 
     def _reset_internal(self, peptide=None, init_tcr=None, target_weights=None) -> None:
-        """Reset state without computing observation (for batched encoding)."""
+        """Reset state without computing observation (for batched encoding).
+
+        Note: initial_affinity is set to 0.0 here. For batched resets,
+        VecTCREditEnv.reset() will batch-compute initial affinities after all
+        envs have been reset.
+        """
         if peptide is None:
             if target_weights:
                 self.peptide = self.pmhc_loader.sample_target_weighted(target_weights)
@@ -243,16 +248,8 @@ class TCREditEnv:
             )
         self.initial_tcr = self.tcr_seq
 
-        if self.reward_manager.affinity_scorer is not None:
-            if hasattr(self.reward_manager.affinity_scorer, 'score_batch_fast'):
-                preds = self.reward_manager.affinity_scorer.score_batch_fast(
-                    [self.tcr_seq], [self.peptide])
-                self.initial_affinity = preds[0]
-            else:
-                aff, _ = self.reward_manager.affinity_scorer.score(self.tcr_seq, self.peptide)
-                self.initial_affinity = aff
-        else:
-            self.initial_affinity = 0.0
+        # Initial affinity is set to 0.0 for now — VecEnv will batch-compute it
+        self.initial_affinity = 0.0
 
         self.step_count = 0
         self.cumulative_delta = 0.0
@@ -383,6 +380,20 @@ class VecTCREditEnv:
         for env in self.envs:
             env._reset_internal()
 
+        # Batch-compute initial affinities for all envs
+        scorer = self.envs[0].reward_manager.affinity_scorer
+        if scorer is not None:
+            tcrs = [env.tcr_seq for env in self.envs]
+            peps = [env.peptide for env in self.envs]
+            if hasattr(scorer, 'score_batch_fast'):
+                preds = scorer.score_batch_fast(tcrs, peps)
+                for i, env in enumerate(self.envs):
+                    env.initial_affinity = preds[i]
+            else:
+                for env in self.envs:
+                    aff, _ = scorer.score(env.tcr_seq, env.peptide)
+                    env.initial_affinity = aff
+
         tcr_seqs = [env.tcr_seq for env in self.envs]
         esm_cache = self.envs[0].esm_cache
         tcr_embs = esm_cache.encode_tcr_batch(tcr_seqs)
@@ -433,6 +444,21 @@ class VecTCREditEnv:
                 dones[i] = done
                 infos.append(info)
                 stepped_indices.append(i)
+
+        # Phase 1.5: Batch-compute initial affinities for auto-reset envs
+        if reset_indices:
+            scorer = self.envs[0].reward_manager.affinity_scorer
+            if scorer is not None:
+                reset_tcrs = [self.envs[i].tcr_seq for i in reset_indices]
+                reset_peps = [self.envs[i].peptide for i in reset_indices]
+                if hasattr(scorer, 'score_batch_fast'):
+                    preds = scorer.score_batch_fast(reset_tcrs, reset_peps)
+                    for j, i in enumerate(reset_indices):
+                        self.envs[i].initial_affinity = preds[j]
+                else:
+                    for i in reset_indices:
+                        aff, _ = scorer.score(self.envs[i].tcr_seq, self.envs[i].peptide)
+                        self.envs[i].initial_affinity = aff
 
         # Phase 2: Batch reward computation for stepped envs
         if stepped_indices:

@@ -246,9 +246,10 @@ class TFoldFeatureCache:
 
     def __init__(self, db_path: str):
         os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else ".", exist_ok=True)
-        self._conn = sqlite3.connect(db_path, check_same_thread=False)
+        self._conn = sqlite3.connect(db_path, check_same_thread=False, timeout=30)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._conn.execute("PRAGMA busy_timeout=30000")
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS features "
             "(cache_key TEXT PRIMARY KEY, data BLOB)"
