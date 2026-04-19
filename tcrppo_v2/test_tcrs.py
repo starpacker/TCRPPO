@@ -262,12 +262,13 @@ def main():
     print(f"N decoys per TCR: {args.n_decoys}")
     print(f"Scorers: {scorer_names}")
 
-    # Load checkpoint config to determine encoder type and max_tcr_len
+    # Load checkpoint config to determine encoder type, hidden_dim, and max_tcr_len
     ckpt_preview = torch.load(args.checkpoint, map_location="cpu")
     ckpt_config = ckpt_preview.get("config", {})
     max_tcr_len_from_ckpt = ckpt_config.get("max_tcr_len", MAX_TCR_LEN)
     encoder_type = ckpt_config.get("encoder", "esm2")
     encoder_dim = ckpt_config.get("encoder_dim", 256)
+    hidden_dim_from_ckpt = ckpt_config.get("hidden_dim", config.get("hidden_dim", 512))
     del ckpt_preview
 
     # Load scorers
@@ -339,11 +340,11 @@ def main():
     )
 
     # Load policy
-    print("Loading policy...")
+    print(f"Loading policy (hidden_dim={hidden_dim_from_ckpt})...")
     policy = load_policy(
         args.checkpoint,
         obs_dim=env.obs_dim,
-        hidden_dim=config.get("hidden_dim", 512),
+        hidden_dim=hidden_dim_from_ckpt,
         device=device,
     )
 
