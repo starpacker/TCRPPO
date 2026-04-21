@@ -686,6 +686,7 @@ class PPOTrainer:
 
                 # Get actions from policy
                 obs_tensor = torch.FloatTensor(obs).to(self.device)
+                obs_tensor = torch.nan_to_num(obs_tensor, nan=0.0, posinf=1.0, neginf=-1.0)
                 mask_dict = {
                     "op_mask": torch.BoolTensor(op_masks).to(self.device),
                     "pos_mask": torch.BoolTensor(pos_masks).to(self.device),
