@@ -367,9 +367,88 @@ Before declaring any phase complete, verify:
 3. Progress file updated with actual results
 4. Git commit created and pushed
 
-### 5.7 Experiment Documentation Standards
+### 5.7 Experiment Documentation Standards (MANDATORY)
 
 Every experiment MUST be documented for reproducibility. Follow this protocol:
+
+#### BEFORE Launch (REQUIRED)
+
+1. **Create experiment design doc** in `docs/experiments/<testXX>_<name>.md`:
+   ```markdown
+   # test<XX>: <Short Title>
+   
+   **Date**: YYYY-MM-DD
+   **Status**: planned|running|completed|failed
+   **GPU**: <N>
+   **Priority**: P0|P1|P2
+   
+   ## Hypothesis
+   What problem does this experiment solve? What do we expect to happen?
+   
+   ## Configuration
+   ```bash
+   CUDA_VISIBLE_DEVICES=<N> python tcrppo_v2/ppo_trainer.py \
+       --config configs/default.yaml \
+       --run_name test<XX>_<name> \
+       --seed <N> \
+       --reward_mode <mode> \
+       --affinity_scorer <scorer> \
+       --encoder <encoder> \
+       --total_timesteps <N> \
+       --n_envs <N> \
+       [... all non-default args ...]
+   ```
+   
+   ## Key Differences from Previous Experiments
+   - vs test<YY>: changed <param> from <old> to <new>
+   - vs test<ZZ>: added <feature>
+   - NEW: <what has never been tested before>
+   
+   ## Expected Outcome
+   - Metric: <expected value>
+   - If successful: <what it proves>
+   - If failed: <what it disproves>
+   
+   ## Dependencies
+   - Code changes needed: <list>
+   - Requires completion of: <test_name>
+   - Blocks: <test_name>
+   ```
+
+2. **Update `docs/all_experiments_tracker.md`** with new row:
+   ```markdown
+   | <N> | test<XX>_<name> | 🔄 PLANNED | 0/2M | TBD | TBD | <reward_mode> | <key_config> | <GPU> | <hypothesis> |
+   ```
+
+3. **Create launch script** `scripts/launch_test<XX>_<name>.sh`:
+   ```bash
+   #!/bin/bash
+   # test<XX>: <Short description>
+   # Hypothesis: <one-line>
+   # Key config: <key params>
+   
+   PYTHON=/home/liuyutian/server/miniconda3/envs/tcrppo_v2/bin/python
+   cd /share/liuyutian/tcrppo_v2
+   
+   CUDA_VISIBLE_DEVICES=<N> nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
+       --config configs/default.yaml \
+       --run_name test<XX>_<name> \
+       [... full args ...] \
+       > logs/test<XX>_<name>_train.log 2>&1 &
+   
+   echo "test<XX>_<name> launched on GPU <N>"
+   echo "Monitor: tail -f logs/test<XX>_<name>_train.log"
+   echo "Hypothesis: <one-line>"
+   ```
+
+4. **Git commit BEFORE launch**:
+   ```bash
+   git add docs/experiments/test<XX>_<name>.md
+   git add scripts/launch_test<XX>_<name>.sh
+   git add docs/all_experiments_tracker.md
+   git commit -m "v2(test<XX>): plan <name> experiment - <hypothesis>"
+   git push
+   ```
 
 #### At Launch
 
@@ -380,8 +459,17 @@ Every experiment MUST be documented for reproducibility. Follow this protocol:
    - GPU assignment
    - Timestamp
 
-2. Add a row to `docs/all_experiments_tracker.md` with:
-   - Experiment name, status, reward mode, key config, GPU
+2. Update experiment status in `docs/all_experiments_tracker.md`:
+   ```markdown
+   | <N> | test<XX>_<name> | 🔄 TRAINING | <steps>/2M | TBD | TBD | ... |
+   ```
+
+3. Update experiment doc status:
+   ```markdown
+   **Status**: running
+   **Started**: YYYY-MM-DD HH:MM
+   **PID**: <process_id>
+   ```
 
 #### At Completion
 
@@ -390,9 +478,55 @@ Every experiment MUST be documented for reproducibility. Follow this protocol:
    python tcrppo_v2/test_tcrs.py --checkpoint output/<name>/checkpoints/final.pt \
        --n_tcrs 50 --n_decoys 50 --output_dir results/<name>/
    ```
-2. Evaluation saves `results/<name>/eval_results.json` with per-target AUROC, scores, generated TCRs
-3. Update `output/<name>/experiment.json` with eval results (use `scripts/archive_experiments.py` or manually)
-4. Update `docs/all_experiments_tracker.md` with AUROC and status
+
+2. Update experiment doc with results:
+   ```markdown
+   ## Results
+   
+   **Training completed**: YYYY-MM-DD HH:MM
+   **Total time**: <hours>h
+   **Final reward**: <value>
+   **Mean AUROC**: <value>
+   **vs Baseline**: <delta>
+   
+   ### Per-Target AUROC
+   | Target | AUROC | vs Baseline |
+   |--------|-------|-------------|
+   | ... | ... | ... |
+   
+   ### Training Curve
+   - Step 100K: R=<value>
+   - Step 500K: R=<value>
+   - Step 1M: R=<value>
+   - Step 2M: R=<value>
+   
+   ## Analysis
+   
+   **Hypothesis confirmed/rejected**: <why>
+   
+   **Key findings**:
+   - <finding 1>
+   - <finding 2>
+   
+   **Unexpected observations**:
+   - <observation>
+   
+   **Next steps**:
+   - <what to try next>
+   ```
+
+3. Update `docs/all_experiments_tracker.md`:
+   ```markdown
+   | <N> | test<XX>_<name> | ✅ DONE | 2M | <AUROC> | <delta> | ... |
+   ```
+
+4. Git commit results:
+   ```bash
+   git add docs/experiments/test<XX>_<name>.md
+   git add docs/all_experiments_tracker.md
+   git commit -m "v2(test<XX>): complete <name> - AUROC=<value>"
+   git push
+   ```
 
 #### Archive Format
 
@@ -413,6 +547,8 @@ Each `output/<run_name>/experiment.json` must contain:
     "hidden_dim": 512,
     "max_steps": 8,
     "affinity_scorer": "ergo|nettcr|ensemble",
+    "encoder": "esm2|lightweight",
+    "ban_stop": true,
     "weights": {"affinity": 1.0, "decoy": 0.0, "naturalness": 0.0, "diversity": 0.0},
     "use_delta_reward": false,
     "use_znorm": false
@@ -425,9 +561,15 @@ Each `output/<run_name>/experiment.json` must contain:
 }
 ```
 
-#### Archival Script
+#### Experiment Naming Convention
 
-Run `python scripts/archive_experiments.py` to retroactively archive experiments that lack `experiment.json`. The script reconstructs configs from training logs and eval results.
+- `test<XX>_<descriptive_name>` where XX is sequential number
+- Name should indicate key feature: `test23_contrastive_ergo`, `test24_large_batch`
+- Launch script: `scripts/launch_test<XX>_<name>.sh`
+- Log file: `logs/test<XX>_<name>_train.log`
+- Output dir: `output/test<XX>_<name>/`
+- Results dir: `results/test<XX>_<name>/`
+- Experiment doc: `docs/experiments/test<XX>_<name>.md`
 
 ---
 

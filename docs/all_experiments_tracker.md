@@ -1,6 +1,6 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-04-16  
+**Last Updated:** 2026-04-21  
 **Baseline:** v1_ergo_only = **0.8075 AUROC** (best result so far, but seed-dependent — repro got 0.5462)  
 **Target:** Beat 0.8075 while adding specificity (decoy resistance)
 
@@ -35,6 +35,17 @@
 | 23 | test11_nettcr | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR** scorer, seed=42 | 0 | Break ERGO train-eval coupling |
 | 24 | test16_ensemble_ergo_tcbind | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+TCBind** (50/50), seed=42 | 0 | Dual-scorer: ERGO + sequence classifier |
 | 25 | test13_ensemble_ergo_nettcr | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR** (50/50), seed=42 | 0 | Dual-scorer: ERGO + NetTCR CNN |
+| 26 | test16_ergo_lightweight | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | Lightweight 256d, seed=42, ban_stop | - | Lightweight encoder baseline |
+| 27 | test17_ergo_lightweight_s123 | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | Lightweight 256d, seed=123, ban_stop | - | Seed=123 repro w/ lightweight |
+| 28 | test18_v1ergo_seed7 | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | seed=7, lightweight | - | Seed stability test |
+| 29 | test19_v1ergo_seed2024 | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | seed=2024, lightweight | - | Seed stability test |
+| 30 | test20_ban_stop | ✅ DONE | 2M | TBD | TBD | v2_full | Lightweight, ban_stop, all penalties | - | R=-1.2, penalties destroy signal |
+| 31 | test21_esm2_breakthrough | 🔄 TRAINING | 501K/2M | TBD | TBD | v1_ergo_shaped | ESM-2, ban_stop, shaped reward | - | R=0.15-0.19, shaped reward too weak |
+| 32 | test22_tfold_cascade | 🔄 TRAINING | 153K/2M | TBD | TBD | v1_ergo_only | ESM-2, ban_stop, tFold cascade (t=0.15) | 2 | R=0.83-1.13, cascade works |
+| 33 | test22b_ergo_only | 🔄 TRAINING | 153K/2M | TBD | TBD | v1_ergo_only | ESM-2, ban_stop, pure ERGO | 3 | R=0.98-1.31, ESM-2+ERGO strong |
+| 34 | test23_contrastive_ergo | 📋 PLANNED | 0/2M | TBD | TBD | contrastive_ergo | **ERGO(target)-ERGO(decoys)**, ESM-2, ban_stop | 0 | Break ERGO train-eval coupling |
+| 35 | test24_large_batch | 📋 PLANNED | 0/2M | TBD | TBD | v1_ergo_only | **n_envs=32**, seed=123, ESM-2, ban_stop | 1 | Stabilize failed seed via large batch |
+| 36 | test26_curriculum_l0 | 📋 PLANNED | 0/2M | TBD | TBD | v1_ergo_only | **L0=0.5,L1=0.2,L2=0.3**, ESM-2, ban_stop | 4 | Better initialization via curriculum |
 
 ---
 
