@@ -43,9 +43,9 @@
 | 31 | test21_esm2_breakthrough | 🔄 TRAINING | 501K/2M | TBD | TBD | v1_ergo_shaped | ESM-2, ban_stop, shaped reward | - | R=0.15-0.19, shaped reward too weak |
 | 32 | test22_tfold_cascade | 🔄 TRAINING | 153K/2M | TBD | TBD | v1_ergo_only | ESM-2, ban_stop, tFold cascade (t=0.15) | 2 | R=0.83-1.13, cascade works |
 | 33 | test22b_ergo_only | 🔄 TRAINING | 153K/2M | TBD | TBD | v1_ergo_only | ESM-2, ban_stop, pure ERGO | 3 | R=0.98-1.31, ESM-2+ERGO strong |
-| 34 | test23_contrastive_ergo | 📋 PLANNED | 0/2M | TBD | TBD | contrastive_ergo | **ERGO(target)-ERGO(decoys)**, ESM-2, ban_stop | 0 | Break ERGO train-eval coupling |
-| 35 | test24_large_batch | 📋 PLANNED | 0/2M | TBD | TBD | v1_ergo_only | **n_envs=32**, seed=123, ESM-2, ban_stop | 1 | Stabilize failed seed via large batch |
-| 36 | test26_curriculum_l0 | 📋 PLANNED | 0/2M | TBD | TBD | v1_ergo_only | **L0=0.5,L1=0.2,L2=0.3**, ESM-2, ban_stop | 4 | Better initialization via curriculum |
+| 34 | test23_contrastive_ergo | 🏃 RUNNING | 0/2M | TBD | TBD | contrastive_ergo | **ERGO(target)-ERGO(decoys)**, ESM-2, ban_stop | 0 | Break ERGO train-eval coupling |
+| 35 | test24_large_batch | 🏃 RUNNING | 0/2M | TBD | TBD | v1_ergo_only | **n_envs=32**, seed=123, ESM-2, ban_stop | 1 | Stabilize failed seed via large batch |
+| 36 | test26_curriculum_l0 | 🏃 RUNNING | 0/2M | TBD | TBD | v1_ergo_only | **L0=0.5,L1=0.2,L2=0.3**, ESM-2, ban_stop | 4 | Better initialization via curriculum |
 
 ---
 

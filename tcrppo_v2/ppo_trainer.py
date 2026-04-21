@@ -360,6 +360,29 @@ class PPOTrainer:
                 scorers=[ergo_scorer, tfold_scorer],
                 weights=[0.5, 0.5],
             )
+        elif affinity_model == "tfold_cascade":
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer, TFoldCascadeScorer
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+
+            # Initialize tFold scorer (with cache)
+            tfold_scorer = AffinityTFoldScorer(
+                device=self.device,
+                gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
+                cache_only=self.config.get("tfold_cache_only", False),
+                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
+            )
+            print(f"  tFold V3.4 loaded (cache={tfold_scorer.cache_stats['cache_size']} entries)")
+
+            # Wrap with cascade logic
+            affinity_scorer = TFoldCascadeScorer(
+                ergo_model_file=model_file,
+                tfold_scorer=tfold_scorer,
+                uncertainty_threshold=self.config.get("cascade_threshold", 0.15),
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+                ergo_device=self.device,
+            )
+            print(f"  ERGO+tFold cascade initialized (threshold={self.config.get('cascade_threshold', 0.15)})")
         else:  # default: ergo
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
@@ -392,9 +415,12 @@ class PPOTrainer:
 
         print(f"  pMHC loader: {len(targets)} targets")
 
-        # TCR pool (no L1 seeds — L1 curriculum is banned)
+        # TCR pool with L1 seeds enabled for enhanced curriculum
+        l1_dir = os.path.join(PROJECT_ROOT, "data", "l1_seeds")
+        if not os.path.isdir(l1_dir):
+            l1_dir = None  # Fall back to L0+L2 only
         tcr_pool = TCRPool(
-            l1_seeds_dir=None,
+            l1_seeds_dir=l1_dir,
             curriculum_schedule=self.config.get("curriculum_schedule"),
             seed=self.seed,
         )
@@ -406,14 +432,16 @@ class PPOTrainer:
         if os.path.isdir(l0_tchard_dir):
             tcr_pool.load_l0_from_dir(l0_tchard_dir)
         l0_targets = tcr_pool.get_l0_targets()
+        l1_targets = tcr_pool.get_l1_targets()
         print(f"  TCR pool: {tcr_pool.num_tcrdb_seqs} seqs, "
-              f"L0 targets={len(l0_targets)}/{len(targets)}")
+              f"L0 targets={len(l0_targets)}/{len(targets)}, "
+              f"L1 targets={len(l1_targets)}/{len(targets)}")
 
         # Decoy scorer (for reward, with LogSumExp penalty)
         decoy_scorer = None
         self.decoy_scorer = None
-        # Load decoy scorer for any mode that uses decoy penalty
-        if self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty"):
+        # Load decoy scorer for any mode that uses decoy penalty or contrastive sampling
+        if self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo"):
             from tcrppo_v2.scorers.decoy import DecoyScorer
             decoy_scorer = DecoyScorer(
                 decoy_library_path=decoy_lib_path,
@@ -467,6 +495,7 @@ class PPOTrainer:
             w_decoy=self.config.get("w_decoy", 0.8),
             w_naturalness=self.config.get("w_naturalness", 0.5),
             w_diversity=self.config.get("w_diversity", 0.2),
+            n_contrast_decoys=self.config.get("n_contrast_decoys", 4),
         )
 
         # VecEnv
@@ -479,8 +508,9 @@ class PPOTrainer:
             reward_mode=self.reward_mode,
             min_steps=self.config.get("min_steps", 0),
             min_steps_penalty=self.config.get("min_steps_penalty", 0.0),
+            ban_stop=self.config.get("ban_stop", False),
         )
-        print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}")
+        print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}, ban_stop={self.config.get('ban_stop', False)}")
 
         # Warmup: pre-cache all pMHC embeddings so encode_pmhc is 0ms during training
         import time as _time
@@ -594,6 +624,8 @@ class PPOTrainer:
         if self.config.get("min_steps", 0) > 0:
             archive["config"]["min_steps"] = self.config["min_steps"]
             archive["config"]["min_steps_penalty"] = self.config.get("min_steps_penalty", 0.0)
+        if self.config.get("ban_stop", False):
+            archive["config"]["ban_stop"] = True
 
         out_dir = os.path.join(self.output_dir, self.run_name)
         os.makedirs(out_dir, exist_ok=True)
@@ -1015,9 +1047,10 @@ def main():
     parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
     parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
     parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
-    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
+    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, tfold_cascade, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
     parser.add_argument("--tfold_cache_only", action="store_true", help="tFold: skip server extraction for cache misses")
     parser.add_argument("--tfold_cache_miss_score", type=float, default=None, help="tFold: score for cache misses (default 0.5)")
+    parser.add_argument("--cascade_threshold", type=float, default=None, help="ERGO uncertainty threshold for tFold cascade (default 0.15)")
     parser.add_argument("--encoder", default=None, choices=["esm2", "lightweight"], help="State encoder: esm2 (default) or lightweight (CPU-friendly BiLSTM)")
     parser.add_argument("--encoder_dim", type=int, default=None, help="Lightweight encoder output dim (default 256)")
     parser.add_argument("--esm_cache_path", type=str, default=None, help="Path to ESM cache DB (default: data/esm_cache.db)")
@@ -1029,6 +1062,15 @@ def main():
     parser.add_argument("--tfold_correction_alpha", type=float, default=None, help="Correction advantage scale (default 2.0)")
     parser.add_argument("--elite_buffer_size", type=int, default=None, help="Max elite buffer size (default 500)")
     parser.add_argument("--elite_score_threshold", type=float, default=None, help="Min ERGO score for elite (default 0.7)")
+    parser.add_argument("--ban_stop", action="store_true", help="Ban STOP action — agent must use all max_steps")
+
+    # Curriculum overrides
+    parser.add_argument("--curriculum_l0", type=float, default=None, help="L0 curriculum ratio (known binder variants)")
+    parser.add_argument("--curriculum_l1", type=float, default=None, help="L1 curriculum ratio (ERGO top-K)")
+    parser.add_argument("--curriculum_l2", type=float, default=None, help="L2 curriculum ratio (random TCRdb)")
+
+    # Contrastive reward
+    parser.add_argument("--n_contrast_decoys", type=int, default=4, help="Number of decoys for contrastive_ergo reward")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -1087,6 +1129,22 @@ def main():
         config["elite_buffer_size"] = args.elite_buffer_size
     if args.elite_score_threshold is not None:
         config["elite_score_threshold"] = args.elite_score_threshold
+    if args.cascade_threshold is not None:
+        config["cascade_threshold"] = args.cascade_threshold
+    if args.ban_stop:
+        config["ban_stop"] = True
+
+    # Curriculum overrides
+    if args.curriculum_l0 is not None or args.curriculum_l1 is not None or args.curriculum_l2 is not None:
+        l0 = args.curriculum_l0 if args.curriculum_l0 is not None else 0.0
+        l1 = args.curriculum_l1 if args.curriculum_l1 is not None else 0.0
+        l2 = args.curriculum_l2 if args.curriculum_l2 is not None else 1.0
+        # Override curriculum schedule with single static entry
+        config["curriculum_schedule"] = [{"until": None, "L0": l0, "L1": l1, "L2": l2}]
+
+    # Contrastive reward config
+    if args.n_contrast_decoys is not None:
+        config["n_contrast_decoys"] = args.n_contrast_decoys
 
     config.setdefault("run_name", "v2_run")
 

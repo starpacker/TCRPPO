@@ -26,6 +26,7 @@ class RewardManager:
         norm_warmup: int = 1000,
         use_delta_reward: bool = True,
         reward_mode: str = "v2_full",
+        n_contrast_decoys: int = 4,
     ):
         self.affinity_scorer = affinity_scorer
         self.decoy_scorer = decoy_scorer
@@ -40,6 +41,7 @@ class RewardManager:
         }
         self.use_delta_reward = use_delta_reward
         self.reward_mode = reward_mode
+        self.n_contrast_decoys = n_contrast_decoys
 
     def compute_reward(
         self,
@@ -103,6 +105,10 @@ class RewardManager:
             total = aff_delta
         elif self.reward_mode == "v1_ergo_stepwise":
             total = aff_score
+        elif self.reward_mode == "v1_ergo_shaped":
+            # Shaped reward: intermediate steps get 0.1 * delta, terminal gets full score
+            # Note: is_terminal flag must be passed via kwargs
+            total = aff_score  # Default to full score (will be overridden in env for intermediate)
         elif self.reward_mode in ("v2_decoy_only", "raw_decoy"):
             total = aff_score - self.weights["decoy"] * decoy_score
         elif self.reward_mode in ("raw_multi_penalty", "v2_full", "v2_no_decoy", "v2_no_curriculum"):
@@ -118,6 +124,25 @@ class RewardManager:
                         - self.weights["decoy"] * decoy_score
                         - self.weights["naturalness"] * nat_score
                         - self.weights["diversity"] * div_score)
+        elif self.reward_mode == "contrastive_ergo":
+            # Contrastive: reward = ERGO(target) - mean(ERGO(decoys))
+            # Requires decoy_scorer to sample decoys
+            if self.decoy_scorer is not None:
+                # Sample decoys using decoy_scorer's sampler
+                decoy_peptides = self.decoy_scorer.sample_decoys(target, k=self.n_contrast_decoys)
+                # Score TCR against decoys using ERGO
+                if hasattr(self.affinity_scorer, 'score_batch_fast'):
+                    decoy_scores = self.affinity_scorer.score_batch_fast(
+                        [tcr] * len(decoy_peptides), decoy_peptides
+                    )
+                else:
+                    decoy_scores = [self.affinity_scorer.score(tcr, d)[0] for d in decoy_peptides]
+                mean_decoy_score = np.mean(decoy_scores)
+                total = aff_score - mean_decoy_score
+                components["decoy_mean"] = mean_decoy_score
+                components["contrast_margin"] = total
+            else:
+                total = aff_score  # Fallback if no decoy_scorer
         else:
             total = aff_score  # Fallback: raw affinity
 
@@ -194,6 +219,8 @@ class RewardManager:
                 total = aff_delta
             elif self.reward_mode == "v1_ergo_stepwise":
                 total = aff_score
+            elif self.reward_mode == "v1_ergo_shaped":
+                total = aff_score  # env handles shaped vs terminal split
             elif self.reward_mode in ("v2_decoy_only", "raw_decoy"):
                 total = aff_score - self.weights["decoy"] * decoy_score
             elif self.reward_mode in ("raw_multi_penalty", "v2_full", "v2_no_decoy", "v2_no_curriculum"):
@@ -209,6 +236,21 @@ class RewardManager:
                             - self.weights["decoy"] * decoy_score
                             - self.weights["naturalness"] * nat_score
                             - self.weights["diversity"] * div_score)
+            elif self.reward_mode == "contrastive_ergo":
+                if self.decoy_scorer is not None:
+                    decoy_peptides = self.decoy_scorer.sample_decoys(targets[i], k=self.n_contrast_decoys)
+                    if hasattr(self.affinity_scorer, 'score_batch_fast'):
+                        decoy_scores = self.affinity_scorer.score_batch_fast(
+                            [tcrs[i]] * len(decoy_peptides), decoy_peptides
+                        )
+                    else:
+                        decoy_scores = [self.affinity_scorer.score(tcrs[i], d)[0] for d in decoy_peptides]
+                    mean_decoy_score = np.mean(decoy_scores)
+                    total = aff_score - mean_decoy_score
+                    components["decoy_mean"] = mean_decoy_score
+                    components["contrast_margin"] = total
+                else:
+                    total = aff_score
             else:
                 total = aff_score  # Fallback
 
