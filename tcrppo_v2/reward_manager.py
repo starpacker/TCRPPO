@@ -130,17 +130,20 @@ class RewardManager:
             if self.decoy_scorer is not None:
                 # Sample decoys using decoy_scorer's sampler
                 decoy_peptides = self.decoy_scorer.sample_decoys(target, k=self.n_contrast_decoys)
-                # Score TCR against decoys using ERGO
-                if hasattr(self.affinity_scorer, 'score_batch_fast'):
-                    decoy_scores = self.affinity_scorer.score_batch_fast(
-                        [tcr] * len(decoy_peptides), decoy_peptides
-                    )
+                if not decoy_peptides:
+                    total = aff_score  # No decoys available, fallback
                 else:
-                    decoy_scores = [self.affinity_scorer.score(tcr, d)[0] for d in decoy_peptides]
-                mean_decoy_score = np.mean(decoy_scores)
-                total = aff_score - mean_decoy_score
-                components["decoy_mean"] = mean_decoy_score
-                components["contrast_margin"] = total
+                    # Score TCR against decoys using ERGO
+                    if hasattr(self.affinity_scorer, 'score_batch_fast'):
+                        decoy_scores = self.affinity_scorer.score_batch_fast(
+                            [tcr] * len(decoy_peptides), decoy_peptides
+                        )
+                    else:
+                        decoy_scores = [self.affinity_scorer.score(tcr, d)[0] for d in decoy_peptides]
+                    mean_decoy_score = np.mean(decoy_scores)
+                    total = aff_score - mean_decoy_score
+                    components["decoy_mean"] = mean_decoy_score
+                    components["contrast_margin"] = total
             else:
                 total = aff_score  # Fallback if no decoy_scorer
         else:
@@ -239,14 +242,17 @@ class RewardManager:
             elif self.reward_mode == "contrastive_ergo":
                 if self.decoy_scorer is not None:
                     decoy_peptides = self.decoy_scorer.sample_decoys(targets[i], k=self.n_contrast_decoys)
-                    if hasattr(self.affinity_scorer, 'score_batch_fast'):
-                        decoy_scores = self.affinity_scorer.score_batch_fast(
-                            [tcrs[i]] * len(decoy_peptides), decoy_peptides
-                        )
+                    if not decoy_peptides:
+                        total = aff_score
                     else:
-                        decoy_scores = [self.affinity_scorer.score(tcrs[i], d)[0] for d in decoy_peptides]
-                    mean_decoy_score = np.mean(decoy_scores)
-                    total = aff_score - mean_decoy_score
+                        if hasattr(self.affinity_scorer, 'score_batch_fast'):
+                            decoy_scores = self.affinity_scorer.score_batch_fast(
+                                [tcrs[i]] * len(decoy_peptides), decoy_peptides
+                            )
+                        else:
+                            decoy_scores = [self.affinity_scorer.score(tcrs[i], d)[0] for d in decoy_peptides]
+                        mean_decoy_score = np.mean(decoy_scores)
+                        total = aff_score - mean_decoy_score
                     components["decoy_mean"] = mean_decoy_score
                     components["contrast_margin"] = total
                 else:

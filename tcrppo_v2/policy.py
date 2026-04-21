@@ -119,7 +119,7 @@ class ActorCritic(nn.Module):
         op_logits = self.op_head(features)
         if action_masks is not None and "op_mask" in action_masks:
             op_logits = op_logits.masked_fill(~action_masks["op_mask"], float("-inf"))
-        op_dist = Categorical(logits=op_logits)
+        op_dist = Categorical(logits=op_logits, validate_args=False)
         op = op_dist.sample()
 
         # Head 2: position (conditioned on op)
@@ -128,14 +128,14 @@ class ActorCritic(nn.Module):
         pos_logits = self.pos_head(pos_input)
         if action_masks is not None and "pos_mask" in action_masks:
             pos_logits = pos_logits.masked_fill(~action_masks["pos_mask"], float("-inf"))
-        pos_dist = Categorical(logits=pos_logits)
+        pos_dist = Categorical(logits=pos_logits, validate_args=False)
         pos = pos_dist.sample()
 
         # Head 3: token (conditioned on op + pos, skipped for DEL/STOP)
         pos_emb = self.pos_embed(pos)
         tok_input = torch.cat([features, op_emb, pos_emb], dim=-1)
         tok_logits = self.token_head(tok_input)
-        tok_dist = Categorical(logits=tok_logits)
+        tok_dist = Categorical(logits=tok_logits, validate_args=False)
         tok = tok_dist.sample()
 
         # Value
@@ -157,7 +157,7 @@ class ActorCritic(nn.Module):
         op_logits = self.op_head(features)
         if action_masks is not None and "op_mask" in action_masks:
             op_logits = op_logits.masked_fill(~action_masks["op_mask"], float("-inf"))
-        op_dist = Categorical(logits=op_logits)
+        op_dist = Categorical(logits=op_logits, validate_args=False)
         op_log_prob = op_dist.log_prob(op_actions)
         op_entropy = op_dist.entropy()
 
@@ -167,7 +167,7 @@ class ActorCritic(nn.Module):
         pos_logits = self.pos_head(pos_input)
         if action_masks is not None and "pos_mask" in action_masks:
             pos_logits = pos_logits.masked_fill(~action_masks["pos_mask"], float("-inf"))
-        pos_dist = Categorical(logits=pos_logits)
+        pos_dist = Categorical(logits=pos_logits, validate_args=False)
         pos_log_prob = pos_dist.log_prob(pos_actions)
         pos_entropy = pos_dist.entropy()
 
@@ -175,7 +175,7 @@ class ActorCritic(nn.Module):
         pos_emb = self.pos_embed(pos_actions)
         tok_input = torch.cat([features, op_emb, pos_emb], dim=-1)
         tok_logits = self.token_head(tok_input)
-        tok_dist = Categorical(logits=tok_logits)
+        tok_dist = Categorical(logits=tok_logits, validate_args=False)
         tok_log_prob = tok_dist.log_prob(tok_actions)
         tok_entropy = tok_dist.entropy()
 
