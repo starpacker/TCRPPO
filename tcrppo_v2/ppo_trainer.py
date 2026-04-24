@@ -205,6 +205,8 @@ class PPOTrainer:
         self.gae_lambda = config.get("gae_lambda", 0.95)
         self.clip_range = config.get("clip_range", 0.2)
         self.entropy_coef = config.get("entropy_coef", 0.05)
+        self.entropy_coef_final = config.get("entropy_coef_final", None)  # None = no decay
+        self.entropy_decay_start = config.get("entropy_decay_start", 1000000)  # start decay at this step
         self.vf_coef = config.get("vf_coef", 0.5)
         self.max_grad_norm = config.get("max_grad_norm", 0.5)
         self.seed = config.get("seed", 42)
@@ -410,6 +412,7 @@ class PPOTrainer:
             esm_cache = ESMCache(
                 device=self.device,
                 tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
+                disk_cache_path=self.config.get("esm_cache_path"),
             )
             print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)")
 
@@ -496,6 +499,8 @@ class PPOTrainer:
             w_naturalness=self.config.get("w_naturalness", 0.5),
             w_diversity=self.config.get("w_diversity", 0.2),
             n_contrast_decoys=self.config.get("n_contrast_decoys", 4),
+            convex_alpha=self.config.get("convex_alpha", 3.0),
+            contrastive_agg=self.config.get("contrastive_agg", "mean"),
         )
 
         # VecEnv
@@ -663,6 +668,9 @@ class PPOTrainer:
         ep_reward_buf = np.zeros(self.n_envs)
         ep_length_buf = np.zeros(self.n_envs, dtype=int)
         next_milestone_idx = 0
+        # Skip past milestones already reached (important for resume)
+        while next_milestone_idx < len(self.milestones) and global_step >= self.milestones[next_milestone_idx]:
+            next_milestone_idx += 1
 
         # Per-env trackers for elite buffer (last obs/action before STOP)
         ep_last_obs = [None] * self.n_envs
@@ -812,11 +820,12 @@ class PPOTrainer:
                     # Value loss
                     vf_loss = F.mse_loss(values, batch["returns"])
 
-                    # Entropy bonus
+                    # Entropy bonus (with optional decay)
                     entropy_loss = -entropy.mean()
+                    current_ent_coef = self._get_entropy_coef(global_step)
 
                     # Total loss
-                    loss = pg_loss + self.vf_coef * vf_loss + self.entropy_coef * entropy_loss
+                    loss = pg_loss + self.vf_coef * vf_loss + current_ent_coef * entropy_loss
 
                     self.optimizer.zero_grad()
                     loss.backward()
@@ -866,15 +875,15 @@ class PPOTrainer:
             # Checkpointing
             if next_milestone_idx < len(self.milestones) and global_step >= self.milestones[next_milestone_idx]:
                 ms = self.milestones[next_milestone_idx]
-                self.save_checkpoint(f"milestone_{ms}")
+                self.save_checkpoint(f"milestone_{ms}", global_step)
                 print(f"  ** Milestone checkpoint saved: {ms:,} steps")
                 next_milestone_idx += 1
 
             if global_step % self.checkpoint_interval < self.n_envs * self.n_steps:
-                self.save_checkpoint("latest")
+                self.save_checkpoint("latest", global_step)
 
         # Final checkpoint
-        self.save_checkpoint("final")
+        self.save_checkpoint("final", global_step)
         print(f"\nTraining complete: {global_step:,} steps, {len(episode_rewards)} episodes")
 
         if self.logger:
@@ -893,6 +902,20 @@ class PPOTrainer:
         else:
             tiers = ["A", "B", "D", "C"]
         self.decoy_scorer.set_unlocked_tiers(tiers)
+
+    def _get_entropy_coef(self, global_step: int) -> float:
+        """Get entropy coefficient with optional linear decay."""
+        if self.entropy_coef_final is None:
+            return self.entropy_coef  # No decay
+        if global_step < self.entropy_decay_start:
+            return self.entropy_coef  # Before decay start
+        # Linear decay from entropy_coef to entropy_coef_final
+        # over remaining steps after decay_start
+        remaining_frac = (global_step - self.entropy_decay_start) / max(
+            1, self.total_timesteps - self.entropy_decay_start
+        )
+        remaining_frac = min(1.0, remaining_frac)
+        return self.entropy_coef + (self.entropy_coef_final - self.entropy_coef) * remaining_frac
 
     def _run_tfold_correction(self, global_step: int) -> None:
         """Re-score top-K elite TCRs with tFold and run correction gradient steps."""
@@ -961,7 +984,7 @@ class PPOTrainer:
             pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 
             entropy_loss = -entropy.mean()
-            loss = pg_loss + self.entropy_coef * entropy_loss
+            loss = pg_loss + self._get_entropy_coef(global_step) * entropy_loss
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -997,22 +1020,27 @@ class PPOTrainer:
             self.logger.add_scalar("tfold/n_positive", n_positive, global_step)
             self.logger.add_scalar("tfold/n_negative", n_negative, global_step)
 
-    def save_checkpoint(self, name: str) -> None:
+    def save_checkpoint(self, name: str, global_step: int = 0) -> None:
         """Save model checkpoint."""
         path = os.path.join(self.ckpt_dir, f"{name}.pt")
         torch.save({
             "policy_state_dict": self.policy.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
             "config": self.config,
+            "global_step": global_step,
         }, path)
 
     def load_checkpoint(self, path: str) -> int:
-        """Load model checkpoint. Returns the step count from the checkpoint filename, or 0."""
+        """Load model checkpoint. Returns the step count stored in checkpoint, or from filename."""
         ckpt = torch.load(path, map_location=self.device)
         self.policy.load_state_dict(ckpt["policy_state_dict"])
         self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
 
-        # Try to extract step count from filename (e.g. milestone_1000000.pt)
+        # Prefer step count stored in checkpoint
+        if "global_step" in ckpt:
+            return int(ckpt["global_step"])
+
+        # Fallback: extract step count from filename (e.g. milestone_1000000.pt)
         import re
         basename = os.path.basename(path)
         match = re.search(r'(\d+)', basename)
@@ -1063,6 +1091,7 @@ def main():
     parser.add_argument("--tfold_correction_alpha", type=float, default=None, help="Correction advantage scale (default 2.0)")
     parser.add_argument("--elite_buffer_size", type=int, default=None, help="Max elite buffer size (default 500)")
     parser.add_argument("--elite_score_threshold", type=float, default=None, help="Min ERGO score for elite (default 0.7)")
+    parser.add_argument("--max_steps", type=int, default=None, help="Max steps per episode (default 8)")
     parser.add_argument("--ban_stop", action="store_true", help="Ban STOP action — agent must use all max_steps")
 
     # Curriculum overrides
@@ -1072,6 +1101,11 @@ def main():
 
     # Contrastive reward
     parser.add_argument("--n_contrast_decoys", type=int, default=4, help="Number of decoys for contrastive_ergo reward")
+    parser.add_argument("--contrastive_agg", default="mean", choices=["mean", "max"], help="Aggregation for contrastive decoy scores: mean or max")
+    parser.add_argument("--convex_alpha", type=float, default=3.0, help="Exponent for v1_ergo_convex reward mode")
+    parser.add_argument("--entropy_coef_final", type=float, default=None, help="Final entropy coefficient (enables linear decay)")
+    parser.add_argument("--entropy_decay_start", type=int, default=None, help="Step to begin entropy decay (default: 1M)")
+    parser.add_argument("--decoy_library_path", type=str, default=None, help="Path to pMHC decoy library (default: /share/liuyutian/pMHC_decoy_library)")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -1098,6 +1132,8 @@ def main():
         config["w_diversity"] = args.w_diversity
     if args.min_steps is not None:
         config["min_steps"] = args.min_steps
+    if args.max_steps is not None:
+        config["max_steps"] = args.max_steps
     if args.min_steps_penalty is not None:
         config["min_steps_penalty"] = args.min_steps_penalty
     if args.hidden_dim is not None:
@@ -1134,6 +1170,8 @@ def main():
         config["cascade_threshold"] = args.cascade_threshold
     if args.ban_stop:
         config["ban_stop"] = True
+    if args.decoy_library_path is not None:
+        config["decoy_library_path"] = args.decoy_library_path
 
     # Curriculum overrides
     if args.curriculum_l0 is not None or args.curriculum_l1 is not None or args.curriculum_l2 is not None:
@@ -1146,6 +1184,14 @@ def main():
     # Contrastive reward config
     if args.n_contrast_decoys is not None:
         config["n_contrast_decoys"] = args.n_contrast_decoys
+    if args.contrastive_agg:
+        config["contrastive_agg"] = args.contrastive_agg
+    if args.convex_alpha is not None:
+        config["convex_alpha"] = args.convex_alpha
+    if args.entropy_coef_final is not None:
+        config["entropy_coef_final"] = args.entropy_coef_final
+    if args.entropy_decay_start is not None:
+        config["entropy_decay_start"] = args.entropy_decay_start
 
     config.setdefault("run_name", "v2_run")
 
