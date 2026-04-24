@@ -1,9 +1,27 @@
 # test27: NetTCR with 12 Steps
 
 **Date**: 2026-04-24
-**Status**: planned
-**GPU**: 1
+**Status**: failed
+**GPU**: 1,5
 **Priority**: P1
+
+## Result: FAILED - TensorFlow/PyTorch GPU Conflict
+
+**Issue**: NetTCR (TensorFlow) and ESM-2 (PyTorch) cannot coexist in the same process with GPU acceleration.
+
+**Error**: `tensorflow.python.framework.errors_impl.FailedPreconditionError: DNN library initialization failed`
+
+**Attempted solutions**:
+1. NetTCR on CPU → Too slow (10.6 seqs/s vs needed ~100+ seqs/s)
+2. Dual-GPU setup (PyTorch on GPU 1, TensorFlow on GPU 5) → Still conflicts
+3. TensorFlow `set_visible_devices` isolation → Insufficient
+
+**Root cause**: TensorFlow and PyTorch both initialize cuDNN in the same process, causing library conflicts even when using different physical GPUs.
+
+**Possible solutions** (not implemented):
+- Run NetTCR as separate process with RPC/IPC communication
+- Use lightweight encoder (CPU-based) to free GPU for NetTCR
+- Reimplement NetTCR in pure PyTorch
 
 ## Hypothesis
 
@@ -31,9 +49,9 @@ CUDA_VISIBLE_DEVICES=<GPU> /home/liuyutian/server/miniconda3/envs/tcrppo_v2/bin/
     --hidden_dim 512 \
     --max_steps 12 \
     --ban_stop \
-    --l0_prob 0.5 \
-    --l1_prob 0.2 \
-    --l2_prob 0.3
+    --curriculum_l0 0.5 \
+    --curriculum_l1 0.2 \
+    --curriculum_l2 0.3
 ```
 
 ## Key Differences from Previous Experiments

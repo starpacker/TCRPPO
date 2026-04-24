@@ -46,7 +46,8 @@
 | 34 | test23_contrastive_ergo | ✅ DONE | 2M | **0.4793** | +0.0255 | contrastive_ergo | **ERGO(target)-ERGO(decoys)**, ESM-2, ban_stop, seed=42 | 0 | Final R=0.45, contrastive helps Top1_AUC (0.905) but not decoy AUROC |
 | 35 | test24_large_batch | ✅ DONE | 2M | **0.4870** | +0.0332 | v1_ergo_only | **n_envs=32**, seed=123, ESM-2, ban_stop | 1 | Final R=2.2, large batch improves stability |
 | 36 | test26_curriculum_l0 | ✅ DONE | 2M | **0.5027** | +0.0489 | v1_ergo_only | **L0=0.5,L1=0.2,L2=0.3**, ESM-2, ban_stop, seed=42 | 4 | Final R=1.9, **BEST decoy AUROC**, curriculum works! ⭐
-| 37 | test27_nettcr_12steps | 🔄 PLANNED | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR scorer, max_steps=12**, curriculum, ESM-2, ban_stop, seed=42 | 1 | Test NetTCR + longer trajectories
+| 37 | test27_nettcr_12steps | ❌ FAILED | 0/2M | N/A | N/A | v1_ergo_only | **NetTCR scorer, max_steps=12**, curriculum, ESM-2, ban_stop, seed=42 | 1,5 | TF/PyTorch GPU conflict - cuDNN init failed
+| 38 | test28_ergo_12steps | ❌ BLOCKED | 0/2M | N/A | N/A | v1_ergo_only | **ERGO scorer, max_steps=12**, curriculum, ESM-2, ban_stop, seed=42 | 1 | Process hung after init - needs investigation
 
 ---
 

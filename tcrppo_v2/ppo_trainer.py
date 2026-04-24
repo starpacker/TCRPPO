@@ -274,7 +274,10 @@ class PPOTrainer:
         affinity_model = self.config.get("affinity_model", "ergo")
         if affinity_model == "nettcr":
             from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
-            affinity_scorer = AffinityNetTCRScorer(device=self.device)
+            # Use a second GPU for TensorFlow if available (logical GPU 1), otherwise CPU
+            cuda_devs = os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")
+            tf_gpu_id = 1 if len(cuda_devs) > 1 else None  # Logical GPU ID, not physical
+            affinity_scorer = AffinityNetTCRScorer(device=self.device, tf_gpu_id=tf_gpu_id)
             print("  NetTCR loaded")
         elif affinity_model == "tfold":
             from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
