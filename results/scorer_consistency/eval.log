@@ -1,0 +1,115 @@
+/home/liuyutian/server/miniconda3/lib/python3.9/site-packages/keras/src/saving/saving_lib.py:802: UserWarning: Skipping variable loading for optimizer 'adam', because it has 2 variables whereas the saved optimizer has 50 variables. 
+  saveable.load_own_variables(weights_store.get(inner_path))
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776957421.274635  114717 device_compiler.h:196] Compiled cluster using XLA!  This line is logged at most once for the lifetime of the process.
+/home/liuyutian/server/miniconda3/lib/python3.9/site-packages/torch/nn/modules/transformer.py:515: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+================================================================================
+TC-Hard Scorer Consistency Evaluation
+================================================================================
+
+Loading tc-hard data...
+Loaded 10 peptides, 1007 TCR-peptide pairs
+
+Initializing scorers...
+  Loading NetTCR-2.0...
+  NetTCR scorer loaded (weights: /share/liuyutian/tcrppo_v2/data/nettcr_model.weights.h5)
+  Loading ERGO...
+  Loading DeepAIR...
+  DeepAIR weights not found at /share/liuyutian/tcrppo_v2/data/deepair_model.pt, training from scratch...
+    Loading training data...
+    Warning: Training data not found at /share/liuyutian/NetTCR-2.0/data/train_beta_large.csv
+    Initializing with random weights (for testing only)
+
+Evaluating NetTCR...
+  RLRPGGKKK: 33 TCRs, mean score: 0.4284
+  GTSGSPIVNR: 176 TCRs, mean score: 0.3730
+  DTDFVNEFY: 5 TCRs, mean score: 0.4012
+  VYFLQSINF: 27 TCRs, mean score: 0.4407
+  ALYGSVPVL: 8 TCRs, mean score: 0.3650
+  ILNVDVFTL: 9 TCRs, mean score: 0.3114
+  NTNSSPDDQIGYY: 7 TCRs, mean score: 0.3005
+  VLWAHGFEL: 731 TCRs, mean score: 0.3205
+  ILNAMITKI: 6 TCRs, mean score: 0.4375
+  ALDPHSGHFV: 5 TCRs, mean score: 0.3940
+
+Evaluating ERGO...
+  RLRPGGKKK: 33 TCRs, mean score: 0.0696
+  GTSGSPIVNR: 176 TCRs, mean score: 0.1533
+  DTDFVNEFY: 5 TCRs, mean score: 0.0672
+  VYFLQSINF: 27 TCRs, mean score: 0.1432
+  ALYGSVPVL: 8 TCRs, mean score: 0.1365
+  ILNVDVFTL: 9 TCRs, mean score: 0.1261
+  NTNSSPDDQIGYY: 7 TCRs, mean score: 0.1265
+  VLWAHGFEL: 731 TCRs, mean score: 0.0975
+  ILNAMITKI: 6 TCRs, mean score: 0.3045
+  ALDPHSGHFV: 5 TCRs, mean score: 0.2030
+
+Evaluating DeepAIR...
+  RLRPGGKKK: 33 TCRs, mean score: 0.4830
+  GTSGSPIVNR: 176 TCRs, mean score: 0.4900
+  DTDFVNEFY: 5 TCRs, mean score: 0.4882
+  VYFLQSINF: 27 TCRs, mean score: 0.4911
+  ALYGSVPVL: 8 TCRs, mean score: 0.4941
+  ILNVDVFTL: 9 TCRs, mean score: 0.4930
+  NTNSSPDDQIGYY: 7 TCRs, mean score: 0.4779
+  VLWAHGFEL: 731 TCRs, mean score: 0.4978
+  ILNAMITKI: 6 TCRs, mean score: 0.4884
+  ALDPHSGHFV: 5 TCRs, mean score: 0.4960
+
+Saved raw results to /share/liuyutian/tcrppo_v2/results/scorer_consistency/scorer_results.csv
+
+================================================================================
+Correlation Analysis
+================================================================================
+
+NetTCR vs ERGO:
+  Pearson r: 0.0576 (p=6.7611e-02)
+  Spearman r: 0.0959 (p=2.3248e-03)
+
+NetTCR vs DeepAIR:
+  Pearson r: -0.3215 (p=1.2219e-25)
+  Spearman r: -0.1983 (p=2.1995e-10)
+
+ERGO vs DeepAIR:
+  Pearson r: -0.1042 (p=9.3219e-04)
+  Spearman r: -0.0489 (p=1.2067e-01)
+
+================================================================================
+Summary Statistics
+================================================================================
+
+NetTCR:
+  Mean: 0.3380
+  Std: 0.0835
+  Min: 0.0972
+  Max: 0.5119
+  Median: 0.3443
+
+ERGO:
+  Mean: 0.1100
+  Std: 0.1332
+  Min: 0.0000
+  Max: 0.7788
+  Median: 0.0586
+
+DeepAIR:
+  Mean: 0.4954
+  Std: 0.0042
+  Min: 0.4778
+  Max: 0.4981
+  Median: 0.4977
+
+================================================================================
+Generating Plots
+================================================================================
+
+Saved score distributions to /share/liuyutian/tcrppo_v2/results/scorer_consistency/score_distributions.png
+Saved correlation matrix to /share/liuyutian/tcrppo_v2/results/scorer_consistency/correlation_matrix.png
+Saved pairwise scatter plots to /share/liuyutian/tcrppo_v2/results/scorer_consistency/pairwise_scatter.png
+
+Saved summary to /share/liuyutian/tcrppo_v2/results/scorer_consistency/summary.json
+
+================================================================================
+Evaluation Complete!
+================================================================================

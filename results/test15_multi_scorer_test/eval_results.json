@@ -1,0 +1,110 @@
+{
+  "GILGFVFTL": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.4255555555555555,
+        "mean_target_score": 0.05598126333724293,
+        "mean_decoy_score": 0.08681971865985058,
+        "std_target_score": 0.06823167816609071,
+        "std_decoy_score": 0.12077042240347295,
+        "n_tcrs": 9,
+        "n_decoys_per_tcr": 30
+      },
+      "tcbind": {
+        "auroc": 0.6823333333333333,
+        "mean_target_score": 0.5762635484337807,
+        "mean_decoy_score": 0.43448781230448125,
+        "std_target_score": 0.19122565794049845,
+        "std_decoy_score": 0.23670366543647256,
+        "n_tcrs": 10,
+        "n_decoys_per_tcr": 30
+      },
+      "nettcr": {
+        "auroc": 0.21100000000000002,
+        "mean_target_score": 0.25278934463858604,
+        "mean_decoy_score": 0.32357380919158457,
+        "std_target_score": 0.19988234240403224,
+        "std_decoy_score": 0.087084368338325,
+        "n_tcrs": 10,
+        "n_decoys_per_tcr": 30
+      }
+    },
+    "n_unique": 10,
+    "mean_steps": 8.0,
+    "mean_reward": 1.0013035402516834,
+    "generated_tcrs": [
+      "IASGYAGGQTYEQYF",
+      "CATSPRSSYEQYF",
+      "CASIETEFF",
+      "MSVGWGYTF",
+      "IASKFGGEQFF",
+      "MSARPIYNEQFF",
+      "GASSGYPSFQETQYF",
+      "IASSLAVGSYNEQFF",
+      "GASGRTNTEAFF",
+      "GASSSNYGSPLHF"
+    ]
+  },
+  "NLVPMVATV": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.524074074074074,
+        "mean_target_score": 0.2154059416335359,
+        "mean_decoy_score": 0.10781797110980747,
+        "std_target_score": 0.31364782480739223,
+        "std_decoy_score": 0.1475842631262056,
+        "n_tcrs": 9,
+        "n_decoys_per_tcr": 30
+      },
+      "tcbind": {
+        "auroc": 0.3456666666666667,
+        "mean_target_score": 0.29242694533313623,
+        "mean_decoy_score": 0.43553648378098536,
+        "std_target_score": 0.26483606070352517,
+        "std_decoy_score": 0.2763849128262953,
+        "n_tcrs": 10,
+        "n_decoys_per_tcr": 30
+      },
+      "nettcr": {
+        "auroc": 0.33,
+        "mean_target_score": 0.21480037048459052,
+        "mean_decoy_score": 0.2647870276619991,
+        "std_target_score": 0.08106608418800124,
+        "std_decoy_score": 0.0866123004482677,
+        "n_tcrs": 10,
+        "n_decoys_per_tcr": 30
+      }
+    },
+    "n_unique": 10,
+    "mean_steps": 8.0,
+    "mean_reward": 1.7102102214169235,
+    "generated_tcrs": [
+      "KASSKRRIGKNGKLFF",
+      "RASHGLGGVETQYF",
+      "QSSSWGSSSSGPGETQYF",
+      "IASSDGSEQYF",
+      "NASIRGQGASKAQFF",
+      "WASTSYTLSMNTEAFF",
+      "DASSNFYEQYF",
+      "VASKWSNRSGANTIYF",
+      "HASSDSTEPFF",
+      "MSAGRAEQYF"
+    ]
+  },
+  "_summary": {
+    "mean_auroc": {
+      "ergo": 0.4748148148148148,
+      "tcbind": 0.514,
+      "nettcr": 0.2705
+    },
+    "v1_baseline": 0.4538,
+    "checkpoint": "output/test15_tcbind_lightweight/checkpoints/final.pt",
+    "n_tcrs": 10,
+    "n_decoys": 30,
+    "scorers": [
+      "ergo",
+      "tcbind",
+      "nettcr"
+    ]
+  }
+}

@@ -1,0 +1,5225 @@
+{
+  "GILGFVFTL": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.2733333333333333,
+        "mean_target_score": 0.13529060679720714,
+        "mean_decoy_score": 0.2011873293806918,
+        "std_target_score": 0.16398478009659995,
+        "std_decoy_score": 0.15621143435400095,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 48,
+        "per_tier_auroc": {
+          "A": 0.27875,
+          "B": 0.31875,
+          "D": 0.2225
+        },
+        "top1_target": 0.6756901144981384,
+        "top3_target": 0.6389761368433634,
+        "top5_target": 0.5745486915111542,
+        "top1_auroc": 0.9166666666666666,
+        "top3_auroc": 0.8055555555555555,
+        "top5_auroc": 0.8,
+        "hit_rate_07": 0.0,
+        "top1_composite": 0.6193826049566269,
+        "top5_composite": 0.4635455648104349,
+        "per_tcr_ranked": [
+          {
+            "tcr": "KSCSGGSSSNGGECQYF",
+            "target_score": 0.6756901144981384,
+            "auroc": 0.9166666666666666,
+            "composite": 0.6193826049566269,
+            "rank": 1
+          },
+          {
+            "tcr": "TSVREDTGQGLKEQYPF",
+            "target_score": 0.6446133852005005,
+            "auroc": 0.75,
+            "composite": 0.48346003890037537,
+            "rank": 2
+          },
+          {
+            "tcr": "CSARTLLIVNSEGQYF",
+            "target_score": 0.5966249108314514,
+            "auroc": 0.75,
+            "composite": 0.44746868312358856,
+            "rank": 3
+          },
+          {
+            "tcr": "CSARPRPIGYNENFF",
+            "target_score": 0.5208258628845215,
+            "auroc": 0.9166666666666666,
+            "composite": 0.47742370764414466,
+            "rank": 4
+          },
+          {
+            "tcr": "CAASASEDGLETQYF",
+            "target_score": 0.43498918414115906,
+            "auroc": 0.6666666666666667,
+            "composite": 0.2899927894274394,
+            "rank": 5
+          },
+          {
+            "tcr": "CAFSADSGGCTSLFF",
+            "target_score": 0.32011422514915466,
+            "auroc": 0.7916666666666666,
+            "composite": 0.2534237615764141,
+            "rank": 6
+          },
+          {
+            "tcr": "CASSGYDHESFETQHY",
+            "target_score": 0.2757891118526459,
+            "auroc": 0.47916666666666663,
+            "composite": 0.13214894942939281,
+            "rank": 7
+          },
+          {
+            "tcr": "CFTATSDRTDRIEQFF",
+            "target_score": 0.22651124000549316,
+            "auroc": 0.8958333333333334,
+            "composite": 0.20291631917158764,
+            "rank": 8
+          },
+          {
+            "tcr": "KASSYAGGQCAYEGTYF",
+            "target_score": 0.21068806946277618,
+            "auroc": 0.33333333333333337,
+            "composite": 0.07022935648759207,
+            "rank": 9
+          },
+          {
+            "tcr": "CASSFGTGGGYQFF",
+            "target_score": 0.2015942633152008,
+            "auroc": 0.41666666666666663,
+            "composite": 0.083997609714667,
+            "rank": 10
+          },
+          {
+            "tcr": "CAATSPRLGSYEQNF",
+            "target_score": 0.17240123450756073,
+            "auroc": 0.08333333333333337,
+            "composite": 0.014366769542296733,
+            "rank": 11
+          },
+          {
+            "tcr": "CASSSIIGGSTENGFF",
+            "target_score": 0.1630890965461731,
+            "auroc": 0.39583333333333337,
+            "composite": 0.06455610071619353,
+            "rank": 12
+          },
+          {
+            "tcr": "CAWKRAGGLHNEQFF",
+            "target_score": 0.1475348174571991,
+            "auroc": 0.7916666666666666,
+            "composite": 0.11679839715361595,
+            "rank": 13
+          },
+          {
+            "tcr": "CASRPGHHENTEAQF",
+            "target_score": 0.13241992890834808,
+            "auroc": 0.08333333333333337,
+            "composite": 0.011034994075695678,
+            "rank": 14
+          },
+          {
+            "tcr": "CASSRSNRGSYNNQF",
+            "target_score": 0.13021118938922882,
+            "auroc": 0.04166666666666663,
+            "composite": 0.005425466224551196,
+            "rank": 15
+          },
+          {
+            "tcr": "CAASKLTRVGYCEQNQ",
+            "target_score": 0.1295434832572937,
+            "auroc": 0.5208333333333333,
+            "composite": 0.06747056419650713,
+            "rank": 16
+          },
+          {
+            "tcr": "CHSVGQRHGYTF",
+            "target_score": 0.1239384263753891,
+            "auroc": 0.16666666666666663,
+            "composite": 0.02065640439589818,
+            "rank": 17
+          },
+          {
+            "tcr": "CASSDGYASIEQYGF",
+            "target_score": 0.11076411604881287,
+            "auroc": 0.125,
+            "composite": 0.013845514506101608,
+            "rank": 18
+          },
+          {
+            "tcr": "CASKLAGPTRYSYEQYF",
+            "target_score": 0.09830429404973984,
+            "auroc": 0.1875,
+            "composite": 0.01843205513432622,
+            "rank": 19
+          },
+          {
+            "tcr": "CASSTDREEHTQYN",
+            "target_score": 0.09021899849176407,
+            "auroc": 0.0625,
+            "composite": 0.005638687405735254,
+            "rank": 20
+          },
+          {
+            "tcr": "KASSQHSQGQTGINEQF",
+            "target_score": 0.08492578566074371,
+            "auroc": 0.3125,
+            "composite": 0.02653930801898241,
+            "rank": 21
+          },
+          {
+            "tcr": "CAAKRGYTREEKLGFEF",
+            "target_score": 0.08312008529901505,
+            "auroc": 0.10416666666666663,
+            "composite": 0.008658342218647398,
+            "rank": 22
+          },
+          {
+            "tcr": "CASSQSSEGSYEQGYF",
+            "target_score": 0.0810827910900116,
+            "auroc": 0.08333333333333337,
+            "composite": 0.00675689925750097,
+            "rank": 23
+          },
+          {
+            "tcr": "CSTARRAPYEQYF",
+            "target_score": 0.08049885183572769,
+            "auroc": 0.10416666666666663,
+            "composite": 0.008385297066221632,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSLDAPRAYEQGMF",
+            "target_score": 0.0788768082857132,
+            "auroc": 0.0625,
+            "composite": 0.004929800517857075,
+            "rank": 25
+          },
+          {
+            "tcr": "CATSRKVGSEQYF",
+            "target_score": 0.07398658245801926,
+            "auroc": 0.10416666666666663,
+            "composite": 0.007706935672710337,
+            "rank": 26
+          },
+          {
+            "tcr": "CASTLDKRSGNTIGF",
+            "target_score": 0.07336849719285965,
+            "auroc": 0.10416666666666663,
+            "composite": 0.007642551790922878,
+            "rank": 27
+          },
+          {
+            "tcr": "CASSSEGPIDTPSYTQYF",
+            "target_score": 0.07274222373962402,
+            "auroc": 0.0625,
+            "composite": 0.0045463889837265015,
+            "rank": 28
+          },
+          {
+            "tcr": "CSAETWPDGSNKETQTQF",
+            "target_score": 0.07216866314411163,
+            "auroc": 0.14583333333333337,
+            "composite": 0.010524596708516283,
+            "rank": 29
+          },
+          {
+            "tcr": "CASARRGQNAPEQNGF",
+            "target_score": 0.06610262393951416,
+            "auroc": 0.08333333333333337,
+            "composite": 0.005508551994959515,
+            "rank": 30
+          },
+          {
+            "tcr": "CSVPEEWEPEANYY",
+            "target_score": 0.05757531896233559,
+            "auroc": 0.1875,
+            "composite": 0.010795372305437922,
+            "rank": 31
+          },
+          {
+            "tcr": "CASSIPLAGVYEQGF",
+            "target_score": 0.05084272474050522,
+            "auroc": 0.10416666666666663,
+            "composite": 0.005296117160469292,
+            "rank": 32
+          },
+          {
+            "tcr": "CGASSFLQTTRGYTF",
+            "target_score": 0.04714318364858627,
+            "auroc": 0.1875,
+            "composite": 0.008839346934109926,
+            "rank": 33
+          },
+          {
+            "tcr": "CGATSPQARGTQYF",
+            "target_score": 0.046798087656497955,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 34
+          },
+          {
+            "tcr": "CASSQGGGSFRIGTF",
+            "target_score": 0.043386831879615784,
+            "auroc": 0.1875,
+            "composite": 0.00813503097742796,
+            "rank": 35
+          },
+          {
+            "tcr": "CASSQQTLGCSVSSYEQYF",
+            "target_score": 0.0397910512983799,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0008289802353829161,
+            "rank": 36
+          },
+          {
+            "tcr": "CASSNRGTAGEAQYGF",
+            "target_score": 0.03780308738350868,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0007875643204897656,
+            "rank": 37
+          },
+          {
+            "tcr": "CASTNPAGGGGTEAFF",
+            "target_score": 0.0333622507750988,
+            "auroc": 0.1875,
+            "composite": 0.006255422020331025,
+            "rank": 38
+          },
+          {
+            "tcr": "CASHKSLAGVETQYF",
+            "target_score": 0.032446421682834625,
+            "auroc": 0.22916666666666663,
+            "composite": 0.007435638302316267,
+            "rank": 39
+          },
+          {
+            "tcr": "CSVAAGGRETAYF",
+            "target_score": 0.032191529870033264,
+            "auroc": 0.25,
+            "composite": 0.008047882467508316,
+            "rank": 40
+          },
+          {
+            "tcr": "CASSPSVNYNSPLGF",
+            "target_score": 0.03217776119709015,
+            "auroc": 0.0625,
+            "composite": 0.0020111100748181343,
+            "rank": 41
+          },
+          {
+            "tcr": "CASNTGAGLSDEQAGYF",
+            "target_score": 0.03159591928124428,
+            "auroc": 0.02083333333333337,
+            "composite": 0.000658248318359257,
+            "rank": 42
+          },
+          {
+            "tcr": "CATTSEYGTSGEQFN",
+            "target_score": 0.025987552478909492,
+            "auroc": 0.625,
+            "composite": 0.016242220299318433,
+            "rank": 43
+          },
+          {
+            "tcr": "CAIKEGLAGGNNEGQF",
+            "target_score": 0.021114319562911987,
+            "auroc": 0.0625,
+            "composite": 0.0013196449726819992,
+            "rank": 44
+          },
+          {
+            "tcr": "CATSSLEGQLNGPQHF",
+            "target_score": 0.02024267613887787,
+            "auroc": 0.7083333333333333,
+            "composite": 0.014338562265038489,
+            "rank": 45
+          },
+          {
+            "tcr": "CASSRGTGKNEPNMLF",
+            "target_score": 0.01729690097272396,
+            "auroc": 0.0625,
+            "composite": 0.0010810563107952476,
+            "rank": 46
+          },
+          {
+            "tcr": "CASTRQGLMNTEAGF",
+            "target_score": 0.008612994104623795,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0001794373771796627,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSEYFPTDRKNGLFF",
+            "target_score": 0.007115804124623537,
+            "auroc": 0.0625,
+            "composite": 0.00044473775778897107,
+            "rank": 48
+          },
+          {
+            "tcr": "CAKMDTGVEAFF",
+            "target_score": 0.004826580639928579,
+            "auroc": 0.10416666666666663,
+            "composite": 0.0005027688166592268,
+            "rank": 49
+          },
+          {
+            "tcr": "CASNAGAMQPLH",
+            "target_score": 0.0014804784441366792,
+            "auroc": 0.02083333333333337,
+            "composite": 3.0843300919514204e-05,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 4.8,
+    "mean_reward": 0.8531534181273309,
+    "generated_tcrs": [
+      "KASSYAGGQCAYEGTYF",
+      "CAATSPRLGSYEQNF",
+      "CAKMDTGVEAFF",
+      "CHSVGQRHGYTF",
+      "CASSFGTGGGYQFF",
+      "CSARPRPIGYNENFF",
+      "CASSGYDHESFETQHY",
+      "CASSRSNRGSYNNQF",
+      "CASRPGHHENTEAQF",
+      "CASSPSVNYNSPLGF",
+      "CASSRGTGKNEPNMLF",
+      "CASHKSLAGVETQYF",
+      "KSCSGGSSSNGGECQYF",
+      "CASSDGYASIEQYGF",
+      "CASARRGQNAPEQNGF",
+      "CASTRQGLMNTEAGF",
+      "CAASKLTRVGYCEQNQ",
+      "CASTLDKRSGNTIGF",
+      "CAFSADSGGCTSLFF",
+      "CSTARRAPYEQYF",
+      "CSARTLLIVNSEGQYF",
+      "CASTNPAGGGGTEAFF",
+      "CASSEYFPTDRKNGLFF",
+      "KASSQHSQGQTGINEQF",
+      "CASSQSSEGSYEQGYF",
+      "CASNAGAMQPLH",
+      "CGATSPQARGTQYF",
+      "CASKLAGPTRYSYEQYF",
+      "CATSSLEGQLNGPQHF",
+      "CAIKEGLAGGNNEGQF",
+      "CAWKRAGGLHNEQFF",
+      "CATSRKVGSEQYF",
+      "CASSSIIGGSTENGFF",
+      "CASSLDAPRAYEQGMF",
+      "CAASASEDGLETQYF",
+      "CSVAAGGRETAYF",
+      "CASSNRGTAGEAQYGF",
+      "CASSTDREEHTQYN",
+      "CAAKRGYTREEKLGFEF",
+      "CGASSFLQTTRGYTF",
+      "CASNTGAGLSDEQAGYF",
+      "CASSQGGGSFRIGTF",
+      "CSVPEEWEPEANYY",
+      "CASSSEGPIDTPSYTQYF",
+      "TSVREDTGQGLKEQYPF",
+      "CATTSEYGTSGEQFN",
+      "CFTATSDRTDRIEQFF",
+      "CSAETWPDGSNKETQTQF",
+      "CASSIPLAGVYEQGF",
+      "CASSQQTLGCSVSSYEQYF"
+    ]
+  },
+  "NLVPMVATV": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.33375,
+        "mean_target_score": 0.1995268789958209,
+        "mean_decoy_score": 0.2192575244371134,
+        "std_target_score": 0.1937282886200595,
+        "std_decoy_score": 0.1425283967507052,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 48,
+        "per_tier_auroc": {
+          "A": 0.37,
+          "B": 0.3225,
+          "D": 0.30875
+        },
+        "top1_target": 0.9712852239608765,
+        "top3_target": 0.7364132205645243,
+        "top5_target": 0.647559255361557,
+        "top1_auroc": 1.0,
+        "top3_auroc": 1.0,
+        "top5_auroc": 0.9916666666666666,
+        "hit_rate_07": 0.02,
+        "top1_composite": 0.9712852239608765,
+        "top5_composite": 0.6432736027985811,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CAIPDVSSLFEVTTH",
+            "target_score": 0.9712852239608765,
+            "auroc": 1.0,
+            "composite": 0.9712852239608765,
+            "rank": 1
+          },
+          {
+            "tcr": "CAEPRGFFVNDPQH",
+            "target_score": 0.6715185642242432,
+            "auroc": 1.0,
+            "composite": 0.6715185642242432,
+            "rank": 2
+          },
+          {
+            "tcr": "CASNDWEPRYQPQHF",
+            "target_score": 0.5664358735084534,
+            "auroc": 1.0,
+            "composite": 0.5664358735084534,
+            "rank": 3
+          },
+          {
+            "tcr": "CSVNPTLQYHYGYTF",
+            "target_score": 0.5536381602287292,
+            "auroc": 0.9791666666666666,
+            "composite": 0.5421040318906307,
+            "rank": 4
+          },
+          {
+            "tcr": "CAINQMGSYHGYTF",
+            "target_score": 0.4749184548854828,
+            "auroc": 0.9791666666666666,
+            "composite": 0.4650243204087019,
+            "rank": 5
+          },
+          {
+            "tcr": "CASSFEPGLHNQPQHF",
+            "target_score": 0.4104299247264862,
+            "auroc": 0.9791666666666666,
+            "composite": 0.4018793012946844,
+            "rank": 6
+          },
+          {
+            "tcr": "CSIPLGQWAAGDYEGYTF",
+            "target_score": 0.4020625054836273,
+            "auroc": 0.8333333333333334,
+            "composite": 0.33505208790302277,
+            "rank": 7
+          },
+          {
+            "tcr": "CASQAKTGYHIEGYTF",
+            "target_score": 0.39263054728507996,
+            "auroc": 0.875,
+            "composite": 0.34355172887444496,
+            "rank": 8
+          },
+          {
+            "tcr": "CSANSWLAYTHTQYF",
+            "target_score": 0.3825080394744873,
+            "auroc": 0.7083333333333333,
+            "composite": 0.2709431946277618,
+            "rank": 9
+          },
+          {
+            "tcr": "CAENRDYGAHPEQYF",
+            "target_score": 0.34948763251304626,
+            "auroc": 0.10416666666666663,
+            "composite": 0.03640496172010897,
+            "rank": 10
+          },
+          {
+            "tcr": "CASNISYIYHTGYTF",
+            "target_score": 0.3332565724849701,
+            "auroc": 0.8333333333333334,
+            "composite": 0.2777138104041418,
+            "rank": 11
+          },
+          {
+            "tcr": "CASKLSYAYHQETQYF",
+            "target_score": 0.32263004779815674,
+            "auroc": 0.16666666666666663,
+            "composite": 0.05377167463302611,
+            "rank": 12
+          },
+          {
+            "tcr": "CAINRPYGYHANE",
+            "target_score": 0.2674463093280792,
+            "auroc": 0.22916666666666663,
+            "composite": 0.061289779221018144,
+            "rank": 13
+          },
+          {
+            "tcr": "CAESHTPNYHGEHF",
+            "target_score": 0.24879992008209229,
+            "auroc": 0.08333333333333337,
+            "composite": 0.0207333266735077,
+            "rank": 14
+          },
+          {
+            "tcr": "CASSSSGQANHEHHF",
+            "target_score": 0.2375858724117279,
+            "auroc": 0.125,
+            "composite": 0.029698234051465988,
+            "rank": 15
+          },
+          {
+            "tcr": "CSVPTGWTYCTHYF",
+            "target_score": 0.21890336275100708,
+            "auroc": 0.0625,
+            "composite": 0.013681460171937943,
+            "rank": 16
+          },
+          {
+            "tcr": "CASSFYSGPWSQPYF",
+            "target_score": 0.2063678652048111,
+            "auroc": 0.0625,
+            "composite": 0.012897991575300694,
+            "rank": 17
+          },
+          {
+            "tcr": "CASSSPPATNAGEQYF",
+            "target_score": 0.2026323825120926,
+            "auroc": 0.5833333333333333,
+            "composite": 0.118202223132054,
+            "rank": 18
+          },
+          {
+            "tcr": "CSASSWGLVHLNEQFF",
+            "target_score": 0.19489870965480804,
+            "auroc": 0.14583333333333337,
+            "composite": 0.02842272849132618,
+            "rank": 19
+          },
+          {
+            "tcr": "CASNQPRLAHQYNEQFF",
+            "target_score": 0.19154228270053864,
+            "auroc": 0.25,
+            "composite": 0.04788557067513466,
+            "rank": 20
+          },
+          {
+            "tcr": "CSARRSTGAEAPF",
+            "target_score": 0.1857350915670395,
+            "auroc": 0.10416666666666663,
+            "composite": 0.019347405371566605,
+            "rank": 21
+          },
+          {
+            "tcr": "CASNKASSVEHEQYF",
+            "target_score": 0.17712245881557465,
+            "auroc": 0.04166666666666663,
+            "composite": 0.007380102450648937,
+            "rank": 22
+          },
+          {
+            "tcr": "CLESPQNSYHETNYF",
+            "target_score": 0.15865422785282135,
+            "auroc": 0.14583333333333337,
+            "composite": 0.02313707489520312,
+            "rank": 23
+          },
+          {
+            "tcr": "CASSLDRGDDHPQHF",
+            "target_score": 0.13914114236831665,
+            "auroc": 0.625,
+            "composite": 0.0869632139801979,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSAGTRSSTDTQYF",
+            "target_score": 0.12178164720535278,
+            "auroc": 0.16666666666666663,
+            "composite": 0.020296941200892125,
+            "rank": 25
+          },
+          {
+            "tcr": "CAERDQGRGHETQYF",
+            "target_score": 0.12154088169336319,
+            "auroc": 0.0625,
+            "composite": 0.007596305105835199,
+            "rank": 26
+          },
+          {
+            "tcr": "CASSLARVYGSSTDTQYF",
+            "target_score": 0.11618419736623764,
+            "auroc": 0.47916666666666663,
+            "composite": 0.055671594571322196,
+            "rank": 27
+          },
+          {
+            "tcr": "CASSGWDRYHAEEYF",
+            "target_score": 0.0994541123509407,
+            "auroc": 0.04166666666666663,
+            "composite": 0.004143921347955859,
+            "rank": 28
+          },
+          {
+            "tcr": "CASSVEGQSEEEQFF",
+            "target_score": 0.09941205382347107,
+            "auroc": 0.0625,
+            "composite": 0.006213253363966942,
+            "rank": 29
+          },
+          {
+            "tcr": "CASSQQAYYHEQRYF",
+            "target_score": 0.0945960283279419,
+            "auroc": 0.0625,
+            "composite": 0.005912251770496368,
+            "rank": 30
+          },
+          {
+            "tcr": "CASNHNTRYNEEQFF",
+            "target_score": 0.09310734272003174,
+            "auroc": 0.39583333333333337,
+            "composite": 0.03685498982667923,
+            "rank": 31
+          },
+          {
+            "tcr": "CASSPAGAITGELFF",
+            "target_score": 0.08638329058885574,
+            "auroc": 0.5833333333333333,
+            "composite": 0.05039025284349918,
+            "rank": 32
+          },
+          {
+            "tcr": "CASSQHGQGNGLHHQYF",
+            "target_score": 0.0828998014330864,
+            "auroc": 0.08333333333333337,
+            "composite": 0.006908316786090536,
+            "rank": 33
+          },
+          {
+            "tcr": "CATSRGETFHYFHQYF",
+            "target_score": 0.08190811425447464,
+            "auroc": 0.10416666666666663,
+            "composite": 0.008532095234841105,
+            "rank": 34
+          },
+          {
+            "tcr": "CASSPVPNGHDEKLFF",
+            "target_score": 0.07859129458665848,
+            "auroc": 0.5833333333333333,
+            "composite": 0.04584492184221744,
+            "rank": 35
+          },
+          {
+            "tcr": "CASSLRGTGHNSPLHF",
+            "target_score": 0.07773999124765396,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 36
+          },
+          {
+            "tcr": "CASFRNYAGTHEQYF",
+            "target_score": 0.07524629682302475,
+            "auroc": 0.04166666666666663,
+            "composite": 0.0031352623676260283,
+            "rank": 37
+          },
+          {
+            "tcr": "CASTAAAGGHLYTF",
+            "target_score": 0.06493891775608063,
+            "auroc": 0.10416666666666663,
+            "composite": 0.006764470599591729,
+            "rank": 38
+          },
+          {
+            "tcr": "CASSESPPYHTEAFF",
+            "target_score": 0.0642479732632637,
+            "auroc": 0.16666666666666663,
+            "composite": 0.010707995543877281,
+            "rank": 39
+          },
+          {
+            "tcr": "CASSSTGTGNTGLFF",
+            "target_score": 0.06317024677991867,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 40
+          },
+          {
+            "tcr": "CASSPSNILAHDEQFF",
+            "target_score": 0.060860853642225266,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0012679344508796952,
+            "rank": 41
+          },
+          {
+            "tcr": "CATSGNTGELFF",
+            "target_score": 0.05939509719610214,
+            "auroc": 0.0625,
+            "composite": 0.003712193574756384,
+            "rank": 42
+          },
+          {
+            "tcr": "CSALGLADSHHDTQYF",
+            "target_score": 0.04572593420743942,
+            "auroc": 0.08333333333333337,
+            "composite": 0.0038104945172866204,
+            "rank": 43
+          },
+          {
+            "tcr": "CASNFRGIDHREQYF",
+            "target_score": 0.04441116750240326,
+            "auroc": 0.16666666666666663,
+            "composite": 0.0074018612504005415,
+            "rank": 44
+          },
+          {
+            "tcr": "CHANGTTGSSTNEQFF",
+            "target_score": 0.0438833087682724,
+            "auroc": 0.125,
+            "composite": 0.00548541359603405,
+            "rank": 45
+          },
+          {
+            "tcr": "CASSTGQTREPQYF",
+            "target_score": 0.015537855215370655,
+            "auroc": 0.0625,
+            "composite": 0.0009711159509606659,
+            "rank": 46
+          },
+          {
+            "tcr": "CASSSLVLYGWNVGELFF",
+            "target_score": 0.013531823642551899,
+            "auroc": 0.14583333333333337,
+            "composite": 0.0019733909478721525,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSHGAWDHEQYF",
+            "target_score": 0.004853537306189537,
+            "auroc": 0.125,
+            "composite": 0.0006066921632736921,
+            "rank": 48
+          },
+          {
+            "tcr": "CASNNPQGHYEQYF",
+            "target_score": 0.0036644290667027235,
+            "auroc": 0.9583333333333334,
+            "composite": 0.0035117445222567767,
+            "rank": 49
+          },
+          {
+            "tcr": "CASKIVGVANLYQYF",
+            "target_score": 0.0036465812008827925,
+            "auroc": 0.08333333333333337,
+            "composite": 0.0003038817667402328,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.4,
+    "mean_reward": 1.2760243573138723,
+    "generated_tcrs": [
+      "CSIPLGQWAAGDYEGYTF",
+      "CASKLSYAYHQETQYF",
+      "CATSRGETFHYFHQYF",
+      "CASTAAAGGHLYTF",
+      "CATSGNTGELFF",
+      "CASFRNYAGTHEQYF",
+      "CASSQQAYYHEQRYF",
+      "CASSFYSGPWSQPYF",
+      "CASSGWDRYHAEEYF",
+      "CASSSTGTGNTGLFF",
+      "CASNFRGIDHREQYF",
+      "CASQAKTGYHIEGYTF",
+      "CASSSLVLYGWNVGELFF",
+      "CAERDQGRGHETQYF",
+      "CASSPSNILAHDEQFF",
+      "CASSTGQTREPQYF",
+      "CAENRDYGAHPEQYF",
+      "CSANSWLAYTHTQYF",
+      "CASSFEPGLHNQPQHF",
+      "CHANGTTGSSTNEQFF",
+      "CASNISYIYHTGYTF",
+      "CLESPQNSYHETNYF",
+      "CASSPAGAITGELFF",
+      "CASNHNTRYNEEQFF",
+      "CASSESPPYHTEAFF",
+      "CASNKASSVEHEQYF",
+      "CASNNPQGHYEQYF",
+      "CASSLRGTGHNSPLHF",
+      "CSALGLADSHHDTQYF",
+      "CASSSSGQANHEHHF",
+      "CASKIVGVANLYQYF",
+      "CASSHGAWDHEQYF",
+      "CSVNPTLQYHYGYTF",
+      "CSARRSTGAEAPF",
+      "CASSSPPATNAGEQYF",
+      "CASSPVPNGHDEKLFF",
+      "CSVPTGWTYCTHYF",
+      "CAINRPYGYHANE",
+      "CAINQMGSYHGYTF",
+      "CASNDWEPRYQPQHF",
+      "CASSAGTRSSTDTQYF",
+      "CAEPRGFFVNDPQH",
+      "CSASSWGLVHLNEQFF",
+      "CASNQPRLAHQYNEQFF",
+      "CASSLARVYGSSTDTQYF",
+      "CAIPDVSSLFEVTTH",
+      "CASSVEGQSEEEQFF",
+      "CASSQHGQGNGLHHQYF",
+      "CAESHTPNYHGEHF",
+      "CASSLDRGDDHPQHF"
+    ]
+  },
+  "GLCTLVAML": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.21750000000000003,
+        "mean_target_score": 0.08878781020059251,
+        "mean_decoy_score": 0.1652078843347428,
+        "std_target_score": 0.0892235405518168,
+        "std_decoy_score": 0.1317325076345449,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 48,
+        "per_tier_auroc": {
+          "A": 0.18375,
+          "B": 0.24375,
+          "D": 0.225
+        },
+        "top1_target": 0.378399521112442,
+        "top3_target": 0.33456581830978394,
+        "top5_target": 0.28701172173023226,
+        "top1_auroc": 0.8958333333333334,
+        "top3_auroc": 0.6875,
+        "top5_auroc": 0.6125,
+        "hit_rate_07": 0.0,
+        "top1_composite": 0.338982904329896,
+        "top5_composite": 0.1920663608238101,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CAWSVILLGYTF",
+            "target_score": 0.378399521112442,
+            "auroc": 0.8958333333333334,
+            "composite": 0.338982904329896,
+            "rank": 1
+          },
+          {
+            "tcr": "CSVAQAYYEEMHQYF",
+            "target_score": 0.36831673979759216,
+            "auroc": 0.9583333333333334,
+            "composite": 0.3529702089726925,
+            "rank": 2
+          },
+          {
+            "tcr": "CAASEVRLAGGEQFF",
+            "target_score": 0.2569811940193176,
+            "auroc": 0.20833333333333337,
+            "composite": 0.05353774875402451,
+            "rank": 3
+          },
+          {
+            "tcr": "CAASDRGLAGGGQFF",
+            "target_score": 0.22239765524864197,
+            "auroc": 0.4375,
+            "composite": 0.09729897417128086,
+            "rank": 4
+          },
+          {
+            "tcr": "CSAEPTGYAHWSF",
+            "target_score": 0.20896349847316742,
+            "auroc": 0.5625,
+            "composite": 0.11754196789115667,
+            "rank": 5
+          },
+          {
+            "tcr": "CAATSGRWNGQFF",
+            "target_score": 0.17948879301548004,
+            "auroc": 0.20833333333333337,
+            "composite": 0.037393498544891685,
+            "rank": 6
+          },
+          {
+            "tcr": "CSVITRGLADHTQYF",
+            "target_score": 0.17746776342391968,
+            "auroc": 0.5625,
+            "composite": 0.09982561692595482,
+            "rank": 7
+          },
+          {
+            "tcr": "CAYKLKLNGESEQDF",
+            "target_score": 0.1728590428829193,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 8
+          },
+          {
+            "tcr": "CALAEERGRKAFGA",
+            "target_score": 0.15989769995212555,
+            "auroc": 0.25,
+            "composite": 0.03997442498803139,
+            "rank": 9
+          },
+          {
+            "tcr": "AESARRAVFHPQGF",
+            "target_score": 0.15774235129356384,
+            "auroc": 0.7708333333333334,
+            "composite": 0.12159306245545547,
+            "rank": 10
+          },
+          {
+            "tcr": "CSAFPDVSYPLHT",
+            "target_score": 0.15516340732574463,
+            "auroc": 0.4375,
+            "composite": 0.06788399070501328,
+            "rank": 11
+          },
+          {
+            "tcr": "CLTSRERGGHSDFF",
+            "target_score": 0.15512347221374512,
+            "auroc": 0.25,
+            "composite": 0.03878086805343628,
+            "rank": 12
+          },
+          {
+            "tcr": "CALPTRPQEHHYF",
+            "target_score": 0.15314504504203796,
+            "auroc": 0.20833333333333337,
+            "composite": 0.03190521771709125,
+            "rank": 13
+          },
+          {
+            "tcr": "GATNSGWPYQVNEQFF",
+            "target_score": 0.1523037999868393,
+            "auroc": 0.9583333333333334,
+            "composite": 0.145957808320721,
+            "rank": 14
+          },
+          {
+            "tcr": "CIASQAGHKEQTF",
+            "target_score": 0.14790619909763336,
+            "auroc": 0.3125,
+            "composite": 0.046220687218010426,
+            "rank": 15
+          },
+          {
+            "tcr": "CSGSKRRETEESFMF",
+            "target_score": 0.12268107384443283,
+            "auroc": 0.5208333333333333,
+            "composite": 0.06389639262730876,
+            "rank": 16
+          },
+          {
+            "tcr": "CASNSEGSTAFHTQYF",
+            "target_score": 0.11341968923807144,
+            "auroc": 0.14583333333333337,
+            "composite": 0.016540371347218755,
+            "rank": 17
+          },
+          {
+            "tcr": "CASTALPWYHTQYF",
+            "target_score": 0.0923953726887703,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 18
+          },
+          {
+            "tcr": "CATRRSSSFHEQYF",
+            "target_score": 0.0919879600405693,
+            "auroc": 0.08333333333333337,
+            "composite": 0.007665663336714112,
+            "rank": 19
+          },
+          {
+            "tcr": "CASSVAGTAEPLHF",
+            "target_score": 0.0738314762711525,
+            "auroc": 0.3125,
+            "composite": 0.023072336334735155,
+            "rank": 20
+          },
+          {
+            "tcr": "CLSSQGDVDPHATEAFF",
+            "target_score": 0.0716894194483757,
+            "auroc": 0.08333333333333337,
+            "composite": 0.005974118287364645,
+            "rank": 21
+          },
+          {
+            "tcr": "CQASQSVSPEVEEQEF",
+            "target_score": 0.06989753246307373,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 22
+          },
+          {
+            "tcr": "CASSLESGQGGESFF",
+            "target_score": 0.06562767177820206,
+            "auroc": 0.125,
+            "composite": 0.008203458972275257,
+            "rank": 23
+          },
+          {
+            "tcr": "CSVGWPSYNEQFS",
+            "target_score": 0.056160151958465576,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0011700031658013683,
+            "rank": 24
+          },
+          {
+            "tcr": "HASSPGGGRMTNQPQHF",
+            "target_score": 0.05527270957827568,
+            "auroc": 0.16666666666666663,
+            "composite": 0.009212118263045944,
+            "rank": 25
+          },
+          {
+            "tcr": "CSASPRRIQGKEGELFF",
+            "target_score": 0.05513394623994827,
+            "auroc": 0.08333333333333337,
+            "composite": 0.004594495519995691,
+            "rank": 26
+          },
+          {
+            "tcr": "CSVLGLAAYPDHQYF",
+            "target_score": 0.05482356995344162,
+            "auroc": 0.04166666666666663,
+            "composite": 0.002284315414726732,
+            "rank": 27
+          },
+          {
+            "tcr": "CASSLRDRMNHEAFF",
+            "target_score": 0.054099395871162415,
+            "auroc": 0.29166666666666663,
+            "composite": 0.015778990462422367,
+            "rank": 28
+          },
+          {
+            "tcr": "CISVTIGKSYHF",
+            "target_score": 0.051441777497529984,
+            "auroc": 0.9583333333333334,
+            "composite": 0.04929837010179957,
+            "rank": 29
+          },
+          {
+            "tcr": "CAESLRTGWCHTQYF",
+            "target_score": 0.042552586644887924,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 30
+          },
+          {
+            "tcr": "CARSNTGRYHYAEQYF",
+            "target_score": 0.04045175760984421,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 31
+          },
+          {
+            "tcr": "CSPSQDGRGYGYTQF",
+            "target_score": 0.037671852856874466,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 32
+          },
+          {
+            "tcr": "CASKVRQSYSPLHF",
+            "target_score": 0.03444116190075874,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0007175242062658085,
+            "rank": 33
+          },
+          {
+            "tcr": "CASSGDDDVSKGEKLFF",
+            "target_score": 0.03423120826482773,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 34
+          },
+          {
+            "tcr": "CSARGFGMSAQFF",
+            "target_score": 0.033914174884557724,
+            "auroc": 0.3125,
+            "composite": 0.010598179651424289,
+            "rank": 35
+          },
+          {
+            "tcr": "CSARKPLQGETQYF",
+            "target_score": 0.030797502025961876,
+            "auroc": 0.02083333333333337,
+            "composite": 0.0006416146255408735,
+            "rank": 36
+          },
+          {
+            "tcr": "CSVEDLGQGHHHPQYF",
+            "target_score": 0.026641525328159332,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 37
+          },
+          {
+            "tcr": "CASRATGAAEHQYF",
+            "target_score": 0.020628882572054863,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 38
+          },
+          {
+            "tcr": "CASGLGLGYGEAFF",
+            "target_score": 0.012585446238517761,
+            "auroc": 0.02083333333333337,
+            "composite": 0.00026219679663578714,
+            "rank": 39
+          },
+          {
+            "tcr": "CSATRDRKSYHYEQYF",
+            "target_score": 0.010114205069839954,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 40
+          },
+          {
+            "tcr": "CAISESTSGTHNEQFF",
+            "target_score": 0.009228612296283245,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 41
+          },
+          {
+            "tcr": "CAASSSPADSGGANEQF",
+            "target_score": 0.00773061765357852,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 42
+          },
+          {
+            "tcr": "CSTGSPYNEPGFF",
+            "target_score": 0.006074916105717421,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 43
+          },
+          {
+            "tcr": "CANRLAGGYHAQYF",
+            "target_score": 0.0054090130142867565,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 44
+          },
+          {
+            "tcr": "CASSRFTSSFLSYEQYF",
+            "target_score": 0.0036598811857402325,
+            "auroc": 0.02083333333333337,
+            "composite": 7.624752470292165e-05,
+            "rank": 45
+          },
+          {
+            "tcr": "CASNAGGGTDHQYF",
+            "target_score": 0.003368921810761094,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 46
+          },
+          {
+            "tcr": "CASWSNSGHITYNEQFF",
+            "target_score": 0.0031211667228490114,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSLAELENLANNIQYF",
+            "target_score": 0.0010690183844417334,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 48
+          },
+          {
+            "tcr": "CASLGGYIADTQEQYF",
+            "target_score": 0.0008662908803671598,
+            "auroc": 0.0,
+            "composite": 0.0,
+            "rank": 49
+          },
+          {
+            "tcr": "CARGGGSGHVLTF",
+            "target_score": 0.00021383882267400622,
+            "auroc": 0.625,
+            "composite": 0.0001336492641712539,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.16,
+    "mean_reward": 0.7058759807790921,
+    "generated_tcrs": [
+      "CSGSKRRETEESFMF",
+      "CARSNTGRYHYAEQYF",
+      "CQASQSVSPEVEEQEF",
+      "CIASQAGHKEQTF",
+      "CALPTRPQEHHYF",
+      "CANRLAGGYHAQYF",
+      "CATRRSSSFHEQYF",
+      "AESARRAVFHPQGF",
+      "CASTALPWYHTQYF",
+      "CALAEERGRKAFGA",
+      "CASKVRQSYSPLHF",
+      "CASSGDDDVSKGEKLFF",
+      "CSARGFGMSAQFF",
+      "CSATRDRKSYHYEQYF",
+      "CSAFPDVSYPLHT",
+      "CASNAGGGTDHQYF",
+      "CASNSEGSTAFHTQYF",
+      "CASSLRDRMNHEAFF",
+      "GATNSGWPYQVNEQFF",
+      "CISVTIGKSYHF",
+      "CASWSNSGHITYNEQFF",
+      "CAASEVRLAGGEQFF",
+      "CAESLRTGWCHTQYF",
+      "CAATSGRWNGQFF",
+      "CARGGGSGHVLTF",
+      "CSVLGLAAYPDHQYF",
+      "CSASPRRIQGKEGELFF",
+      "CAASSSPADSGGANEQF",
+      "CASLGGYIADTQEQYF",
+      "CAYKLKLNGESEQDF",
+      "CSARKPLQGETQYF",
+      "CLTSRERGGHSDFF",
+      "HASSPGGGRMTNQPQHF",
+      "CASSLAELENLANNIQYF",
+      "CAASDRGLAGGGQFF",
+      "CSVITRGLADHTQYF",
+      "CSVAQAYYEEMHQYF",
+      "CLSSQGDVDPHATEAFF",
+      "CSPSQDGRGYGYTQF",
+      "CSTGSPYNEPGFF",
+      "CSVEDLGQGHHHPQYF",
+      "CAWSVILLGYTF",
+      "CASSLESGQGGESFF",
+      "CASGLGLGYGEAFF",
+      "CASSVAGTAEPLHF",
+      "CAISESTSGTHNEQFF",
+      "CASSRFTSSFLSYEQYF",
+      "CSAEPTGYAHWSF",
+      "CASRATGAAEHQYF",
+      "CSVGWPSYNEQFS"
+    ]
+  },
+  "LLWNGPMAV": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.5933333333333333,
+        "mean_target_score": 0.23860461669508368,
+        "mean_decoy_score": 0.1674242939240018,
+        "std_target_score": 0.167392127800257,
+        "std_decoy_score": 0.12772643690083565,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 30,
+        "per_tier_auroc": {
+          "A": 0.6085714285714285,
+          "B": 0.58
+        },
+        "top1_target": 0.6205053329467773,
+        "top3_target": 0.5798668464024862,
+        "top5_target": 0.5402056038379669,
+        "top1_auroc": 1.0,
+        "top3_auroc": 1.0,
+        "top5_auroc": 0.9866666666666667,
+        "hit_rate_07": 0.0,
+        "top1_composite": 0.6205053329467773,
+        "top5_composite": 0.5340819668769836,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CSANWSFLYHNEQFF",
+            "target_score": 0.6205053329467773,
+            "auroc": 1.0,
+            "composite": 0.6205053329467773,
+            "rank": 1
+          },
+          {
+            "tcr": "TATNWEGRYHTQF",
+            "target_score": 0.5636995434761047,
+            "auroc": 1.0,
+            "composite": 0.5636995434761047,
+            "rank": 2
+          },
+          {
+            "tcr": "CADNEARDSHHGYTF",
+            "target_score": 0.5553956627845764,
+            "auroc": 1.0,
+            "composite": 0.5553956627845764,
+            "rank": 3
+          },
+          {
+            "tcr": "CSASGGQGYHHEQFF",
+            "target_score": 0.5021547079086304,
+            "auroc": 1.0,
+            "composite": 0.5021547079086304,
+            "rank": 4
+          },
+          {
+            "tcr": "CASNPGSAVHHKNIQYF",
+            "target_score": 0.4592727720737457,
+            "auroc": 0.9333333333333333,
+            "composite": 0.4286545872688294,
+            "rank": 5
+          },
+          {
+            "tcr": "CAISSQGGYHHYF",
+            "target_score": 0.4591788053512573,
+            "auroc": 1.0,
+            "composite": 0.4591788053512573,
+            "rank": 6
+          },
+          {
+            "tcr": "CASNKEGGYHHTQTF",
+            "target_score": 0.4328998327255249,
+            "auroc": 1.0,
+            "composite": 0.4328998327255249,
+            "rank": 7
+          },
+          {
+            "tcr": "CWSSLAGKPHHEGQFF",
+            "target_score": 0.42365893721580505,
+            "auroc": 0.9666666666666667,
+            "composite": 0.4095369726419449,
+            "rank": 8
+          },
+          {
+            "tcr": "CASNSGGMLQHETQYF",
+            "target_score": 0.4081878066062927,
+            "auroc": 0.8666666666666667,
+            "composite": 0.35376276572545373,
+            "rank": 9
+          },
+          {
+            "tcr": "CASNTGASGGHEAFKF",
+            "target_score": 0.3841545879840851,
+            "auroc": 0.8333333333333334,
+            "composite": 0.3201288233200709,
+            "rank": 10
+          },
+          {
+            "tcr": "CALHGVRNSHHHQYF",
+            "target_score": 0.38110265135765076,
+            "auroc": 0.9666666666666667,
+            "composite": 0.3683992296457291,
+            "rank": 11
+          },
+          {
+            "tcr": "CSTSWGDYGHTF",
+            "target_score": 0.37988266348838806,
+            "auroc": 0.9,
+            "composite": 0.3418943971395493,
+            "rank": 12
+          },
+          {
+            "tcr": "CASMDGSYRHHSFF",
+            "target_score": 0.3650079667568207,
+            "auroc": 0.9666666666666667,
+            "composite": 0.3528410345315933,
+            "rank": 13
+          },
+          {
+            "tcr": "CSANSAFCYHHSQYE",
+            "target_score": 0.3626224994659424,
+            "auroc": 0.9333333333333333,
+            "composite": 0.33844766616821287,
+            "rank": 14
+          },
+          {
+            "tcr": "CASNYFSGGHHEVHF",
+            "target_score": 0.36017709970474243,
+            "auroc": 0.9666666666666667,
+            "composite": 0.34817119638125105,
+            "rank": 15
+          },
+          {
+            "tcr": "CWSPGGYKNEQFF",
+            "target_score": 0.35288622975349426,
+            "auroc": 0.8,
+            "composite": 0.2823089838027954,
+            "rank": 16
+          },
+          {
+            "tcr": "CNENRGEYHEQYF",
+            "target_score": 0.35244911909103394,
+            "auroc": 1.0,
+            "composite": 0.35244911909103394,
+            "rank": 17
+          },
+          {
+            "tcr": "CASSLFYDYHHHENYF",
+            "target_score": 0.33886539936065674,
+            "auroc": 0.8333333333333334,
+            "composite": 0.2823878328005473,
+            "rank": 18
+          },
+          {
+            "tcr": "CASNHRGQANHNEQYF",
+            "target_score": 0.3257061839103699,
+            "auroc": 0.8,
+            "composite": 0.2605649471282959,
+            "rank": 19
+          },
+          {
+            "tcr": "CASSLSAFRGTEAF",
+            "target_score": 0.28726640343666077,
+            "auroc": 0.3666666666666667,
+            "composite": 0.1053310145934423,
+            "rank": 20
+          },
+          {
+            "tcr": "CAENGYRDYRADTQYEF",
+            "target_score": 0.28293704986572266,
+            "auroc": 0.9,
+            "composite": 0.2546433448791504,
+            "rank": 21
+          },
+          {
+            "tcr": "CAASSSRGKHNEQWF",
+            "target_score": 0.2596975266933441,
+            "auroc": 0.6333333333333333,
+            "composite": 0.16447510023911793,
+            "rank": 22
+          },
+          {
+            "tcr": "CASTPAGGTSHYEQFF",
+            "target_score": 0.25957292318344116,
+            "auroc": 0.9666666666666667,
+            "composite": 0.2509204924106598,
+            "rank": 23
+          },
+          {
+            "tcr": "CASSEGLSRYPYEQYF",
+            "target_score": 0.23845279216766357,
+            "auroc": 0.8333333333333334,
+            "composite": 0.19871066013971966,
+            "rank": 24
+          },
+          {
+            "tcr": "CSARRWQAYEAFHF",
+            "target_score": 0.21593445539474487,
+            "auroc": 0.1333333333333333,
+            "composite": 0.02879126071929931,
+            "rank": 25
+          },
+          {
+            "tcr": "CASSEFDLWMAGEQFF",
+            "target_score": 0.2145446389913559,
+            "auroc": 0.7,
+            "composite": 0.1501812472939491,
+            "rank": 26
+          },
+          {
+            "tcr": "CASSWAGLNYHYTF",
+            "target_score": 0.19865190982818604,
+            "auroc": 0.43333333333333335,
+            "composite": 0.08608249425888062,
+            "rank": 27
+          },
+          {
+            "tcr": "CFANRDWTSYHWNTYYF",
+            "target_score": 0.1891905665397644,
+            "auroc": 0.3666666666666667,
+            "composite": 0.06936987439791362,
+            "rank": 28
+          },
+          {
+            "tcr": "CASSSSDSSEYQEQNYF",
+            "target_score": 0.1815698742866516,
+            "auroc": 0.3666666666666667,
+            "composite": 0.06657562057177226,
+            "rank": 29
+          },
+          {
+            "tcr": "CASNGGAANGYFF",
+            "target_score": 0.1767609715461731,
+            "auroc": 0.4,
+            "composite": 0.07070438861846924,
+            "rank": 30
+          },
+          {
+            "tcr": "CSVEVQQGAHHTQYF",
+            "target_score": 0.15574727952480316,
+            "auroc": 0.8,
+            "composite": 0.12459782361984253,
+            "rank": 31
+          },
+          {
+            "tcr": "CASNRGYREGETQYF",
+            "target_score": 0.14645332098007202,
+            "auroc": 0.19999999999999996,
+            "composite": 0.029290664196014397,
+            "rank": 32
+          },
+          {
+            "tcr": "CASSTTKTSVAGELFR",
+            "target_score": 0.1457592099905014,
+            "auroc": 0.1333333333333333,
+            "composite": 0.01943456133206685,
+            "rank": 33
+          },
+          {
+            "tcr": "CASSWRLEWGTQYF",
+            "target_score": 0.1190878227353096,
+            "auroc": 0.2666666666666667,
+            "composite": 0.0317567527294159,
+            "rank": 34
+          },
+          {
+            "tcr": "CSAGLAGGRVMGTQYF",
+            "target_score": 0.11879231780767441,
+            "auroc": 0.5666666666666667,
+            "composite": 0.06731564675768216,
+            "rank": 35
+          },
+          {
+            "tcr": "CASNNAGTIHF",
+            "target_score": 0.09039580821990967,
+            "auroc": 0.1333333333333333,
+            "composite": 0.012052774429321286,
+            "rank": 36
+          },
+          {
+            "tcr": "CSAGDEGYNEHQYF",
+            "target_score": 0.08511284738779068,
+            "auroc": 0.4666666666666667,
+            "composite": 0.03971932878096898,
+            "rank": 37
+          },
+          {
+            "tcr": "CAENVQGYHNTEARF",
+            "target_score": 0.08102481812238693,
+            "auroc": 0.23333333333333328,
+            "composite": 0.018905790895223613,
+            "rank": 38
+          },
+          {
+            "tcr": "CAISKLFGTYHVYEQYF",
+            "target_score": 0.07627816498279572,
+            "auroc": 0.06666666666666665,
+            "composite": 0.005085210998853047,
+            "rank": 39
+          },
+          {
+            "tcr": "CASNVDMTNMTEAFF",
+            "target_score": 0.06045465171337128,
+            "auroc": 0.43333333333333335,
+            "composite": 0.02619701574246089,
+            "rank": 40
+          },
+          {
+            "tcr": "CASSIDRIYAFF",
+            "target_score": 0.05824955552816391,
+            "auroc": 0.19999999999999996,
+            "composite": 0.01164991110563278,
+            "rank": 41
+          },
+          {
+            "tcr": "CASNAGRPGHEWETQYF",
+            "target_score": 0.05794478952884674,
+            "auroc": 0.16666666666666663,
+            "composite": 0.009657464921474455,
+            "rank": 42
+          },
+          {
+            "tcr": "TANNHEVAYVTQYH",
+            "target_score": 0.056821923702955246,
+            "auroc": 0.9333333333333333,
+            "composite": 0.05303379545609156,
+            "rank": 43
+          },
+          {
+            "tcr": "CAKTGGRWGEYYF",
+            "target_score": 0.04352787137031555,
+            "auroc": 0.4,
+            "composite": 0.017411148548126223,
+            "rank": 44
+          },
+          {
+            "tcr": "CASSHFTAYDTTELFF",
+            "target_score": 0.03754739463329315,
+            "auroc": 0.2666666666666667,
+            "composite": 0.010012638568878176,
+            "rank": 45
+          },
+          {
+            "tcr": "CASCLGLAGHGEQFF",
+            "target_score": 0.030866870656609535,
+            "auroc": 0.16666666666666663,
+            "composite": 0.005144478442768254,
+            "rank": 46
+          },
+          {
+            "tcr": "CAKSLGAESNTGERFF",
+            "target_score": 0.014828291721642017,
+            "auroc": 0.033333333333333326,
+            "composite": 0.0004942763907214004,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSSTTGDDYTF",
+            "target_score": 0.009481064043939114,
+            "auroc": 0.09999999999999998,
+            "composite": 0.0009481064043939111,
+            "rank": 48
+          },
+          {
+            "tcr": "CASSPRTGGETGELFF",
+            "target_score": 0.007094285450875759,
+            "auroc": 0.06666666666666665,
+            "composite": 0.00047295236339171717,
+            "rank": 49
+          },
+          {
+            "tcr": "CASSLVSSGGDSEQFF",
+            "target_score": 0.002375632757321,
+            "auroc": 0.16666666666666663,
+            "composite": 0.00039593879288683326,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.44,
+    "mean_reward": 1.494389787199907,
+    "generated_tcrs": [
+      "CASMDGSYRHHSFF",
+      "CASNNAGTIHF",
+      "CASSEFDLWMAGEQFF",
+      "CSANWSFLYHNEQFF",
+      "CASNKEGGYHHTQTF",
+      "CASSHFTAYDTTELFF",
+      "CWSPGGYKNEQFF",
+      "CSARRWQAYEAFHF",
+      "CASNRGYREGETQYF",
+      "CNENRGEYHEQYF",
+      "CASTPAGGTSHYEQFF",
+      "CSTSWGDYGHTF",
+      "CAKSLGAESNTGERFF",
+      "CASSLVSSGGDSEQFF",
+      "CSAGDEGYNEHQYF",
+      "CADNEARDSHHGYTF",
+      "CAENVQGYHNTEARF",
+      "CWSSLAGKPHHEGQFF",
+      "CASNPGSAVHHKNIQYF",
+      "CASNYFSGGHHEVHF",
+      "TANNHEVAYVTQYH",
+      "CASNAGRPGHEWETQYF",
+      "CAISKLFGTYHVYEQYF",
+      "CASNTGASGGHEAFKF",
+      "CSASGGQGYHHEQFF",
+      "CASSEGLSRYPYEQYF",
+      "CAENGYRDYRADTQYEF",
+      "CASSWRLEWGTQYF",
+      "CALHGVRNSHHHQYF",
+      "CASSWAGLNYHYTF",
+      "TATNWEGRYHTQF",
+      "CAISSQGGYHHYF",
+      "CASNHRGQANHNEQYF",
+      "CASSLFYDYHHHENYF",
+      "CASSSSDSSEYQEQNYF",
+      "CASSTTKTSVAGELFR",
+      "CSANSAFCYHHSQYE",
+      "CSAGLAGGRVMGTQYF",
+      "CASNSGGMLQHETQYF",
+      "CASNGGAANGYFF",
+      "CASNVDMTNMTEAFF",
+      "CASCLGLAGHGEQFF",
+      "CASSPRTGGETGELFF",
+      "CFANRDWTSYHWNTYYF",
+      "CAASSSRGKHNEQWF",
+      "CSVEVQQGAHHTQYF",
+      "CASSIDRIYAFF",
+      "CAKTGGRWGEYYF",
+      "CASSLSAFRGTEAF",
+      "CASSSTTGDDYTF"
+    ]
+  },
+  "YLQPRTFLL": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.7029166666666667,
+        "mean_target_score": 0.35851915513863786,
+        "mean_decoy_score": 0.17883343139592928,
+        "std_target_score": 0.26206204465083704,
+        "std_decoy_score": 0.17636503323109792,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 48,
+        "per_tier_auroc": {
+          "A": 0.655,
+          "B": 0.72375,
+          "D": 0.73
+        },
+        "top1_target": 0.8756629824638367,
+        "top3_target": 0.8253047863642374,
+        "top5_target": 0.805685818195343,
+        "top1_auroc": 0.8958333333333334,
+        "top3_auroc": 0.9305555555555557,
+        "top5_auroc": 0.9333333333333333,
+        "hit_rate_07": 0.14,
+        "top1_composite": 0.784448088457187,
+        "top5_composite": 0.7512273840606213,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CATKMSDGDRTTWGF",
+            "target_score": 0.8756629824638367,
+            "auroc": 0.8958333333333334,
+            "composite": 0.784448088457187,
+            "rank": 1
+          },
+          {
+            "tcr": "CATSMQQGQSTF",
+            "target_score": 0.812341570854187,
+            "auroc": 0.9375,
+            "composite": 0.7615702226758003,
+            "rank": 2
+          },
+          {
+            "tcr": "CATSGGPVGDTQYF",
+            "target_score": 0.7879098057746887,
+            "auroc": 0.9583333333333334,
+            "composite": 0.7550802305340767,
+            "rank": 3
+          },
+          {
+            "tcr": "CATSMLGRLEASPQHF",
+            "target_score": 0.7869177460670471,
+            "auroc": 0.9166666666666666,
+            "composite": 0.7213412672281265,
+            "rank": 4
+          },
+          {
+            "tcr": "CSTASQFGGQTTYF",
+            "target_score": 0.7655969858169556,
+            "auroc": 0.9583333333333334,
+            "composite": 0.7336971114079158,
+            "rank": 5
+          },
+          {
+            "tcr": "CATSTRQDGFGYF",
+            "target_score": 0.7284296751022339,
+            "auroc": 0.9375,
+            "composite": 0.6829028204083443,
+            "rank": 6
+          },
+          {
+            "tcr": "CATTNDETQYF",
+            "target_score": 0.7064250111579895,
+            "auroc": 0.9375,
+            "composite": 0.6622734479606152,
+            "rank": 7
+          },
+          {
+            "tcr": "CATSMLGLDGYTF",
+            "target_score": 0.6853237152099609,
+            "auroc": 0.9166666666666666,
+            "composite": 0.6282134056091309,
+            "rank": 8
+          },
+          {
+            "tcr": "CASTLLQYGWEPQGGF",
+            "target_score": 0.6550176739692688,
+            "auroc": 0.9166666666666666,
+            "composite": 0.600432867805163,
+            "rank": 9
+          },
+          {
+            "tcr": "CATSMPFSGEEQFGF",
+            "target_score": 0.6295289397239685,
+            "auroc": 0.9583333333333334,
+            "composite": 0.6032985672354698,
+            "rank": 10
+          },
+          {
+            "tcr": "CATSPRQIQFSPLHF",
+            "target_score": 0.6278315782546997,
+            "auroc": 0.9375,
+            "composite": 0.588592104613781,
+            "rank": 11
+          },
+          {
+            "tcr": "CVTSRDIFQMEQFGF",
+            "target_score": 0.6093447208404541,
+            "auroc": 0.9583333333333334,
+            "composite": 0.5839553574721019,
+            "rank": 12
+          },
+          {
+            "tcr": "CATSPTGRGSHCTQYYF",
+            "target_score": 0.5964013934135437,
+            "auroc": 0.9583333333333334,
+            "composite": 0.5715513353546461,
+            "rank": 13
+          },
+          {
+            "tcr": "QYSSESQRGQTCTIYF",
+            "target_score": 0.5939469337463379,
+            "auroc": 0.9583333333333334,
+            "composite": 0.5691991448402405,
+            "rank": 14
+          },
+          {
+            "tcr": "CADREQFRQEQF",
+            "target_score": 0.532407283782959,
+            "auroc": 0.9375,
+            "composite": 0.49913182854652405,
+            "rank": 15
+          },
+          {
+            "tcr": "CADSMQGRGATNDTPIYF",
+            "target_score": 0.5165221691131592,
+            "auroc": 0.9791666666666666,
+            "composite": 0.5057612905899683,
+            "rank": 16
+          },
+          {
+            "tcr": "CATSMGTSYGYTF",
+            "target_score": 0.5034947395324707,
+            "auroc": 0.9583333333333334,
+            "composite": 0.4825157920519511,
+            "rank": 17
+          },
+          {
+            "tcr": "CSARPLFQFQTCTGEKLTK",
+            "target_score": 0.4314994513988495,
+            "auroc": 0.9166666666666666,
+            "composite": 0.39554116378227866,
+            "rank": 18
+          },
+          {
+            "tcr": "CVTSMRGKQGT",
+            "target_score": 0.4196440875530243,
+            "auroc": 0.8958333333333334,
+            "composite": 0.37593116176625097,
+            "rank": 19
+          },
+          {
+            "tcr": "CATSNLPGYYGYTF",
+            "target_score": 0.41204291582107544,
+            "auroc": 0.8541666666666666,
+            "composite": 0.35195332393050194,
+            "rank": 20
+          },
+          {
+            "tcr": "CATNGGFRGETQYF",
+            "target_score": 0.40807080268859863,
+            "auroc": 0.875,
+            "composite": 0.3570619523525238,
+            "rank": 21
+          },
+          {
+            "tcr": "CATSSRGFGDTQYF",
+            "target_score": 0.40054187178611755,
+            "auroc": 0.875,
+            "composite": 0.35047413781285286,
+            "rank": 22
+          },
+          {
+            "tcr": "CVTSMSAGLPLHF",
+            "target_score": 0.38306790590286255,
+            "auroc": 0.9375,
+            "composite": 0.35912616178393364,
+            "rank": 23
+          },
+          {
+            "tcr": "CQTSMPFDQGVSPLHCF",
+            "target_score": 0.3550541400909424,
+            "auroc": 0.9166666666666666,
+            "composite": 0.32546629508336383,
+            "rank": 24
+          },
+          {
+            "tcr": "CVTSPPFDIGNCQF",
+            "target_score": 0.35314422845840454,
+            "auroc": 0.9166666666666666,
+            "composite": 0.3237155427535375,
+            "rank": 25
+          },
+          {
+            "tcr": "CATNSGAGQQYEQYF",
+            "target_score": 0.33987438678741455,
+            "auroc": 0.9375,
+            "composite": 0.31863223761320114,
+            "rank": 26
+          },
+          {
+            "tcr": "CSTNMVKNTEQAFF",
+            "target_score": 0.32436707615852356,
+            "auroc": 0.6666666666666667,
+            "composite": 0.21624471743901574,
+            "rank": 27
+          },
+          {
+            "tcr": "CASRSDRAAHTHTFG",
+            "target_score": 0.3197576403617859,
+            "auroc": 0.6041666666666667,
+            "composite": 0.193186907718579,
+            "rank": 28
+          },
+          {
+            "tcr": "CATSEEQQGGAQPQHYF",
+            "target_score": 0.30952340364456177,
+            "auroc": 0.9375,
+            "composite": 0.29017819091677666,
+            "rank": 29
+          },
+          {
+            "tcr": "CATSELGDSQTTQGG",
+            "target_score": 0.26709991693496704,
+            "auroc": 0.8958333333333334,
+            "composite": 0.23927700892090797,
+            "rank": 30
+          },
+          {
+            "tcr": "CASRGLYDFTEFG",
+            "target_score": 0.23818357288837433,
+            "auroc": 0.125,
+            "composite": 0.02977294661104679,
+            "rank": 31
+          },
+          {
+            "tcr": "CATNPGGVQYGYTF",
+            "target_score": 0.19911283254623413,
+            "auroc": 0.5416666666666667,
+            "composite": 0.10785278429587683,
+            "rank": 32
+          },
+          {
+            "tcr": "CASSLEDGKSGNTPYF",
+            "target_score": 0.1906149834394455,
+            "auroc": 0.27083333333333337,
+            "composite": 0.05162489134818316,
+            "rank": 33
+          },
+          {
+            "tcr": "CSARASGDSGVYEQFF",
+            "target_score": 0.1742563396692276,
+            "auroc": 0.8333333333333334,
+            "composite": 0.145213616391023,
+            "rank": 34
+          },
+          {
+            "tcr": "NSTSLSYYGYP",
+            "target_score": 0.15998680889606476,
+            "auroc": 0.875,
+            "composite": 0.13998845778405666,
+            "rank": 35
+          },
+          {
+            "tcr": "CAIDWSSGLHHLNEQYF",
+            "target_score": 0.134177103638649,
+            "auroc": 0.25,
+            "composite": 0.03354427590966225,
+            "rank": 36
+          },
+          {
+            "tcr": "CASNGTQSPHGQTF",
+            "target_score": 0.1198452040553093,
+            "auroc": 0.20833333333333337,
+            "composite": 0.02496775084485611,
+            "rank": 37
+          },
+          {
+            "tcr": "CATAPGRGDSPLHF",
+            "target_score": 0.09764041751623154,
+            "auroc": 0.25,
+            "composite": 0.024410104379057884,
+            "rank": 38
+          },
+          {
+            "tcr": "CASSLARTEHANIQYF",
+            "target_score": 0.0908202975988388,
+            "auroc": 0.20833333333333337,
+            "composite": 0.018920895333091423,
+            "rank": 39
+          },
+          {
+            "tcr": "CSVPEIGRAYEQYF",
+            "target_score": 0.08975125104188919,
+            "auroc": 0.33333333333333337,
+            "composite": 0.029917083680629734,
+            "rank": 40
+          },
+          {
+            "tcr": "CATSPMASGANVLTF",
+            "target_score": 0.05624029412865639,
+            "auroc": 0.1875,
+            "composite": 0.010545055149123073,
+            "rank": 41
+          },
+          {
+            "tcr": "CYTSLQSKYNTPQHE",
+            "target_score": 0.048918839544057846,
+            "auroc": 0.8333333333333334,
+            "composite": 0.04076569962004821,
+            "rank": 42
+          },
+          {
+            "tcr": "CASSSLGAYNEQYT",
+            "target_score": 0.042330142110586166,
+            "auroc": 0.1875,
+            "composite": 0.007936901645734906,
+            "rank": 43
+          },
+          {
+            "tcr": "CSARFGTESTYEQYF",
+            "target_score": 0.04193558171391487,
+            "auroc": 0.22916666666666663,
+            "composite": 0.009610237476105489,
+            "rank": 44
+          },
+          {
+            "tcr": "CASNLATRDRNYWGQYF",
+            "target_score": 0.03135046735405922,
+            "auroc": 0.7708333333333334,
+            "composite": 0.024165985252087317,
+            "rank": 45
+          },
+          {
+            "tcr": "CATSDWTSWGNEQYF",
+            "target_score": 0.031242134049534798,
+            "auroc": 0.5416666666666667,
+            "composite": 0.016922822610164683,
+            "rank": 46
+          },
+          {
+            "tcr": "CATWAQADEAFF",
+            "target_score": 0.0237970482558012,
+            "auroc": 0.6875,
+            "composite": 0.016360470675863326,
+            "rank": 47
+          },
+          {
+            "tcr": "CASRPSIYSEQDP",
+            "target_score": 0.014012993313372135,
+            "auroc": 0.25,
+            "composite": 0.003503248328343034,
+            "rank": 48
+          },
+          {
+            "tcr": "CASSQVRLWLAGATTDTQYF",
+            "target_score": 0.004704311955720186,
+            "auroc": 0.10416666666666663,
+            "composite": 0.0004900324953875193,
+            "rank": 49
+          },
+          {
+            "tcr": "CATSLVDGALMVYF",
+            "target_score": 0.0002463808050379157,
+            "auroc": 0.20833333333333337,
+            "composite": 5.132933438289911e-05,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 6.08,
+    "mean_reward": 2.3787254463136196,
+    "generated_tcrs": [
+      "CQTSMPFDQGVSPLHCF",
+      "CATSNLPGYYGYTF",
+      "CATNGGFRGETQYF",
+      "CASNLATRDRNYWGQYF",
+      "CASNGTQSPHGQTF",
+      "CADSMQGRGATNDTPIYF",
+      "CVTSMRGKQGT",
+      "CATSPMASGANVLTF",
+      "CATNPGGVQYGYTF",
+      "CVTSMSAGLPLHF",
+      "CATSLVDGALMVYF",
+      "CVTSPPFDIGNCQF",
+      "CSTASQFGGQTTYF",
+      "CSARPLFQFQTCTGEKLTK",
+      "CASSQVRLWLAGATTDTQYF",
+      "CVTSRDIFQMEQFGF",
+      "CATNSGAGQQYEQYF",
+      "CATSPTGRGSHCTQYYF",
+      "CATSSRGFGDTQYF",
+      "CSTNMVKNTEQAFF",
+      "CATWAQADEAFF",
+      "CASSLARTEHANIQYF",
+      "CATAPGRGDSPLHF",
+      "CATSTRQDGFGYF",
+      "CATSEEQQGGAQPQHYF",
+      "CASRSDRAAHTHTFG",
+      "CATSGGPVGDTQYF",
+      "CATSELGDSQTTQGG",
+      "CATSMQQGQSTF",
+      "CASSSLGAYNEQYT",
+      "QYSSESQRGQTCTIYF",
+      "CADREQFRQEQF",
+      "CATSMPFSGEEQFGF",
+      "CAIDWSSGLHHLNEQYF",
+      "CATTNDETQYF",
+      "CATSMLGRLEASPQHF",
+      "CASRPSIYSEQDP",
+      "CATSDWTSWGNEQYF",
+      "CASTLLQYGWEPQGGF",
+      "CASRGLYDFTEFG",
+      "CATKMSDGDRTTWGF",
+      "CASSLEDGKSGNTPYF",
+      "CSARASGDSGVYEQFF",
+      "CATSPRQIQFSPLHF",
+      "CSVPEIGRAYEQYF",
+      "CYTSLQSKYNTPQHE",
+      "NSTSLSYYGYP",
+      "CATSMGTSYGYTF",
+      "CATSMLGLDGYTF",
+      "CSARFGTESTYEQYF"
+    ]
+  },
+  "FLYALALLL": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.4223076923076924,
+        "mean_target_score": 0.11772239768502914,
+        "mean_decoy_score": 0.1496382442752763,
+        "std_target_score": 0.0999887400827242,
+        "std_decoy_score": 0.13648753483742895,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 26,
+        "per_tier_auroc": {
+          "A": 0.42400000000000004,
+          "B": 0.42125
+        },
+        "top1_target": 0.4511236548423767,
+        "top3_target": 0.36647481719652814,
+        "top5_target": 0.3255628407001495,
+        "top1_auroc": 1.0,
+        "top3_auroc": 0.8461538461538461,
+        "top5_auroc": 0.8384615384615385,
+        "hit_rate_07": 0.0,
+        "top1_composite": 0.4511236548423767,
+        "top5_composite": 0.2792271834153396,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CASSGHYYYHTTF",
+            "target_score": 0.4511236548423767,
+            "auroc": 1.0,
+            "composite": 0.4511236548423767,
+            "rank": 1
+          },
+          {
+            "tcr": "CSDSSGASGLHSTEAPF",
+            "target_score": 0.3737831115722656,
+            "auroc": 0.8461538461538461,
+            "composite": 0.31627801748422474,
+            "rank": 2
+          },
+          {
+            "tcr": "CASSPKTVMNHEANF",
+            "target_score": 0.274517685174942,
+            "auroc": 0.6923076923076923,
+            "composite": 0.1900507051211137,
+            "rank": 3
+          },
+          {
+            "tcr": "CSAPSARWINHEF",
+            "target_score": 0.2692384719848633,
+            "auroc": 1.0,
+            "composite": 0.2692384719848633,
+            "rank": 4
+          },
+          {
+            "tcr": "CASNKALNHYHHQYF",
+            "target_score": 0.25915127992630005,
+            "auroc": 0.6538461538461539,
+            "composite": 0.16944506764411926,
+            "rank": 5
+          },
+          {
+            "tcr": "CASSQGTSGHPYNEQYF",
+            "target_score": 0.2488526552915573,
+            "auroc": 0.5384615384615384,
+            "composite": 0.13399758361853084,
+            "rank": 6
+          },
+          {
+            "tcr": "CWSTRTPGKYHEQQYNFF",
+            "target_score": 0.24244321882724762,
+            "auroc": 0.5384615384615384,
+            "composite": 0.13054634859928718,
+            "rank": 7
+          },
+          {
+            "tcr": "CASSEGTSYHATQTPH",
+            "target_score": 0.2339773327112198,
+            "auroc": 0.5384615384615384,
+            "composite": 0.12598779453681064,
+            "rank": 8
+          },
+          {
+            "tcr": "CSVAGPRYNHQFF",
+            "target_score": 0.23369814455509186,
+            "auroc": 0.5384615384615384,
+            "composite": 0.12583746245274177,
+            "rank": 9
+          },
+          {
+            "tcr": "CSANKGPGHELFN",
+            "target_score": 0.22454284131526947,
+            "auroc": 0.5384615384615384,
+            "composite": 0.12090768378514509,
+            "rank": 10
+          },
+          {
+            "tcr": "CASSRLPLYQTYEQFR",
+            "target_score": 0.21182014048099518,
+            "auroc": 0.3846153846153846,
+            "composite": 0.08146928480038275,
+            "rank": 11
+          },
+          {
+            "tcr": "CASSLSDGTTHNTQYF",
+            "target_score": 0.17006555199623108,
+            "auroc": 0.34615384615384615,
+            "composite": 0.058868844921772294,
+            "rank": 12
+          },
+          {
+            "tcr": "CSVKMGIETEHHQYH",
+            "target_score": 0.1693911850452423,
+            "auroc": 0.5384615384615384,
+            "composite": 0.09121063810128431,
+            "rank": 13
+          },
+          {
+            "tcr": "CSARSEAGSHSYEQYF",
+            "target_score": 0.16233734786510468,
+            "auroc": 0.42307692307692313,
+            "composite": 0.0686811856352366,
+            "rank": 14
+          },
+          {
+            "tcr": "CASNKQGAYHHNEQYFF",
+            "target_score": 0.14589238166809082,
+            "auroc": 0.42307692307692313,
+            "composite": 0.06172369993649997,
+            "rank": 15
+          },
+          {
+            "tcr": "CAESLWGVGHQPQHF",
+            "target_score": 0.13606548309326172,
+            "auroc": 0.46153846153846156,
+            "composite": 0.06279945373535156,
+            "rank": 16
+          },
+          {
+            "tcr": "CASSYAPGYEHDTQYF",
+            "target_score": 0.13546867668628693,
+            "auroc": 0.3846153846153846,
+            "composite": 0.05210333718703343,
+            "rank": 17
+          },
+          {
+            "tcr": "CASSMRFRGNPGELFF",
+            "target_score": 0.1314357966184616,
+            "auroc": 0.6923076923076923,
+            "composite": 0.09099401304355034,
+            "rank": 18
+          },
+          {
+            "tcr": "CSAFSGLMDTHYDAF",
+            "target_score": 0.1287233531475067,
+            "auroc": 0.5,
+            "composite": 0.06436167657375336,
+            "rank": 19
+          },
+          {
+            "tcr": "CASSRTSGRHSDNEQFF",
+            "target_score": 0.1167512834072113,
+            "auroc": 0.2692307692307693,
+            "composite": 0.03143303784040305,
+            "rank": 20
+          },
+          {
+            "tcr": "CASSTIRDRGPHGNTGPLFF",
+            "target_score": 0.10682175308465958,
+            "auroc": 0.1923076923076923,
+            "composite": 0.020542644823972993,
+            "rank": 21
+          },
+          {
+            "tcr": "CAISPGDRVDHEAFF",
+            "target_score": 0.1031549721956253,
+            "auroc": 0.6153846153846154,
+            "composite": 0.06347998288961558,
+            "rank": 22
+          },
+          {
+            "tcr": "CANGRGAANSPLHF",
+            "target_score": 0.10205064713954926,
+            "auroc": 0.5,
+            "composite": 0.05102532356977463,
+            "rank": 23
+          },
+          {
+            "tcr": "CASSSMDRGHHQYF",
+            "target_score": 0.09809361398220062,
+            "auroc": 0.3846153846153846,
+            "composite": 0.03772831307007716,
+            "rank": 24
+          },
+          {
+            "tcr": "CSARPEQANTFPLHF",
+            "target_score": 0.09330517798662186,
+            "auroc": 0.46153846153846156,
+            "composite": 0.043063928301517784,
+            "rank": 25
+          },
+          {
+            "tcr": "TASWRYGLLNHGNNEQFF",
+            "target_score": 0.09272559732198715,
+            "auroc": 0.23076923076923073,
+            "composite": 0.021398214766612415,
+            "rank": 26
+          },
+          {
+            "tcr": "CASNGLGDTHSYQYF",
+            "target_score": 0.08706945925951004,
+            "auroc": 0.23076923076923073,
+            "composite": 0.020092952136810005,
+            "rank": 27
+          },
+          {
+            "tcr": "CASNADREGYNEQFF",
+            "target_score": 0.08675246685743332,
+            "auroc": 0.3076923076923077,
+            "composite": 0.0266930667253641,
+            "rank": 28
+          },
+          {
+            "tcr": "CASNAVVDSNQAQHF",
+            "target_score": 0.08392272889614105,
+            "auroc": 0.11538461538461542,
+            "composite": 0.009683391795708585,
+            "rank": 29
+          },
+          {
+            "tcr": "CASQPRGPSHSYEQYF",
+            "target_score": 0.0830058678984642,
+            "auroc": 0.1923076923076923,
+            "composite": 0.015962666903550807,
+            "rank": 30
+          },
+          {
+            "tcr": "CAARRTYSGNHTDTQYF",
+            "target_score": 0.06876283138990402,
+            "auroc": 0.34615384615384615,
+            "composite": 0.0238025185580437,
+            "rank": 31
+          },
+          {
+            "tcr": "CASSLSQTGSGNTIYF",
+            "target_score": 0.06860470771789551,
+            "auroc": 0.5384615384615384,
+            "composite": 0.036940996463482194,
+            "rank": 32
+          },
+          {
+            "tcr": "CASPIIPTGGHAQYF",
+            "target_score": 0.0676536113023758,
+            "auroc": 0.3076923076923077,
+            "composite": 0.0208164957853464,
+            "rank": 33
+          },
+          {
+            "tcr": "CASRDSGLGRDEQFF",
+            "target_score": 0.06350212544202805,
+            "auroc": 0.3846153846153846,
+            "composite": 0.024423894400780015,
+            "rank": 34
+          },
+          {
+            "tcr": "CALSLGPGDNQPQHF",
+            "target_score": 0.05953407287597656,
+            "auroc": 0.3076923076923077,
+            "composite": 0.01831817626953125,
+            "rank": 35
+          },
+          {
+            "tcr": "CSASGLLSPNLHHF",
+            "target_score": 0.05440979450941086,
+            "auroc": 0.5,
+            "composite": 0.02720489725470543,
+            "rank": 36
+          },
+          {
+            "tcr": "CASSYDNENTEEHFF",
+            "target_score": 0.04407060891389847,
+            "auroc": 0.2692307692307693,
+            "composite": 0.011865163938357282,
+            "rank": 37
+          },
+          {
+            "tcr": "CASTPRTANTHGELFF",
+            "target_score": 0.030816832557320595,
+            "auroc": 0.5384615384615384,
+            "composite": 0.01659367906932647,
+            "rank": 38
+          },
+          {
+            "tcr": "CATSSGHPGYHQYF",
+            "target_score": 0.028205031529068947,
+            "auroc": 0.038461538461538436,
+            "composite": 0.0010848089049641896,
+            "rank": 39
+          },
+          {
+            "tcr": "CASSPGELEYHF",
+            "target_score": 0.026897525414824486,
+            "auroc": 0.3076923076923077,
+            "composite": 0.008276161666099843,
+            "rank": 40
+          },
+          {
+            "tcr": "CAGSRQGEVPFF",
+            "target_score": 0.023641441017389297,
+            "auroc": 0.11538461538461542,
+            "composite": 0.002727858578929535,
+            "rank": 41
+          },
+          {
+            "tcr": "CASSVLEDTGITGELFY",
+            "target_score": 0.02212507836520672,
+            "auroc": 0.11538461538461542,
+            "composite": 0.0025528936575238527,
+            "rank": 42
+          },
+          {
+            "tcr": "CASSHQGAIHGDYGYTF",
+            "target_score": 0.021169856190681458,
+            "auroc": 0.5,
+            "composite": 0.010584928095340729,
+            "rank": 43
+          },
+          {
+            "tcr": "CASSRQGRHQQF",
+            "target_score": 0.018247416242957115,
+            "auroc": 0.1923076923076923,
+            "composite": 0.0035091185082609835,
+            "rank": 44
+          },
+          {
+            "tcr": "CASNGGSSLQYHHEQYG",
+            "target_score": 0.014647775329649448,
+            "auroc": 0.3846153846153846,
+            "composite": 0.005633759742172864,
+            "rank": 45
+          },
+          {
+            "tcr": "CASSIQGAYNSDPLHF",
+            "target_score": 0.01375634502619505,
+            "auroc": 0.3076923076923077,
+            "composite": 0.004232721546521554,
+            "rank": 46
+          },
+          {
+            "tcr": "CADASESYTGDNSPLHF",
+            "target_score": 0.0016761156730353832,
+            "auroc": 0.46153846153846156,
+            "composite": 0.0007735918490932538,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSWGWHHYKETQYF",
+            "target_score": 0.0014876944478601217,
+            "auroc": 0.42307692307692313,
+            "composite": 0.0006294091894792824,
+            "rank": 48
+          },
+          {
+            "tcr": "CHASSPDGGAYHHTQYF",
+            "target_score": 0.0007066442631185055,
+            "auroc": 0.1923076923076923,
+            "composite": 0.0001358931275227895,
+            "rank": 49
+          },
+          {
+            "tcr": "CQSERTDSEKLFHF",
+            "target_score": 2.2495210941997357e-05,
+            "auroc": 0.34615384615384615,
+            "composite": 7.78680378761447e-06,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.06,
+    "mean_reward": 0.6333129991939495,
+    "generated_tcrs": [
+      "CASSYDNENTEEHFF",
+      "CANGRGAANSPLHF",
+      "CQSERTDSEKLFHF",
+      "CALSLGPGDNQPQHF",
+      "CSVKMGIETEHHQYH",
+      "CASSIQGAYNSDPLHF",
+      "CWSTRTPGKYHEQQYNFF",
+      "CHASSPDGGAYHHTQYF",
+      "CASSVLEDTGITGELFY",
+      "CSDSSGASGLHSTEAPF",
+      "CSANKGPGHELFN",
+      "CSAFSGLMDTHYDAF",
+      "CAISPGDRVDHEAFF",
+      "CASTPRTANTHGELFF",
+      "CASSMRFRGNPGELFF",
+      "CASNGGSSLQYHHEQYG",
+      "CASNKQGAYHHNEQYFF",
+      "CASSWGWHHYKETQYF",
+      "CASNGLGDTHSYQYF",
+      "CASSEGTSYHATQTPH",
+      "CASSPKTVMNHEANF",
+      "CASSQGTSGHPYNEQYF",
+      "CASQPRGPSHSYEQYF",
+      "CASPIIPTGGHAQYF",
+      "CASSPGELEYHF",
+      "CAARRTYSGNHTDTQYF",
+      "CASNKALNHYHHQYF",
+      "CASSLSQTGSGNTIYF",
+      "TASWRYGLLNHGNNEQFF",
+      "CASRDSGLGRDEQFF",
+      "CSARSEAGSHSYEQYF",
+      "CAESLWGVGHQPQHF",
+      "CASSRQGRHQQF",
+      "CSVAGPRYNHQFF",
+      "CSARPEQANTFPLHF",
+      "CASSSMDRGHHQYF",
+      "CASNADREGYNEQFF",
+      "CASSHQGAIHGDYGYTF",
+      "CASSYAPGYEHDTQYF",
+      "CATSSGHPGYHQYF",
+      "CSAPSARWINHEF",
+      "CASSLSDGTTHNTQYF",
+      "CAGSRQGEVPFF",
+      "CASSGHYYYHTTF",
+      "CASNAVVDSNQAQHF",
+      "CASSTIRDRGPHGNTGPLFF",
+      "CADASESYTGDNSPLHF",
+      "CSASGLLSPNLHHF",
+      "CASSRLPLYQTYEQFR",
+      "CASSRTSGRHSDNEQFF"
+    ]
+  },
+  "SLYNTVATL": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.3520833333333333,
+        "mean_target_score": 0.11510500756966166,
+        "mean_decoy_score": 0.14591171693628327,
+        "std_target_score": 0.16540096529961995,
+        "std_decoy_score": 0.13805459285532598,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 48,
+        "per_tier_auroc": {
+          "A": 0.34625,
+          "B": 0.40125,
+          "D": 0.30875
+        },
+        "top1_target": 0.7684425115585327,
+        "top3_target": 0.640309194723765,
+        "top5_target": 0.51780766248703,
+        "top1_auroc": 1.0,
+        "top3_auroc": 0.9722222222222223,
+        "top5_auroc": 0.9666666666666668,
+        "hit_rate_07": 0.02,
+        "top1_composite": 0.7684425115585327,
+        "top5_composite": 0.5024533761044344,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CASEQGAPHHYF",
+            "target_score": 0.7684425115585327,
+            "auroc": 1.0,
+            "composite": 0.7684425115585327,
+            "rank": 1
+          },
+          {
+            "tcr": "TGSGWTQAAVHLTF",
+            "target_score": 0.6156112551689148,
+            "auroc": 0.9583333333333334,
+            "composite": 0.5899607862035434,
+            "rank": 2
+          },
+          {
+            "tcr": "CASSLSRGVDDEQFF",
+            "target_score": 0.5368738174438477,
+            "auroc": 0.9583333333333334,
+            "composite": 0.514504075050354,
+            "rank": 3
+          },
+          {
+            "tcr": "CASSQETRWGRELFF",
+            "target_score": 0.3559739291667938,
+            "auroc": 0.9375,
+            "composite": 0.3337255585938692,
+            "rank": 4
+          },
+          {
+            "tcr": "KASEKTNINLTIYF",
+            "target_score": 0.31213679909706116,
+            "auroc": 0.9791666666666666,
+            "composite": 0.3056339491158724,
+            "rank": 5
+          },
+          {
+            "tcr": "CARPRREGRVGELGF",
+            "target_score": 0.28144392371177673,
+            "auroc": 0.9375,
+            "composite": 0.2638536784797907,
+            "rank": 6
+          },
+          {
+            "tcr": "CLSSQDGRRSTENTVSF",
+            "target_score": 0.26559174060821533,
+            "auroc": 0.47916666666666663,
+            "composite": 0.1272627090414365,
+            "rank": 7
+          },
+          {
+            "tcr": "CTSRAIEEDHQFF",
+            "target_score": 0.23550571501255035,
+            "auroc": 0.5,
+            "composite": 0.11775285750627518,
+            "rank": 8
+          },
+          {
+            "tcr": "CASNGSALRWNEQFF",
+            "target_score": 0.2277442365884781,
+            "auroc": 0.6041666666666667,
+            "composite": 0.13759547627220553,
+            "rank": 9
+          },
+          {
+            "tcr": "CYENKSGMGSTELFF",
+            "target_score": 0.21538817882537842,
+            "auroc": 0.20833333333333337,
+            "composite": 0.04487253725528718,
+            "rank": 10
+          },
+          {
+            "tcr": "CALSHRRTNHTENFM",
+            "target_score": 0.20672370493412018,
+            "auroc": 0.35416666666666663,
+            "composite": 0.07321464549750088,
+            "rank": 11
+          },
+          {
+            "tcr": "CASSLWGAQHF",
+            "target_score": 0.19851361215114594,
+            "auroc": 0.7083333333333333,
+            "composite": 0.14061380860706169,
+            "rank": 12
+          },
+          {
+            "tcr": "CASPLGLGQGLDNEQFF",
+            "target_score": 0.18250803649425507,
+            "auroc": 0.41666666666666663,
+            "composite": 0.0760450152059396,
+            "rank": 13
+          },
+          {
+            "tcr": "CMEPRGLGGELFF",
+            "target_score": 0.17670699954032898,
+            "auroc": 0.4375,
+            "composite": 0.07730931229889393,
+            "rank": 14
+          },
+          {
+            "tcr": "CASTSGATQHEEYEF",
+            "target_score": 0.14910627901554108,
+            "auroc": 0.25,
+            "composite": 0.03727656975388527,
+            "rank": 15
+          },
+          {
+            "tcr": "CASSIGKDGTEAFF",
+            "target_score": 0.12890148162841797,
+            "auroc": 0.25,
+            "composite": 0.03222537040710449,
+            "rank": 16
+          },
+          {
+            "tcr": "CVWTWIGWNNSPLWF",
+            "target_score": 0.11850951611995697,
+            "auroc": 0.27083333333333337,
+            "composite": 0.03209632728248835,
+            "rank": 17
+          },
+          {
+            "tcr": "CASSQEGDRGHLNYGYTF",
+            "target_score": 0.10370125621557236,
+            "auroc": 0.4375,
+            "composite": 0.045369299594312906,
+            "rank": 18
+          },
+          {
+            "tcr": "ASSLDLWGHTGQFF",
+            "target_score": 0.08855097740888596,
+            "auroc": 0.625,
+            "composite": 0.05534436088055372,
+            "rank": 19
+          },
+          {
+            "tcr": "CASSWTRGDRHLNAQYF",
+            "target_score": 0.08787999302148819,
+            "auroc": 0.10416666666666663,
+            "composite": 0.00915416593973835,
+            "rank": 20
+          },
+          {
+            "tcr": "CSTSCLYAYNEEQGF",
+            "target_score": 0.057501766830682755,
+            "auroc": 0.4375,
+            "composite": 0.025157022988423705,
+            "rank": 21
+          },
+          {
+            "tcr": "CAIRGTLYHNPYGYTF",
+            "target_score": 0.05380133166909218,
+            "auroc": 0.125,
+            "composite": 0.006725166458636522,
+            "rank": 22
+          },
+          {
+            "tcr": "CASTAEGAGTGERFF",
+            "target_score": 0.05098697170615196,
+            "auroc": 0.16666666666666663,
+            "composite": 0.008497828617691992,
+            "rank": 23
+          },
+          {
+            "tcr": "CASSWTSSIDHEQFF",
+            "target_score": 0.046082399785518646,
+            "auroc": 0.20833333333333337,
+            "composite": 0.009600499955316387,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSLATILGTEAFF",
+            "target_score": 0.04017946869134903,
+            "auroc": 0.16666666666666663,
+            "composite": 0.0066965781152248365,
+            "rank": 25
+          },
+          {
+            "tcr": "CAEDAGTKYNHSEQFF",
+            "target_score": 0.0374482236802578,
+            "auroc": 0.125,
+            "composite": 0.004681027960032225,
+            "rank": 26
+          },
+          {
+            "tcr": "SRQLWNQRTEHAFF",
+            "target_score": 0.03495744988322258,
+            "auroc": 1.0,
+            "composite": 0.03495744988322258,
+            "rank": 27
+          },
+          {
+            "tcr": "CASRYLGGAGHTQYF",
+            "target_score": 0.03229614719748497,
+            "auroc": 0.10416666666666663,
+            "composite": 0.0033641819997380167,
+            "rank": 28
+          },
+          {
+            "tcr": "CASNHVAPWSGYTF",
+            "target_score": 0.03184504434466362,
+            "auroc": 0.22916666666666663,
+            "composite": 0.007297822662318745,
+            "rank": 29
+          },
+          {
+            "tcr": "CASHTYIATPANF",
+            "target_score": 0.029589910060167313,
+            "auroc": 0.9791666666666666,
+            "composite": 0.02897345360058049,
+            "rank": 30
+          },
+          {
+            "tcr": "CASSSGLAGSPGELFF",
+            "target_score": 0.025567008182406425,
+            "auroc": 0.16666666666666663,
+            "composite": 0.00426116803040107,
+            "rank": 31
+          },
+          {
+            "tcr": "CATSVSKDVGFYEQYF",
+            "target_score": 0.011911598034203053,
+            "auroc": 0.125,
+            "composite": 0.0014889497542753816,
+            "rank": 32
+          },
+          {
+            "tcr": "CASAVFGTSTDTQYF",
+            "target_score": 0.007088647689670324,
+            "auroc": 0.125,
+            "composite": 0.0008860809612087905,
+            "rank": 33
+          },
+          {
+            "tcr": "CASKPGRVAEQFF",
+            "target_score": 0.006306004710495472,
+            "auroc": 0.10416666666666663,
+            "composite": 0.0006568754906766114,
+            "rank": 34
+          },
+          {
+            "tcr": "CADPELAGGPNPEQFF",
+            "target_score": 0.005454931408166885,
+            "auroc": 0.10416666666666663,
+            "composite": 0.0005682220216840503,
+            "rank": 35
+          },
+          {
+            "tcr": "CSVAGSWVGSTEAFF",
+            "target_score": 0.005311270244419575,
+            "auroc": 0.125,
+            "composite": 0.0006639087805524468,
+            "rank": 36
+          },
+          {
+            "tcr": "CASSLEDGVENTAFF",
+            "target_score": 0.004552624654024839,
+            "auroc": 0.1875,
+            "composite": 0.0008536171226296574,
+            "rank": 37
+          },
+          {
+            "tcr": "CASSYRQEVGRSMKFF",
+            "target_score": 0.0042469981126487255,
+            "auroc": 0.16666666666666663,
+            "composite": 0.0007078330187747874,
+            "rank": 38
+          },
+          {
+            "tcr": "CSVVGNRFTHDTQYF",
+            "target_score": 0.0033392070326954126,
+            "auroc": 0.27083333333333337,
+            "composite": 0.0009043685713550077,
+            "rank": 39
+          },
+          {
+            "tcr": "CSARSGVNGELFQF",
+            "target_score": 0.002678700489923358,
+            "auroc": 0.10416666666666663,
+            "composite": 0.000279031301033683,
+            "rank": 40
+          },
+          {
+            "tcr": "CSSLDQGNTEAFF",
+            "target_score": 0.0021453204099088907,
+            "auroc": 0.10416666666666663,
+            "composite": 0.00022347087603217603,
+            "rank": 41
+          },
+          {
+            "tcr": "CASSLMTGKSTHQHF",
+            "target_score": 0.0021394325885921717,
+            "auroc": 0.125,
+            "composite": 0.00026742907357402146,
+            "rank": 42
+          },
+          {
+            "tcr": "CSARGDGTSTDTQYF",
+            "target_score": 0.001893671927973628,
+            "auroc": 0.125,
+            "composite": 0.0002367089909967035,
+            "rank": 43
+          },
+          {
+            "tcr": "CASSQERYTHHPLHF",
+            "target_score": 0.0010381215251982212,
+            "auroc": 0.1875,
+            "composite": 0.00019464778597466648,
+            "rank": 44
+          },
+          {
+            "tcr": "CASSLDFEQKNIQYF",
+            "target_score": 0.0006744405254721642,
+            "auroc": 0.0625,
+            "composite": 4.215253284201026e-05,
+            "rank": 45
+          },
+          {
+            "tcr": "CASSAPVRLEGGADTQYF",
+            "target_score": 0.0002285851223859936,
+            "auroc": 0.10416666666666663,
+            "composite": 2.381095024854099e-05,
+            "rank": 46
+          },
+          {
+            "tcr": "CSARDIHQETPQYF",
+            "target_score": 0.00013573198521044105,
+            "auroc": 0.125,
+            "composite": 1.696649815130513e-05,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSRAGKNHQPQHF",
+            "target_score": 2.6858115234063007e-05,
+            "auroc": 0.125,
+            "composite": 3.357264404257876e-06,
+            "rank": 48
+          },
+          {
+            "tcr": "CATSFASGSYGQFF",
+            "target_score": 7.459846528945491e-06,
+            "auroc": 0.10416666666666663,
+            "composite": 7.77067346765155e-07,
+            "rank": 49
+          },
+          {
+            "tcr": "CVVSWQEKLPHEKLGF",
+            "target_score": 1.088318072106631e-06,
+            "auroc": 0.10416666666666663,
+            "composite": 1.1336646584444069e-07,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 4.64,
+    "mean_reward": 0.6121013976131701,
+    "generated_tcrs": [
+      "CASSLDFEQKNIQYF",
+      "CAIRGTLYHNPYGYTF",
+      "CASSWTRGDRHLNAQYF",
+      "CASTSGATQHEEYEF",
+      "CASSQETRWGRELFF",
+      "CSSLDQGNTEAFF",
+      "CASSYRQEVGRSMKFF",
+      "CASSLSRGVDDEQFF",
+      "CASSQERYTHHPLHF",
+      "TGSGWTQAAVHLTF",
+      "CLSSQDGRRSTENTVSF",
+      "CASNGSALRWNEQFF",
+      "CMEPRGLGGELFF",
+      "CADPELAGGPNPEQFF",
+      "CASPLGLGQGLDNEQFF",
+      "CASTAEGAGTGERFF",
+      "CVVSWQEKLPHEKLGF",
+      "CASAVFGTSTDTQYF",
+      "CARPRREGRVGELGF",
+      "CASRYLGGAGHTQYF",
+      "CASSQEGDRGHLNYGYTF",
+      "CASSLEDGVENTAFF",
+      "CTSRAIEEDHQFF",
+      "CAEDAGTKYNHSEQFF",
+      "CSTSCLYAYNEEQGF",
+      "CASSWTSSIDHEQFF",
+      "CASNHVAPWSGYTF",
+      "ASSLDLWGHTGQFF",
+      "CASSLATILGTEAFF",
+      "CASSLMTGKSTHQHF",
+      "CASSAPVRLEGGADTQYF",
+      "CASHTYIATPANF",
+      "CVWTWIGWNNSPLWF",
+      "CASKPGRVAEQFF",
+      "CATSFASGSYGQFF",
+      "CASSRAGKNHQPQHF",
+      "KASEKTNINLTIYF",
+      "CSVVGNRFTHDTQYF",
+      "CYENKSGMGSTELFF",
+      "CATSVSKDVGFYEQYF",
+      "CASSSGLAGSPGELFF",
+      "CALSHRRTNHTENFM",
+      "CSARDIHQETPQYF",
+      "CASEQGAPHHYF",
+      "CSARSGVNGELFQF",
+      "CASSLWGAQHF",
+      "SRQLWNQRTEHAFF",
+      "CSARGDGTSTDTQYF",
+      "CASSIGKDGTEAFF",
+      "CSVAGSWVGSTEAFF"
+    ]
+  },
+  "KLGGALQAK": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.53875,
+        "mean_target_score": 0.18481448831036687,
+        "mean_decoy_score": 0.18231663489736405,
+        "std_target_score": 0.15572731786150462,
+        "std_decoy_score": 0.18488560867975287,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 32,
+        "per_tier_auroc": {
+          "A": 0.595,
+          "B": 0.4825
+        },
+        "top1_target": 0.6387344598770142,
+        "top3_target": 0.5486757655938467,
+        "top5_target": 0.5173805177211761,
+        "top1_auroc": 0.78125,
+        "top3_auroc": 0.7604166666666666,
+        "top5_auroc": 0.74375,
+        "hit_rate_07": 0.0,
+        "top1_composite": 0.4990112967789173,
+        "top5_composite": 0.3860613191500306,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CASSAIGEGDLHS",
+            "target_score": 0.6387344598770142,
+            "auroc": 0.78125,
+            "composite": 0.4990112967789173,
+            "rank": 1
+          },
+          {
+            "tcr": "CAISKAGLANGCNTY",
+            "target_score": 0.5091218948364258,
+            "auroc": 0.84375,
+            "composite": 0.42957159876823425,
+            "rank": 2
+          },
+          {
+            "tcr": "CQANAGRLELASF",
+            "target_score": 0.4981709420681,
+            "auroc": 0.65625,
+            "composite": 0.3269246807321906,
+            "rank": 3
+          },
+          {
+            "tcr": "CGASSGGSGHSQHF",
+            "target_score": 0.4937191903591156,
+            "auroc": 0.6875,
+            "composite": 0.339431943371892,
+            "rank": 4
+          },
+          {
+            "tcr": "CASARQGINNFF",
+            "target_score": 0.4471561014652252,
+            "auroc": 0.75,
+            "composite": 0.3353670760989189,
+            "rank": 5
+          },
+          {
+            "tcr": "CASRLRPGEESYQGYF",
+            "target_score": 0.39658069610595703,
+            "auroc": 0.78125,
+            "composite": 0.30982866883277893,
+            "rank": 6
+          },
+          {
+            "tcr": "CAIKSEWDANEQFF",
+            "target_score": 0.391559898853302,
+            "auroc": 0.625,
+            "composite": 0.24472493678331375,
+            "rank": 7
+          },
+          {
+            "tcr": "CAAAPPALGSEHQYF",
+            "target_score": 0.37961000204086304,
+            "auroc": 0.75,
+            "composite": 0.2847075015306473,
+            "rank": 8
+          },
+          {
+            "tcr": "CASTALGLLARAYTF",
+            "target_score": 0.3255065679550171,
+            "auroc": 0.65625,
+            "composite": 0.21361368522047997,
+            "rank": 9
+          },
+          {
+            "tcr": "CAASSVRLAESQETQYF",
+            "target_score": 0.3170546889305115,
+            "auroc": 0.71875,
+            "composite": 0.22788305766880512,
+            "rank": 10
+          },
+          {
+            "tcr": "CASAYQDYLATHTQGYF",
+            "target_score": 0.31601962447166443,
+            "auroc": 0.84375,
+            "composite": 0.26664155814796686,
+            "rank": 11
+          },
+          {
+            "tcr": "CASSNYRLLNSKTQF",
+            "target_score": 0.2799408435821533,
+            "auroc": 0.59375,
+            "composite": 0.16621487587690353,
+            "rank": 12
+          },
+          {
+            "tcr": "CLSAPPGGLQASDTQYF",
+            "target_score": 0.2784135937690735,
+            "auroc": 0.53125,
+            "composite": 0.1479072216898203,
+            "rank": 13
+          },
+          {
+            "tcr": "CASSADGRGSSYGYTF",
+            "target_score": 0.2780607044696808,
+            "auroc": 0.71875,
+            "composite": 0.19985613133758307,
+            "rank": 14
+          },
+          {
+            "tcr": "CARKLMAPLAIDTYQYF",
+            "target_score": 0.26528286933898926,
+            "auroc": 0.875,
+            "composite": 0.2321225106716156,
+            "rank": 15
+          },
+          {
+            "tcr": "CAASPAGRDEQYF",
+            "target_score": 0.23993416130542755,
+            "auroc": 0.5625,
+            "composite": 0.134962965734303,
+            "rank": 16
+          },
+          {
+            "tcr": "CWATEGTFNHEQFF",
+            "target_score": 0.23009268939495087,
+            "auroc": 0.71875,
+            "composite": 0.16537912050262094,
+            "rank": 17
+          },
+          {
+            "tcr": "CATGEGSANEQFSF",
+            "target_score": 0.2111189067363739,
+            "auroc": 0.71875,
+            "composite": 0.15174171421676874,
+            "rank": 18
+          },
+          {
+            "tcr": "CASASEGLLLLQY",
+            "target_score": 0.20262201130390167,
+            "auroc": 0.6875,
+            "composite": 0.1393026327714324,
+            "rank": 19
+          },
+          {
+            "tcr": "CASAGGEKFEAF",
+            "target_score": 0.19088691473007202,
+            "auroc": 0.53125,
+            "composite": 0.10140867345035076,
+            "rank": 20
+          },
+          {
+            "tcr": "CASSVTDANESYF",
+            "target_score": 0.18885329365730286,
+            "auroc": 0.5,
+            "composite": 0.09442664682865143,
+            "rank": 21
+          },
+          {
+            "tcr": "CSGIQGHTYNQYF",
+            "target_score": 0.18351006507873535,
+            "auroc": 0.65625,
+            "composite": 0.12042848020792007,
+            "rank": 22
+          },
+          {
+            "tcr": "CLASRSQNRNTENFF",
+            "target_score": 0.17786552011966705,
+            "auroc": 0.375,
+            "composite": 0.06669957004487514,
+            "rank": 23
+          },
+          {
+            "tcr": "CASKLGNDSSQY",
+            "target_score": 0.17361906170845032,
+            "auroc": 0.53125,
+            "composite": 0.09223512653261423,
+            "rank": 24
+          },
+          {
+            "tcr": "CLAASLTGLENEQFF",
+            "target_score": 0.13991676270961761,
+            "auroc": 0.53125,
+            "composite": 0.07433078018948436,
+            "rank": 25
+          },
+          {
+            "tcr": "CASTGDVDQPSQEHF",
+            "target_score": 0.13414835929870605,
+            "auroc": 0.6875,
+            "composite": 0.09222699701786041,
+            "rank": 26
+          },
+          {
+            "tcr": "CAAARKLVRDEYF",
+            "target_score": 0.12458353489637375,
+            "auroc": 0.53125,
+            "composite": 0.06618500291369855,
+            "rank": 27
+          },
+          {
+            "tcr": "CASSQGLGGGSYTEQFF",
+            "target_score": 0.10628729313611984,
+            "auroc": 0.40625,
+            "composite": 0.043179212836548686,
+            "rank": 28
+          },
+          {
+            "tcr": "CGASSSINLADLNTEAFF",
+            "target_score": 0.09843195229768753,
+            "auroc": 0.34375,
+            "composite": 0.03383598360233009,
+            "rank": 29
+          },
+          {
+            "tcr": "CASASLFEAFLF",
+            "target_score": 0.0818878561258316,
+            "auroc": 0.46875,
+            "composite": 0.038384932558983564,
+            "rank": 30
+          },
+          {
+            "tcr": "CSAVPPGAGEKLFF",
+            "target_score": 0.08133126050233841,
+            "auroc": 0.5,
+            "composite": 0.040665630251169205,
+            "rank": 31
+          },
+          {
+            "tcr": "CASSGDFGLGYESYF",
+            "target_score": 0.07990287244319916,
+            "auroc": 0.21875,
+            "composite": 0.017478753346949816,
+            "rank": 32
+          },
+          {
+            "tcr": "CSASKREDGDTQYGF",
+            "target_score": 0.07684653997421265,
+            "auroc": 0.4375,
+            "composite": 0.03362036123871803,
+            "rank": 33
+          },
+          {
+            "tcr": "CAISGTVYNESFF",
+            "target_score": 0.07223282009363174,
+            "auroc": 0.34375,
+            "composite": 0.024830031907185912,
+            "rank": 34
+          },
+          {
+            "tcr": "MGASGVEGTNAYF",
+            "target_score": 0.05872362107038498,
+            "auroc": 0.46875,
+            "composite": 0.02752669737674296,
+            "rank": 35
+          },
+          {
+            "tcr": "CATGMPYMGLFEF",
+            "target_score": 0.056343961507081985,
+            "auroc": 0.28125,
+            "composite": 0.01584673917386681,
+            "rank": 36
+          },
+          {
+            "tcr": "CASRPTPGQGEDYGYT",
+            "target_score": 0.05400622636079788,
+            "auroc": 0.34375,
+            "composite": 0.018564640311524272,
+            "rank": 37
+          },
+          {
+            "tcr": "CAASGRVDNQAY",
+            "target_score": 0.052841540426015854,
+            "auroc": 0.375,
+            "composite": 0.019815577659755945,
+            "rank": 38
+          },
+          {
+            "tcr": "CSANDGGLEHESSFF",
+            "target_score": 0.049269091337919235,
+            "auroc": 0.25,
+            "composite": 0.012317272834479809,
+            "rank": 39
+          },
+          {
+            "tcr": "CGASSGAYRGIDNYPHF",
+            "target_score": 0.045280542224645615,
+            "auroc": 0.71875,
+            "composite": 0.032545389723964036,
+            "rank": 40
+          },
+          {
+            "tcr": "CSARDRFRGTQEAFF",
+            "target_score": 0.04471955820918083,
+            "auroc": 0.3125,
+            "composite": 0.01397486194036901,
+            "rank": 41
+          },
+          {
+            "tcr": "CAASSEPTNVEQYF",
+            "target_score": 0.04133987054228783,
+            "auroc": 0.375,
+            "composite": 0.015502451453357935,
+            "rank": 42
+          },
+          {
+            "tcr": "CASGDYTGDTSYF",
+            "target_score": 0.04072042554616928,
+            "auroc": 0.375,
+            "composite": 0.01527015957981348,
+            "rank": 43
+          },
+          {
+            "tcr": "CASKSWRQAGEGELFF",
+            "target_score": 0.03954951837658882,
+            "auroc": 0.40625,
+            "composite": 0.01606699184048921,
+            "rank": 44
+          },
+          {
+            "tcr": "CASSSMGLHYEQYF",
+            "target_score": 0.0366021953523159,
+            "auroc": 0.46875,
+            "composite": 0.01715727907139808,
+            "rank": 45
+          },
+          {
+            "tcr": "SASAFLADLNIDTQYF",
+            "target_score": 0.0341571606695652,
+            "auroc": 0.5,
+            "composite": 0.0170785803347826,
+            "rank": 46
+          },
+          {
+            "tcr": "CASAKYSGGLQETQYF",
+            "target_score": 0.03282879665493965,
+            "auroc": 0.3125,
+            "composite": 0.010258998954668641,
+            "rank": 47
+          },
+          {
+            "tcr": "CASRVVGPGLQEAFF",
+            "target_score": 0.021595917642116547,
+            "auroc": 0.5625,
+            "composite": 0.012147703673690557,
+            "rank": 48
+          },
+          {
+            "tcr": "CSAALHSRNSETGLAF",
+            "target_score": 0.01333784218877554,
+            "auroc": 0.28125,
+            "composite": 0.0037512681155931205,
+            "rank": 49
+          },
+          {
+            "tcr": "CASSIVRLSNEQF",
+            "target_score": 0.0104041937738657,
+            "auroc": 0.34375,
+            "composite": 0.0035764416097663343,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.22,
+    "mean_reward": 1.300833372734487,
+    "generated_tcrs": [
+      "CGASSSINLADLNTEAFF",
+      "CASSVTDANESYF",
+      "CATGEGSANEQFSF",
+      "CASAGGEKFEAF",
+      "CAAARKLVRDEYF",
+      "CWATEGTFNHEQFF",
+      "CQANAGRLELASF",
+      "CASSAIGEGDLHS",
+      "CGASSGGSGHSQHF",
+      "CAISGTVYNESFF",
+      "CAIKSEWDANEQFF",
+      "CASASEGLLLLQY",
+      "CASTALGLLARAYTF",
+      "CASTGDVDQPSQEHF",
+      "CASSGDFGLGYESYF",
+      "CGASSGAYRGIDNYPHF",
+      "CSARDRFRGTQEAFF",
+      "CLSAPPGGLQASDTQYF",
+      "CAASPAGRDEQYF",
+      "CASKSWRQAGEGELFF",
+      "CSAALHSRNSETGLAF",
+      "CATGMPYMGLFEF",
+      "CASRVVGPGLQEAFF",
+      "CASSIVRLSNEQF",
+      "CARKLMAPLAIDTYQYF",
+      "CASAKYSGGLQETQYF",
+      "CASSQGLGGGSYTEQFF",
+      "CAASGRVDNQAY",
+      "CSASKREDGDTQYGF",
+      "CAAAPPALGSEHQYF",
+      "CASSNYRLLNSKTQF",
+      "CASARQGINNFF",
+      "CLAASLTGLENEQFF",
+      "CASRPTPGQGEDYGYT",
+      "CASRLRPGEESYQGYF",
+      "CAASSVRLAESQETQYF",
+      "CASASLFEAFLF",
+      "CSANDGGLEHESSFF",
+      "CASSADGRGSSYGYTF",
+      "CAASSEPTNVEQYF",
+      "CAISKAGLANGCNTY",
+      "MGASGVEGTNAYF",
+      "CLASRSQNRNTENFF",
+      "CSAVPPGAGEKLFF",
+      "CASKLGNDSSQY",
+      "CSGIQGHTYNQYF",
+      "CASAYQDYLATHTQGYF",
+      "CASSSMGLHYEQYF",
+      "SASAFLADLNIDTQYF",
+      "CASGDYTGDTSYF"
+    ]
+  },
+  "AVFDRKSDAK": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.535625,
+        "mean_target_score": 0.1937965941708535,
+        "mean_decoy_score": 0.18386762152504757,
+        "std_target_score": 0.21077388787394802,
+        "std_decoy_score": 0.1794092764278796,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 32,
+        "per_tier_auroc": {
+          "A": 0.6,
+          "B": 0.47125
+        },
+        "top1_target": 0.720295786857605,
+        "top3_target": 0.6995051900545756,
+        "top5_target": 0.6518172502517701,
+        "top1_auroc": 0.875,
+        "top3_auroc": 0.9270833333333334,
+        "top5_auroc": 0.89375,
+        "hit_rate_07": 0.04,
+        "top1_composite": 0.6302588135004044,
+        "top5_composite": 0.5848672285676002,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CASETVGRFNQNVLTF",
+            "target_score": 0.720295786857605,
+            "auroc": 0.875,
+            "composite": 0.6302588135004044,
+            "rank": 1
+          },
+          {
+            "tcr": "CASRRDRLTNSDTQYF",
+            "target_score": 0.7022308111190796,
+            "auroc": 1.0,
+            "composite": 0.7022308111190796,
+            "rank": 2
+          },
+          {
+            "tcr": "CGASNFVGGAHHTQLHR",
+            "target_score": 0.6759889721870422,
+            "auroc": 0.90625,
+            "composite": 0.612615006044507,
+            "rank": 3
+          },
+          {
+            "tcr": "CASSRRGDACTF",
+            "target_score": 0.5822267532348633,
+            "auroc": 0.84375,
+            "composite": 0.4912538230419159,
+            "rank": 4
+          },
+          {
+            "tcr": "CASSLTVRDKWRSEQYF",
+            "target_score": 0.57834392786026,
+            "auroc": 0.84375,
+            "composite": 0.4879776891320944,
+            "rank": 5
+          },
+          {
+            "tcr": "CGASHFGAGETQYF",
+            "target_score": 0.513664186000824,
+            "auroc": 0.75,
+            "composite": 0.385248139500618,
+            "rank": 6
+          },
+          {
+            "tcr": "CGASSRAVLQVMNTEAFF",
+            "target_score": 0.5126819014549255,
+            "auroc": 0.65625,
+            "composite": 0.3364474978297949,
+            "rank": 7
+          },
+          {
+            "tcr": "CASSRLRDFYKNEQF",
+            "target_score": 0.45521458983421326,
+            "auroc": 0.96875,
+            "composite": 0.4409891339018941,
+            "rank": 8
+          },
+          {
+            "tcr": "CTAIGSNTHGSYNQYF",
+            "target_score": 0.45399072766304016,
+            "auroc": 0.875,
+            "composite": 0.39724188670516014,
+            "rank": 9
+          },
+          {
+            "tcr": "CASKHSGMGGDTQYF",
+            "target_score": 0.4173493981361389,
+            "auroc": 1.0,
+            "composite": 0.4173493981361389,
+            "rank": 10
+          },
+          {
+            "tcr": "CASRLARTSSSYF",
+            "target_score": 0.3223586976528168,
+            "auroc": 0.6875,
+            "composite": 0.22162160463631153,
+            "rank": 11
+          },
+          {
+            "tcr": "CASSPGPHSGAPSEQYF",
+            "target_score": 0.3039562702178955,
+            "auroc": 0.75,
+            "composite": 0.22796720266342163,
+            "rank": 12
+          },
+          {
+            "tcr": "CASTETSLGSSDTQYF",
+            "target_score": 0.3021090626716614,
+            "auroc": 0.5625,
+            "composite": 0.16993634775280952,
+            "rank": 13
+          },
+          {
+            "tcr": "CATSGESLDISSLHD",
+            "target_score": 0.2770317792892456,
+            "auroc": 0.65625,
+            "composite": 0.18180210515856743,
+            "rank": 14
+          },
+          {
+            "tcr": "CASTTGGKNEKLFGF",
+            "target_score": 0.25993064045906067,
+            "auroc": 0.53125,
+            "composite": 0.13808815274387598,
+            "rank": 15
+          },
+          {
+            "tcr": "CSAGAAPTGGQDTQYF",
+            "target_score": 0.2589130103588104,
+            "auroc": 0.65625,
+            "composite": 0.16991166304796934,
+            "rank": 16
+          },
+          {
+            "tcr": "CASKRADRYNTQFF",
+            "target_score": 0.22065414488315582,
+            "auroc": 0.53125,
+            "composite": 0.11722251446917653,
+            "rank": 17
+          },
+          {
+            "tcr": "CGASSQEGGFSSGNTIYF",
+            "target_score": 0.216653972864151,
+            "auroc": 0.46875,
+            "composite": 0.10155654978007078,
+            "rank": 18
+          },
+          {
+            "tcr": "CASSSDHEVTSPLH",
+            "target_score": 0.20450866222381592,
+            "auroc": 0.65625,
+            "composite": 0.1342088095843792,
+            "rank": 19
+          },
+          {
+            "tcr": "CAETKSWLASELFG",
+            "target_score": 0.19285333156585693,
+            "auroc": 0.53125,
+            "composite": 0.1024533323943615,
+            "rank": 20
+          },
+          {
+            "tcr": "CSAARAQAAGETNGYF",
+            "target_score": 0.19260725378990173,
+            "auroc": 0.625,
+            "composite": 0.12037953361868858,
+            "rank": 21
+          },
+          {
+            "tcr": "CGAASRGNNNSPLHF",
+            "target_score": 0.19217519462108612,
+            "auroc": 0.4375,
+            "composite": 0.08407664764672518,
+            "rank": 22
+          },
+          {
+            "tcr": "CASKPSQLRLSSPF",
+            "target_score": 0.1614089012145996,
+            "auroc": 0.9375,
+            "composite": 0.15132084488868713,
+            "rank": 23
+          },
+          {
+            "tcr": "CGATGSQVGNLNGFANVTF",
+            "target_score": 0.14957113564014435,
+            "auroc": 0.375,
+            "composite": 0.05608917586505413,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSLSGQLNEGTQY",
+            "target_score": 0.10702307522296906,
+            "auroc": 0.40625,
+            "composite": 0.04347812430933118,
+            "rank": 25
+          },
+          {
+            "tcr": "CASSPGDDHDNEQFF",
+            "target_score": 0.10074307024478912,
+            "auroc": 0.5625,
+            "composite": 0.05666797701269388,
+            "rank": 26
+          },
+          {
+            "tcr": "CSSVEEWSSGPYGYTF",
+            "target_score": 0.06044143810868263,
+            "auroc": 0.25,
+            "composite": 0.015110359527170658,
+            "rank": 27
+          },
+          {
+            "tcr": "CASADLRTGELGF",
+            "target_score": 0.057359401136636734,
+            "auroc": 0.4375,
+            "composite": 0.02509473799727857,
+            "rank": 28
+          },
+          {
+            "tcr": "CASSQDSPLEGGGDTQYF",
+            "target_score": 0.05207262933254242,
+            "auroc": 0.21875,
+            "composite": 0.011390887666493654,
+            "rank": 29
+          },
+          {
+            "tcr": "CASSRQTLVEPGNLGF",
+            "target_score": 0.049842264503240585,
+            "auroc": 0.375,
+            "composite": 0.01869084918871522,
+            "rank": 30
+          },
+          {
+            "tcr": "CARLDRTLEHSF",
+            "target_score": 0.04579389467835426,
+            "auroc": 0.65625,
+            "composite": 0.030052243382669985,
+            "rank": 31
+          },
+          {
+            "tcr": "CASSQDERAERNEQFF",
+            "target_score": 0.04163501039147377,
+            "auroc": 0.25,
+            "composite": 0.010408752597868443,
+            "rank": 32
+          },
+          {
+            "tcr": "CSVDGGVREGPYSLDTQYF",
+            "target_score": 0.04117731750011444,
+            "auroc": 0.4375,
+            "composite": 0.018015076406300068,
+            "rank": 33
+          },
+          {
+            "tcr": "CTSVTKSAYSDGKLTF",
+            "target_score": 0.04080680012702942,
+            "auroc": 0.4375,
+            "composite": 0.01785297505557537,
+            "rank": 34
+          },
+          {
+            "tcr": "CSARGHGVRTQPQHF",
+            "target_score": 0.039077844470739365,
+            "auroc": 0.34375,
+            "composite": 0.013433009036816657,
+            "rank": 35
+          },
+          {
+            "tcr": "CASSLTCRLCQETGQLF",
+            "target_score": 0.0389418825507164,
+            "auroc": 0.3125,
+            "composite": 0.012169338297098875,
+            "rank": 36
+          },
+          {
+            "tcr": "CASKAHRGDNSGEGFEF",
+            "target_score": 0.02770835906267166,
+            "auroc": 0.3125,
+            "composite": 0.008658862207084894,
+            "rank": 37
+          },
+          {
+            "tcr": "CGSLGRSYGNDSPHHF",
+            "target_score": 0.02712232805788517,
+            "auroc": 0.375,
+            "composite": 0.010170873021706939,
+            "rank": 38
+          },
+          {
+            "tcr": "CASRLAVRGGSNADTQYDF",
+            "target_score": 0.017865346744656563,
+            "auroc": 0.375,
+            "composite": 0.006699505029246211,
+            "rank": 39
+          },
+          {
+            "tcr": "CASTADTGTVDSCIYQYF",
+            "target_score": 0.013558309525251389,
+            "auroc": 0.34375,
+            "composite": 0.004660668899305165,
+            "rank": 40
+          },
+          {
+            "tcr": "CAASLAPGTASRGDTEAF",
+            "target_score": 0.012669004499912262,
+            "auroc": 0.4375,
+            "composite": 0.005542689468711615,
+            "rank": 41
+          },
+          {
+            "tcr": "CASSEGSGYSYNEQF",
+            "target_score": 0.010861079208552837,
+            "auroc": 0.3125,
+            "composite": 0.0033940872526727617,
+            "rank": 42
+          },
+          {
+            "tcr": "SCAKWSVGRPNEGEAFF",
+            "target_score": 0.010491487570106983,
+            "auroc": 0.28125,
+            "composite": 0.002950730879092589,
+            "rank": 43
+          },
+          {
+            "tcr": "CASTVGDRANGNGDT",
+            "target_score": 0.008564365096390247,
+            "auroc": 0.40625,
+            "composite": 0.003479273320408538,
+            "rank": 44
+          },
+          {
+            "tcr": "CSVLRLAGLDTQYF",
+            "target_score": 0.006613456178456545,
+            "auroc": 0.375,
+            "composite": 0.0024800460669212043,
+            "rank": 45
+          },
+          {
+            "tcr": "CATSSFDSLSIQYF",
+            "target_score": 0.005532687529921532,
+            "auroc": 0.34375,
+            "composite": 0.0019018613384105265,
+            "rank": 46
+          },
+          {
+            "tcr": "CASKSGGASFHNEGF",
+            "target_score": 0.0021190533880144358,
+            "auroc": 0.34375,
+            "composite": 0.0007284246021299623,
+            "rank": 47
+          },
+          {
+            "tcr": "CASRADIGGVNCQQTIEAFF",
+            "target_score": 0.002009427873417735,
+            "auroc": 0.40625,
+            "composite": 0.0008163300735759549,
+            "rank": 48
+          },
+          {
+            "tcr": "CAWRTGFNQHPQHGF",
+            "target_score": 0.0018149371026083827,
+            "auroc": 0.3125,
+            "composite": 0.0005671678445651196,
+            "rank": 49
+          },
+          {
+            "tcr": "CSVSQGNGETAHQQYF",
+            "target_score": 0.0012661266373470426,
+            "auroc": 0.34375,
+            "composite": 0.0004352310315880459,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.18,
+    "mean_reward": 1.0845136853521058,
+    "generated_tcrs": [
+      "CSVDGGVREGPYSLDTQYF",
+      "CATSSFDSLSIQYF",
+      "CASETVGRFNQNVLTF",
+      "CASADLRTGELGF",
+      "CARLDRTLEHSF",
+      "CSVLRLAGLDTQYF",
+      "CASRRDRLTNSDTQYF",
+      "CASSRQTLVEPGNLGF",
+      "CAASLAPGTASRGDTEAF",
+      "CASSEGSGYSYNEQF",
+      "CSVSQGNGETAHQQYF",
+      "CASTTGGKNEKLFGF",
+      "CASSLTVRDKWRSEQYF",
+      "CASSRRGDACTF",
+      "CTSVTKSAYSDGKLTF",
+      "CSAGAAPTGGQDTQYF",
+      "CASKSGGASFHNEGF",
+      "CSARGHGVRTQPQHF",
+      "CASTETSLGSSDTQYF",
+      "CASSLTCRLCQETGQLF",
+      "CAWRTGFNQHPQHGF",
+      "CASKPSQLRLSSPF",
+      "CASSPGPHSGAPSEQYF",
+      "CATSGESLDISSLHD",
+      "CASSQDSPLEGGGDTQYF",
+      "CGASNFVGGAHHTQLHR",
+      "CASSSDHEVTSPLH",
+      "CASSQDERAERNEQFF",
+      "CGSLGRSYGNDSPHHF",
+      "CASSRLRDFYKNEQF",
+      "CGASSQEGGFSSGNTIYF",
+      "CASSLSGQLNEGTQY",
+      "CASKHSGMGGDTQYF",
+      "CTAIGSNTHGSYNQYF",
+      "CASRLAVRGGSNADTQYDF",
+      "CSSVEEWSSGPYGYTF",
+      "CGATGSQVGNLNGFANVTF",
+      "CSAARAQAAGETNGYF",
+      "CASTVGDRANGNGDT",
+      "CASRLARTSSSYF",
+      "CAETKSWLASELFG",
+      "SCAKWSVGRPNEGEAFF",
+      "CASTADTGTVDSCIYQYF",
+      "CASSPGDDHDNEQFF",
+      "CASKAHRGDNSGEGFEF",
+      "CGAASRGNNNSPLHF",
+      "CASRADIGGVNCQQTIEAFF",
+      "CGASSRAVLQVMNTEAFF",
+      "CGASHFGAGETQYF",
+      "CASKRADRYNTQFF"
+    ]
+  },
+  "IVTDFSVIK": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.75375,
+        "mean_target_score": 0.45555888867005706,
+        "mean_decoy_score": 0.2211870368675909,
+        "std_target_score": 0.2978540176122561,
+        "std_decoy_score": 0.22401478243026385,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 32,
+        "per_tier_auroc": {
+          "A": 0.77,
+          "B": 0.7375
+        },
+        "top1_target": 0.9128097295761108,
+        "top3_target": 0.9073183933893839,
+        "top5_target": 0.8882979035377503,
+        "top1_auroc": 0.9375,
+        "top3_auroc": 0.96875,
+        "top5_auroc": 0.95625,
+        "hit_rate_07": 0.3,
+        "top1_composite": 0.8557591214776039,
+        "top5_composite": 0.8497593332082033,
+        "per_tcr_ranked": [
+          {
+            "tcr": "TATLMSGDTNTQYF",
+            "target_score": 0.9128097295761108,
+            "auroc": 0.9375,
+            "composite": 0.8557591214776039,
+            "rank": 1
+          },
+          {
+            "tcr": "CSTQRDLYDGSYTG",
+            "target_score": 0.9076623320579529,
+            "auroc": 1.0,
+            "composite": 0.9076623320579529,
+            "rank": 2
+          },
+          {
+            "tcr": "CAISMGFDSTMAYGF",
+            "target_score": 0.9014831185340881,
+            "auroc": 0.96875,
+            "composite": 0.8733117710798979,
+            "rank": 3
+          },
+          {
+            "tcr": "CATRQGGGLIEQYG",
+            "target_score": 0.8671385049819946,
+            "auroc": 0.9375,
+            "composite": 0.81294234842062,
+            "rank": 4
+          },
+          {
+            "tcr": "CAIGMRPGQQVPEGYF",
+            "target_score": 0.8523958325386047,
+            "auroc": 0.9375,
+            "composite": 0.7991210930049419,
+            "rank": 5
+          },
+          {
+            "tcr": "CSTSMTFVDIDGYG",
+            "target_score": 0.8346464037895203,
+            "auroc": 0.96875,
+            "composite": 0.8085637036710978,
+            "rank": 6
+          },
+          {
+            "tcr": "CATSMSNRGNDEQGMYF",
+            "target_score": 0.8014902472496033,
+            "auroc": 0.9375,
+            "composite": 0.7513971067965031,
+            "rank": 7
+          },
+          {
+            "tcr": "CATSMDGLDDEQFF",
+            "target_score": 0.7962890863418579,
+            "auroc": 1.0,
+            "composite": 0.7962890863418579,
+            "rank": 8
+          },
+          {
+            "tcr": "TAISWVTPDNEQFGG",
+            "target_score": 0.792923629283905,
+            "auroc": 1.0,
+            "composite": 0.792923629283905,
+            "rank": 9
+          },
+          {
+            "tcr": "CASSKDSRDIEQHGM",
+            "target_score": 0.7842567563056946,
+            "auroc": 0.90625,
+            "composite": 0.7107326854020357,
+            "rank": 10
+          },
+          {
+            "tcr": "CATSMGPNSDGYTF",
+            "target_score": 0.7646281719207764,
+            "auroc": 0.9375,
+            "composite": 0.7168389111757278,
+            "rank": 11
+          },
+          {
+            "tcr": "CAASASFDACSQPQHF",
+            "target_score": 0.7633270025253296,
+            "auroc": 1.0,
+            "composite": 0.7633270025253296,
+            "rank": 12
+          },
+          {
+            "tcr": "CAASMSIIMSVGNEGF",
+            "target_score": 0.7544493675231934,
+            "auroc": 1.0,
+            "composite": 0.7544493675231934,
+            "rank": 13
+          },
+          {
+            "tcr": "CASSMQGGVNTEAGF",
+            "target_score": 0.7072411179542542,
+            "auroc": 0.96875,
+            "composite": 0.6851398330181837,
+            "rank": 14
+          },
+          {
+            "tcr": "CSVTGMVDPNGYMF",
+            "target_score": 0.7032204270362854,
+            "auroc": 0.96875,
+            "composite": 0.6812447886914015,
+            "rank": 15
+          },
+          {
+            "tcr": "CYTLMHSMYS",
+            "target_score": 0.6893786787986755,
+            "auroc": 0.84375,
+            "composite": 0.5816632602363825,
+            "rank": 16
+          },
+          {
+            "tcr": "CATKMKGALGSYEQMYF",
+            "target_score": 0.6734215617179871,
+            "auroc": 0.96875,
+            "composite": 0.6523771379143,
+            "rank": 17
+          },
+          {
+            "tcr": "CATSMEQTDCGNIYF",
+            "target_score": 0.6614144444465637,
+            "auroc": 0.9375,
+            "composite": 0.6200760416686535,
+            "rank": 18
+          },
+          {
+            "tcr": "CATTHQSDTINIILFF",
+            "target_score": 0.6517674922943115,
+            "auroc": 1.0,
+            "composite": 0.6517674922943115,
+            "rank": 19
+          },
+          {
+            "tcr": "CAASMEAGDFYEQMGF",
+            "target_score": 0.6508902907371521,
+            "auroc": 0.9375,
+            "composite": 0.6102096475660801,
+            "rank": 20
+          },
+          {
+            "tcr": "CATSMLVGDQVLFF",
+            "target_score": 0.6291179656982422,
+            "auroc": 0.8125,
+            "composite": 0.5111583471298218,
+            "rank": 21
+          },
+          {
+            "tcr": "CASSTSGTGIGGETQY",
+            "target_score": 0.6290637850761414,
+            "auroc": 0.90625,
+            "composite": 0.5700890552252531,
+            "rank": 22
+          },
+          {
+            "tcr": "CATSRPGGGSPANVLT",
+            "target_score": 0.5629754066467285,
+            "auroc": 0.96875,
+            "composite": 0.5453824251890182,
+            "rank": 23
+          },
+          {
+            "tcr": "CASRPNGRQTNEKGMFF",
+            "target_score": 0.46094921231269836,
+            "auroc": 0.875,
+            "composite": 0.40333056077361107,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSVRTDYNEQQF",
+            "target_score": 0.45227083563804626,
+            "auroc": 0.875,
+            "composite": 0.3957369811832905,
+            "rank": 25
+          },
+          {
+            "tcr": "CATRMWLMGEAFPGF",
+            "target_score": 0.43641382455825806,
+            "auroc": 0.8125,
+            "composite": 0.35458623245358467,
+            "rank": 26
+          },
+          {
+            "tcr": "CSTIMMPGPEAFF",
+            "target_score": 0.35371384024620056,
+            "auroc": 0.78125,
+            "composite": 0.2763389376923442,
+            "rank": 27
+          },
+          {
+            "tcr": "CSAIVLTGGGYYTF",
+            "target_score": 0.3359498381614685,
+            "auroc": 0.625,
+            "composite": 0.20996864885091782,
+            "rank": 28
+          },
+          {
+            "tcr": "TAIRTADGGQQH",
+            "target_score": 0.3192051947116852,
+            "auroc": 0.90625,
+            "composite": 0.2892797077074647,
+            "rank": 29
+          },
+          {
+            "tcr": "CYISMRRHGPTYNSPLHF",
+            "target_score": 0.3154788911342621,
+            "auroc": 0.71875,
+            "composite": 0.22675045300275087,
+            "rank": 30
+          },
+          {
+            "tcr": "CATGRTGGAYEQYF",
+            "target_score": 0.31476789712905884,
+            "auroc": 0.75,
+            "composite": 0.23607592284679413,
+            "rank": 31
+          },
+          {
+            "tcr": "CAISLYPRAGGFNEQFF",
+            "target_score": 0.26653045415878296,
+            "auroc": 0.5625,
+            "composite": 0.14992338046431541,
+            "rank": 32
+          },
+          {
+            "tcr": "KATRALTARGYEQYG",
+            "target_score": 0.2370055913925171,
+            "auroc": 0.75,
+            "composite": 0.17775419354438782,
+            "rank": 33
+          },
+          {
+            "tcr": "CQSSLIFDMGGCYEQKYF",
+            "target_score": 0.21815840899944305,
+            "auroc": 0.46875,
+            "composite": 0.10226175421848893,
+            "rank": 34
+          },
+          {
+            "tcr": "CATSVSRVYEQFF",
+            "target_score": 0.21731075644493103,
+            "auroc": 0.375,
+            "composite": 0.08149153366684914,
+            "rank": 35
+          },
+          {
+            "tcr": "CASSMTTDYNEQFF",
+            "target_score": 0.2157914936542511,
+            "auroc": 0.59375,
+            "composite": 0.1281261993572116,
+            "rank": 36
+          },
+          {
+            "tcr": "CASDSHRTTGGPRTEF",
+            "target_score": 0.19931161403656006,
+            "auroc": 0.4375,
+            "composite": 0.08719883114099503,
+            "rank": 37
+          },
+          {
+            "tcr": "CAIGMGQSRETYPF",
+            "target_score": 0.18456198275089264,
+            "auroc": 0.5625,
+            "composite": 0.10381611529737711,
+            "rank": 38
+          },
+          {
+            "tcr": "CATTDAVLGHTQHH",
+            "target_score": 0.16938607394695282,
+            "auroc": 0.96875,
+            "composite": 0.16409275913611054,
+            "rank": 39
+          },
+          {
+            "tcr": "CASSPSLDRGGYNPAFWF",
+            "target_score": 0.14365996420383453,
+            "auroc": 0.1875,
+            "composite": 0.026936243288218975,
+            "rank": 40
+          },
+          {
+            "tcr": "CATTPQTGDSTCQHF",
+            "target_score": 0.13054603338241577,
+            "auroc": 0.625,
+            "composite": 0.08159127086400986,
+            "rank": 41
+          },
+          {
+            "tcr": "CASRRYGGTNIYNEQFF",
+            "target_score": 0.11021767556667328,
+            "auroc": 0.09375,
+            "composite": 0.01033290708437562,
+            "rank": 42
+          },
+          {
+            "tcr": "CASSMQGDQEKLFMF",
+            "target_score": 0.0839686244726181,
+            "auroc": 0.28125,
+            "composite": 0.02361617563292384,
+            "rank": 43
+          },
+          {
+            "tcr": "CAIQYSHSEYEQYQM",
+            "target_score": 0.0773804560303688,
+            "auroc": 0.875,
+            "composite": 0.0677078990265727,
+            "rank": 44
+          },
+          {
+            "tcr": "CAISPGTGASRGYT",
+            "target_score": 0.07104035466909409,
+            "auroc": 0.84375,
+            "composite": 0.059940299252048135,
+            "rank": 45
+          },
+          {
+            "tcr": "CASSMAGQINEQYF",
+            "target_score": 0.06818439811468124,
+            "auroc": 0.46875,
+            "composite": 0.03196143661625683,
+            "rank": 46
+          },
+          {
+            "tcr": "CASLRTIELYQYF",
+            "target_score": 0.041651368141174316,
+            "auroc": 0.21875,
+            "composite": 0.009111236780881882,
+            "rank": 47
+          },
+          {
+            "tcr": "CAIGSYRGGSVYWEQYMF",
+            "target_score": 0.03508702293038368,
+            "auroc": 0.625,
+            "composite": 0.0219293893314898,
+            "rank": 48
+          },
+          {
+            "tcr": "CASSMLSFGELFF",
+            "target_score": 0.021824035793542862,
+            "auroc": 0.25,
+            "composite": 0.0054560089483857155,
+            "rank": 49
+          },
+          {
+            "tcr": "CASSQGLAPADDYKEQFF",
+            "target_score": 0.005587237887084484,
+            "auroc": 0.3125,
+            "composite": 0.0017460118397139013,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 6.12,
+    "mean_reward": 2.6587124282540753,
+    "generated_tcrs": [
+      "CSAIVLTGGGYYTF",
+      "CAIGMRPGQQVPEGYF",
+      "CAIQYSHSEYEQYQM",
+      "CATRQGGGLIEQYG",
+      "CASSTSGTGIGGETQY",
+      "CASSPSLDRGGYNPAFWF",
+      "TAIRTADGGQQH",
+      "CSTIMMPGPEAFF",
+      "CATSRPGGGSPANVLT",
+      "CSTSMTFVDIDGYG",
+      "CAISMGFDSTMAYGF",
+      "CAISLYPRAGGFNEQFF",
+      "CATSMLVGDQVLFF",
+      "CATSMEQTDCGNIYF",
+      "TAISWVTPDNEQFGG",
+      "CASSQGLAPADDYKEQFF",
+      "CAASMEAGDFYEQMGF",
+      "CATRMWLMGEAFPGF",
+      "CATSMSNRGNDEQGMYF",
+      "CATKMKGALGSYEQMYF",
+      "CAISPGTGASRGYT",
+      "TATLMSGDTNTQYF",
+      "CATTHQSDTINIILFF",
+      "CATSVSRVYEQFF",
+      "CYISMRRHGPTYNSPLHF",
+      "CSTQRDLYDGSYTG",
+      "CASSVRTDYNEQQF",
+      "CATSMDGLDDEQFF",
+      "CAIGMGQSRETYPF",
+      "CAASASFDACSQPQHF",
+      "CSVTGMVDPNGYMF",
+      "CASSMTTDYNEQFF",
+      "CASRRYGGTNIYNEQFF",
+      "CASDSHRTTGGPRTEF",
+      "CASRPNGRQTNEKGMFF",
+      "CASSMLSFGELFF",
+      "CASSMAGQINEQYF",
+      "CATTPQTGDSTCQHF",
+      "CATSMGPNSDGYTF",
+      "CATGRTGGAYEQYF",
+      "CASSMQGDQEKLFMF",
+      "CATTDAVLGHTQHH",
+      "CASSKDSRDIEQHGM",
+      "CASSMQGGVNTEAGF",
+      "CAASMSIIMSVGNEGF",
+      "CASLRTIELYQYF",
+      "CYTLMHSMYS",
+      "CAIGSYRGGSVYWEQYMF",
+      "KATRALTARGYEQYG",
+      "CQSSLIFDMGGCYEQKYF"
+    ]
+  },
+  "SPRWYFYYL": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.4725,
+        "mean_target_score": 0.16848641491354555,
+        "mean_decoy_score": 0.1665906396995819,
+        "std_target_score": 0.1950332233995861,
+        "std_decoy_score": 0.20035494759337827,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 32,
+        "per_tier_auroc": {
+          "A": 0.5225,
+          "B": 0.4225
+        },
+        "top1_target": 0.7595007419586182,
+        "top3_target": 0.664412260055542,
+        "top5_target": 0.6178129315376282,
+        "top1_auroc": 0.6875,
+        "top3_auroc": 0.8020833333333334,
+        "top5_auroc": 0.83125,
+        "hit_rate_07": 0.02,
+        "top1_composite": 0.52215676009655,
+        "top5_composite": 0.5084019258618355,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CASPDRVYTY",
+            "target_score": 0.7595007419586182,
+            "auroc": 0.6875,
+            "composite": 0.52215676009655,
+            "rank": 1
+          },
+          {
+            "tcr": "CASSAPHPH",
+            "target_score": 0.6208640933036804,
+            "auroc": 0.90625,
+            "composite": 0.5626580845564604,
+            "rank": 2
+          },
+          {
+            "tcr": "CAIWSSGRWDEAF",
+            "target_score": 0.6128719449043274,
+            "auroc": 0.8125,
+            "composite": 0.497958455234766,
+            "rank": 3
+          },
+          {
+            "tcr": "ASSPPQIEA",
+            "target_score": 0.5541049242019653,
+            "auroc": 0.90625,
+            "composite": 0.5021575875580311,
+            "rank": 4
+          },
+          {
+            "tcr": "CWSPGGGSEF",
+            "target_score": 0.5417229533195496,
+            "auroc": 0.84375,
+            "composite": 0.45707874186336994,
+            "rank": 5
+          },
+          {
+            "tcr": "CASSRGDGFYEQYF",
+            "target_score": 0.4311959743499756,
+            "auroc": 0.59375,
+            "composite": 0.256022609770298,
+            "rank": 6
+          },
+          {
+            "tcr": "CASPDGGRDTQYF",
+            "target_score": 0.379684716463089,
+            "auroc": 0.8125,
+            "composite": 0.3084938321262598,
+            "rank": 7
+          },
+          {
+            "tcr": "CVSRRTSQ",
+            "target_score": 0.36230090260505676,
+            "auroc": 0.53125,
+            "composite": 0.1924723545089364,
+            "rank": 8
+          },
+          {
+            "tcr": "CASSPPLSEQF",
+            "target_score": 0.33168646693229675,
+            "auroc": 0.875,
+            "composite": 0.29022565856575966,
+            "rank": 9
+          },
+          {
+            "tcr": "CASRTGTNY",
+            "target_score": 0.3189161419868469,
+            "auroc": 0.84375,
+            "composite": 0.2690854948014021,
+            "rank": 10
+          },
+          {
+            "tcr": "CASGRGTGLNMQYF",
+            "target_score": 0.2956949472427368,
+            "auroc": 0.5,
+            "composite": 0.1478474736213684,
+            "rank": 11
+          },
+          {
+            "tcr": "CGASSPDVISYF",
+            "target_score": 0.2928159534931183,
+            "auroc": 0.53125,
+            "composite": 0.1555584752932191,
+            "rank": 12
+          },
+          {
+            "tcr": "CATSPSESLPYEQYF",
+            "target_score": 0.2919195890426636,
+            "auroc": 0.71875,
+            "composite": 0.20981720462441444,
+            "rank": 13
+          },
+          {
+            "tcr": "CFADGHTQH",
+            "target_score": 0.26149654388427734,
+            "auroc": 0.875,
+            "composite": 0.22880947589874268,
+            "rank": 14
+          },
+          {
+            "tcr": "CSSGPNTGEF",
+            "target_score": 0.25630271434783936,
+            "auroc": 0.5625,
+            "composite": 0.14417027682065964,
+            "rank": 15
+          },
+          {
+            "tcr": "CQSPRWWNEQFF",
+            "target_score": 0.225127175450325,
+            "auroc": 0.6875,
+            "composite": 0.15477493312209845,
+            "rank": 16
+          },
+          {
+            "tcr": "RGASGLEQYTF",
+            "target_score": 0.21267057955265045,
+            "auroc": 0.59375,
+            "composite": 0.1262731566093862,
+            "rank": 17
+          },
+          {
+            "tcr": "CASKPGLFL",
+            "target_score": 0.19918818771839142,
+            "auroc": 0.75,
+            "composite": 0.14939114078879356,
+            "rank": 18
+          },
+          {
+            "tcr": "CATSCGPSPDYEQY",
+            "target_score": 0.17750120162963867,
+            "auroc": 0.625,
+            "composite": 0.11093825101852417,
+            "rank": 19
+          },
+          {
+            "tcr": "CASRPDSFPVQF",
+            "target_score": 0.17355871200561523,
+            "auroc": 0.625,
+            "composite": 0.10847419500350952,
+            "rank": 20
+          },
+          {
+            "tcr": "CAISSWAEAFF",
+            "target_score": 0.16744796931743622,
+            "auroc": 0.4375,
+            "composite": 0.07325848657637835,
+            "rank": 21
+          },
+          {
+            "tcr": "CASSMREVELFF",
+            "target_score": 0.15501241385936737,
+            "auroc": 0.375,
+            "composite": 0.058129655197262764,
+            "rank": 22
+          },
+          {
+            "tcr": "CASSKRGEQFF",
+            "target_score": 0.14953482151031494,
+            "auroc": 0.5625,
+            "composite": 0.08411333709955215,
+            "rank": 23
+          },
+          {
+            "tcr": "CAISSWSRNEQF",
+            "target_score": 0.10174033790826797,
+            "auroc": 0.375,
+            "composite": 0.03815262671560049,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSLGFGICQY",
+            "target_score": 0.08691293001174927,
+            "auroc": 0.46875,
+            "composite": 0.04074043594300747,
+            "rank": 25
+          },
+          {
+            "tcr": "CASTRTAF",
+            "target_score": 0.08608032763004303,
+            "auroc": 0.53125,
+            "composite": 0.04573017405346036,
+            "rank": 26
+          },
+          {
+            "tcr": "CASSPGQTKNEQ",
+            "target_score": 0.07920006662607193,
+            "auroc": 0.78125,
+            "composite": 0.061875052051618695,
+            "rank": 27
+          },
+          {
+            "tcr": "CASFGANVLTF",
+            "target_score": 0.06792832911014557,
+            "auroc": 0.53125,
+            "composite": 0.03608692483976483,
+            "rank": 28
+          },
+          {
+            "tcr": "CASRSGANLT",
+            "target_score": 0.06640751659870148,
+            "auroc": 0.34375,
+            "composite": 0.022827583830803633,
+            "rank": 29
+          },
+          {
+            "tcr": "CATGNTEF",
+            "target_score": 0.05944201722741127,
+            "auroc": 0.34375,
+            "composite": 0.020433193421922624,
+            "rank": 30
+          },
+          {
+            "tcr": "CASSYGYT",
+            "target_score": 0.02276305854320526,
+            "auroc": 0.21875,
+            "composite": 0.004979419056326151,
+            "rank": 31
+          },
+          {
+            "tcr": "CALTVGWYQYF",
+            "target_score": 0.01819455437362194,
+            "auroc": 0.25,
+            "composite": 0.004548638593405485,
+            "rank": 32
+          },
+          {
+            "tcr": "CSAKSRRNEQFF",
+            "target_score": 0.0162225179374218,
+            "auroc": 0.1875,
+            "composite": 0.0030417221132665873,
+            "rank": 33
+          },
+          {
+            "tcr": "CASTSQTFLGYEQY",
+            "target_score": 0.016082730144262314,
+            "auroc": 0.3125,
+            "composite": 0.005025853170081973,
+            "rank": 34
+          },
+          {
+            "tcr": "CLSVSHGAQEQYF",
+            "target_score": 0.008172450587153435,
+            "auroc": 0.15625,
+            "composite": 0.0012769454042427242,
+            "rank": 35
+          },
+          {
+            "tcr": "CASSGNNQFF",
+            "target_score": 0.0060261026956140995,
+            "auroc": 0.125,
+            "composite": 0.0007532628369517624,
+            "rank": 36
+          },
+          {
+            "tcr": "CAISSFGPEQY",
+            "target_score": 0.005521917250007391,
+            "auroc": 0.53125,
+            "composite": 0.0029335185390664265,
+            "rank": 37
+          },
+          {
+            "tcr": "CSVDTEFF",
+            "target_score": 0.0028781688306480646,
+            "auroc": 0.25,
+            "composite": 0.0007195422076620162,
+            "rank": 38
+          },
+          {
+            "tcr": "CASVGAGAPSHQ",
+            "target_score": 0.002488097408786416,
+            "auroc": 0.375,
+            "composite": 0.000933036528294906,
+            "rank": 39
+          },
+          {
+            "tcr": "CADMRGRHNEQFF",
+            "target_score": 0.002318437211215496,
+            "auroc": 0.1875,
+            "composite": 0.0004347069771029055,
+            "rank": 40
+          },
+          {
+            "tcr": "CAVSGDYNQFF",
+            "target_score": 0.0014828982530161738,
+            "auroc": 0.375,
+            "composite": 0.0005560868448810652,
+            "rank": 41
+          },
+          {
+            "tcr": "CSATQFSWLH",
+            "target_score": 0.0012506714556366205,
+            "auroc": 0.25,
+            "composite": 0.00031266786390915513,
+            "rank": 42
+          },
+          {
+            "tcr": "CDQAGGENTEFF",
+            "target_score": 0.0006978285382501781,
+            "auroc": 0.09375,
+            "composite": 6.54214254609542e-05,
+            "rank": 43
+          },
+          {
+            "tcr": "CSGAELFF",
+            "target_score": 0.0004315679252613336,
+            "auroc": 0.21875,
+            "composite": 9.440548365091672e-05,
+            "rank": 44
+          },
+          {
+            "tcr": "CASSPIFGQETYF",
+            "target_score": 0.0004215648223180324,
+            "auroc": 0.15625,
+            "composite": 6.586950348719256e-05,
+            "rank": 45
+          },
+          {
+            "tcr": "CASVFKTQHF",
+            "target_score": 0.0002528787008486688,
+            "auroc": 0.125,
+            "composite": 3.16098376060836e-05,
+            "rank": 46
+          },
+          {
+            "tcr": "CASSTTQGDPQHF",
+            "target_score": 0.00025267264572903514,
+            "auroc": 0.28125,
+            "composite": 7.106418161129113e-05,
+            "rank": 47
+          },
+          {
+            "tcr": "AEGVMENGMDIQYF",
+            "target_score": 2.191880594182294e-05,
+            "auroc": 0.03125,
+            "composite": 6.849626856819668e-07,
+            "rank": 48
+          },
+          {
+            "tcr": "CAETSESEYPEQQF",
+            "target_score": 8.841783710522577e-06,
+            "auroc": 0.25,
+            "composite": 2.2104459276306443e-06,
+            "rank": 49
+          },
+          {
+            "tcr": "CSVRGEGDGYTF",
+            "target_score": 6.73572458254057e-07,
+            "auroc": 0.21875,
+            "composite": 1.4734397524307496e-07,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.66,
+    "mean_reward": 0.689174528561671,
+    "generated_tcrs": [
+      "CASRPDSFPVQF",
+      "CVSRRTSQ",
+      "CASSRGDGFYEQYF",
+      "CASPDRVYTY",
+      "CLSVSHGAQEQYF",
+      "CSSGPNTGEF",
+      "CASSPIFGQETYF",
+      "CALTVGWYQYF",
+      "ASSPPQIEA",
+      "CSGAELFF",
+      "CATSPSESLPYEQYF",
+      "CASTRTAF",
+      "CAIWSSGRWDEAF",
+      "CQSPRWWNEQFF",
+      "CAISSFGPEQY",
+      "CASGRGTGLNMQYF",
+      "CASSPPLSEQF",
+      "CASPDGGRDTQYF",
+      "CADMRGRHNEQFF",
+      "CASSLGFGICQY",
+      "CASVGAGAPSHQ",
+      "CFADGHTQH",
+      "CASFGANVLTF",
+      "CWSPGGGSEF",
+      "CSVDTEFF",
+      "CASTSQTFLGYEQY",
+      "CASSGNNQFF",
+      "CASRTGTNY",
+      "CAISSWSRNEQF",
+      "CSAKSRRNEQFF",
+      "CATGNTEF",
+      "CASSAPHPH",
+      "CASKPGLFL",
+      "CASSTTQGDPQHF",
+      "CGASSPDVISYF",
+      "CAISSWAEAFF",
+      "CASRSGANLT",
+      "CSATQFSWLH",
+      "CASSKRGEQFF",
+      "CDQAGGENTEFF",
+      "CAETSESEYPEQQF",
+      "CASSMREVELFF",
+      "CASSYGYT",
+      "CASVFKTQHF",
+      "CSVRGEGDGYTF",
+      "CATSCGPSPDYEQY",
+      "CASSPGQTKNEQ",
+      "AEGVMENGMDIQYF",
+      "RGASGLEQYTF",
+      "CAVSGDYNQFF"
+    ]
+  },
+  "RLRAEAQVK": {
+    "specificity": {
+      "ergo": {
+        "auroc": 0.64875,
+        "mean_target_score": 0.1974649440261419,
+        "mean_decoy_score": 0.16475061737659988,
+        "std_target_score": 0.1462881960153299,
+        "std_decoy_score": 0.16882370021390056,
+        "n_tcrs": 50,
+        "n_decoys_per_tcr": 32,
+        "per_tier_auroc": {
+          "A": 0.6275,
+          "B": 0.67
+        },
+        "top1_target": 0.6140557527542114,
+        "top3_target": 0.5198478003342947,
+        "top5_target": 0.49152018427848815,
+        "top1_auroc": 0.78125,
+        "top3_auroc": 0.9166666666666666,
+        "top5_auroc": 0.8625,
+        "hit_rate_07": 0.0,
+        "top1_composite": 0.4797310568392277,
+        "top5_composite": 0.4223533658310771,
+        "per_tcr_ranked": [
+          {
+            "tcr": "CASSPRALLNEHQYF",
+            "target_score": 0.6140557527542114,
+            "auroc": 0.78125,
+            "composite": 0.4797310568392277,
+            "rank": 1
+          },
+          {
+            "tcr": "AAASDPYVQPHYEQYF",
+            "target_score": 0.47885221242904663,
+            "auroc": 1.0,
+            "composite": 0.47885221242904663,
+            "rank": 2
+          },
+          {
+            "tcr": "CASAFQGQPQHQCSLHF",
+            "target_score": 0.46663543581962585,
+            "auroc": 0.96875,
+            "composite": 0.45205307845026255,
+            "rank": 3
+          },
+          {
+            "tcr": "CASSSSNLLGHETNYF",
+            "target_score": 0.45666006207466125,
+            "auroc": 0.75,
+            "composite": 0.34249504655599594,
+            "rank": 4
+          },
+          {
+            "tcr": "CGSKFIDRGGSPLHF",
+            "target_score": 0.44139745831489563,
+            "auroc": 0.8125,
+            "composite": 0.3586354348808527,
+            "rank": 5
+          },
+          {
+            "tcr": "CASSLMGVDEHHYF",
+            "target_score": 0.4401645362377167,
+            "auroc": 0.875,
+            "composite": 0.3851439692080021,
+            "rank": 6
+          },
+          {
+            "tcr": "CASRASPYEQHYF",
+            "target_score": 0.368085116147995,
+            "auroc": 0.96875,
+            "composite": 0.35658245626837015,
+            "rank": 7
+          },
+          {
+            "tcr": "CASRASGILNNSQFF",
+            "target_score": 0.34920623898506165,
+            "auroc": 0.5,
+            "composite": 0.17460311949253082,
+            "rank": 8
+          },
+          {
+            "tcr": "CSARDSAQGKSYEQYF",
+            "target_score": 0.3262467682361603,
+            "auroc": 0.78125,
+            "composite": 0.2548802876845002,
+            "rank": 9
+          },
+          {
+            "tcr": "CALSQAPDNGGTDNTQYF",
+            "target_score": 0.3245374858379364,
+            "auroc": 0.9375,
+            "composite": 0.3042538929730654,
+            "rank": 10
+          },
+          {
+            "tcr": "CATTQSEELITFQYF",
+            "target_score": 0.3192703127861023,
+            "auroc": 0.75,
+            "composite": 0.23945273458957672,
+            "rank": 11
+          },
+          {
+            "tcr": "CSTKSRLTGHSCEAFF",
+            "target_score": 0.285480260848999,
+            "auroc": 0.84375,
+            "composite": 0.24087397009134293,
+            "rank": 12
+          },
+          {
+            "tcr": "CAASNTGENEHTLYMF",
+            "target_score": 0.28216227889060974,
+            "auroc": 0.65625,
+            "composite": 0.18516899552196264,
+            "rank": 13
+          },
+          {
+            "tcr": "CASSSGQEGNVATQF",
+            "target_score": 0.27847525477409363,
+            "auroc": 0.625,
+            "composite": 0.17404703423380852,
+            "rank": 14
+          },
+          {
+            "tcr": "CAASPLDVANTGELFF",
+            "target_score": 0.26614153385162354,
+            "auroc": 0.75,
+            "composite": 0.19960615038871765,
+            "rank": 15
+          },
+          {
+            "tcr": "CASRSKWDGGSF",
+            "target_score": 0.24106891453266144,
+            "auroc": 0.53125,
+            "composite": 0.1280678608454764,
+            "rank": 16
+          },
+          {
+            "tcr": "CASSQDMRLLHYNF",
+            "target_score": 0.2404860407114029,
+            "auroc": 0.71875,
+            "composite": 0.17284934176132083,
+            "rank": 17
+          },
+          {
+            "tcr": "CAANQEWGSGNTIYEF",
+            "target_score": 0.23617565631866455,
+            "auroc": 0.6875,
+            "composite": 0.16237076371908188,
+            "rank": 18
+          },
+          {
+            "tcr": "CAWSRNGQGVSLSQYF",
+            "target_score": 0.21603311598300934,
+            "auroc": 0.84375,
+            "composite": 0.18227794161066413,
+            "rank": 19
+          },
+          {
+            "tcr": "CASSQSLSTSHDTQYF",
+            "target_score": 0.20125161111354828,
+            "auroc": 0.75,
+            "composite": 0.1509387083351612,
+            "rank": 20
+          },
+          {
+            "tcr": "CAASQPWDLGTTSAFF",
+            "target_score": 0.19624356925487518,
+            "auroc": 0.625,
+            "composite": 0.12265223078429699,
+            "rank": 21
+          },
+          {
+            "tcr": "CASSDLGRTVGDEKLF",
+            "target_score": 0.19531100988388062,
+            "auroc": 0.875,
+            "composite": 0.17089713364839554,
+            "rank": 22
+          },
+          {
+            "tcr": "ESAKLPGVLNHTQYF",
+            "target_score": 0.19130662083625793,
+            "auroc": 0.71875,
+            "composite": 0.1375016337260604,
+            "rank": 23
+          },
+          {
+            "tcr": "CAITRWRLGDGYTF",
+            "target_score": 0.1890420913696289,
+            "auroc": 0.4375,
+            "composite": 0.08270591497421265,
+            "rank": 24
+          },
+          {
+            "tcr": "CASSLELTQGEADTQYF",
+            "target_score": 0.17874394357204437,
+            "auroc": 0.53125,
+            "composite": 0.09495772002264857,
+            "rank": 25
+          },
+          {
+            "tcr": "CASSELTANYHSPLHF",
+            "target_score": 0.17632350325584412,
+            "auroc": 0.71875,
+            "composite": 0.12673251796513796,
+            "rank": 26
+          },
+          {
+            "tcr": "CASERGGNTDTQQKYF",
+            "target_score": 0.17241989076137543,
+            "auroc": 0.59375,
+            "composite": 0.10237431013956666,
+            "rank": 27
+          },
+          {
+            "tcr": "CGATSGGTNTQYF",
+            "target_score": 0.17203809320926666,
+            "auroc": 0.59375,
+            "composite": 0.10214761784300208,
+            "rank": 28
+          },
+          {
+            "tcr": "CSAAPRDRGSSEQYF",
+            "target_score": 0.17035230994224548,
+            "auroc": 0.6875,
+            "composite": 0.11711721308529377,
+            "rank": 29
+          },
+          {
+            "tcr": "CASVEVGKVCAANVLTF",
+            "target_score": 0.16073854267597198,
+            "auroc": 0.6875,
+            "composite": 0.11050774808973074,
+            "rank": 30
+          },
+          {
+            "tcr": "CASSLRIGLVAAGGDTQYF",
+            "target_score": 0.16061024367809296,
+            "auroc": 0.59375,
+            "composite": 0.09536233218386769,
+            "rank": 31
+          },
+          {
+            "tcr": "CASSGPGKDAQYNF",
+            "target_score": 0.14673787355422974,
+            "auroc": 0.4375,
+            "composite": 0.06419781967997551,
+            "rank": 32
+          },
+          {
+            "tcr": "CASSSLQGPHNEQYF",
+            "target_score": 0.13861000537872314,
+            "auroc": 0.65625,
+            "composite": 0.09096281602978706,
+            "rank": 33
+          },
+          {
+            "tcr": "CGATSDSGVQVPYEQYF",
+            "target_score": 0.1241096779704094,
+            "auroc": 0.78125,
+            "composite": 0.09696068591438234,
+            "rank": 34
+          },
+          {
+            "tcr": "CSARALRGRGTDNTQYF",
+            "target_score": 0.12137743085622787,
+            "auroc": 0.53125,
+            "composite": 0.06448176014237106,
+            "rank": 35
+          },
+          {
+            "tcr": "CASSGHAGFDNEQFF",
+            "target_score": 0.09778054058551788,
+            "auroc": 0.53125,
+            "composite": 0.051945912186056376,
+            "rank": 36
+          },
+          {
+            "tcr": "CASSQDGTANSNYGYTF",
+            "target_score": 0.09371799230575562,
+            "auroc": 0.34375,
+            "composite": 0.03221555985510349,
+            "rank": 37
+          },
+          {
+            "tcr": "CASSQPVQDCSEQGYF",
+            "target_score": 0.0766679048538208,
+            "auroc": 0.34375,
+            "composite": 0.0263545922935009,
+            "rank": 38
+          },
+          {
+            "tcr": "CAAAWSDILRADTQYF",
+            "target_score": 0.07088461518287659,
+            "auroc": 0.5,
+            "composite": 0.03544230759143829,
+            "rank": 39
+          },
+          {
+            "tcr": "CASRMVAGTGELFGF",
+            "target_score": 0.04440079256892204,
+            "auroc": 0.28125,
+            "composite": 0.012487722910009325,
+            "rank": 40
+          },
+          {
+            "tcr": "CASALPSAAFLQYVN",
+            "target_score": 0.04053441435098648,
+            "auroc": 0.625,
+            "composite": 0.02533400896936655,
+            "rank": 41
+          },
+          {
+            "tcr": "CAASYLSGVNNEMQFF",
+            "target_score": 0.03733920678496361,
+            "auroc": 0.6875,
+            "composite": 0.02567070466466248,
+            "rank": 42
+          },
+          {
+            "tcr": "CAIGDTEGNSALHF",
+            "target_score": 0.028975069522857666,
+            "auroc": 0.46875,
+            "composite": 0.013582063838839531,
+            "rank": 43
+          },
+          {
+            "tcr": "CASSELGGILAKNIQYF",
+            "target_score": 0.020843904465436935,
+            "auroc": 0.53125,
+            "composite": 0.011073324247263372,
+            "rank": 44
+          },
+          {
+            "tcr": "CATSYPLRLNQTQYL",
+            "target_score": 0.019368918612599373,
+            "auroc": 0.53125,
+            "composite": 0.010289738012943417,
+            "rank": 45
+          },
+          {
+            "tcr": "CASTPSLVDDQEQYL",
+            "target_score": 0.007379274349659681,
+            "auroc": 0.40625,
+            "composite": 0.0029978302045492455,
+            "rank": 46
+          },
+          {
+            "tcr": "CASEPDRDLEKSLFF",
+            "target_score": 0.004386011976748705,
+            "auroc": 0.5,
+            "composite": 0.0021930059883743525,
+            "rank": 47
+          },
+          {
+            "tcr": "CASSTGQNMGLLYTF",
+            "target_score": 0.003825453808531165,
+            "auroc": 0.5625,
+            "composite": 0.0021518177672987804,
+            "rank": 48
+          },
+          {
+            "tcr": "CGGTARGVGAYEQYF",
+            "target_score": 0.000569082039874047,
+            "auroc": 0.34375,
+            "composite": 0.00019562195120670367,
+            "rank": 49
+          },
+          {
+            "tcr": "CGASSHGTVLPNETIYF",
+            "target_score": 0.00022316705144476146,
+            "auroc": 0.78125,
+            "composite": 0.0001743492589412199,
+            "rank": 50
+          }
+        ]
+      }
+    },
+    "n_unique": 50,
+    "mean_steps": 5.08,
+    "mean_reward": 1.2069061803162913,
+    "generated_tcrs": [
+      "CGASSHGTVLPNETIYF",
+      "CASSSGQEGNVATQF",
+      "CAIGDTEGNSALHF",
+      "CASSQPVQDCSEQGYF",
+      "CAITRWRLGDGYTF",
+      "CSARDSAQGKSYEQYF",
+      "CASTPSLVDDQEQYL",
+      "CASSELTANYHSPLHF",
+      "CAASPLDVANTGELFF",
+      "CASSSSNLLGHETNYF",
+      "CASSQDGTANSNYGYTF",
+      "CAAAWSDILRADTQYF",
+      "CGATSDSGVQVPYEQYF",
+      "CASSGHAGFDNEQFF",
+      "CAASNTGENEHTLYMF",
+      "ESAKLPGVLNHTQYF",
+      "CASSPRALLNEHQYF",
+      "CASSDLGRTVGDEKLF",
+      "CASSTGQNMGLLYTF",
+      "CASALPSAAFLQYVN",
+      "CASRMVAGTGELFGF",
+      "CSTKSRLTGHSCEAFF",
+      "CATTQSEELITFQYF",
+      "CAWSRNGQGVSLSQYF",
+      "CASVEVGKVCAANVLTF",
+      "CASERGGNTDTQQKYF",
+      "CSARALRGRGTDNTQYF",
+      "AAASDPYVQPHYEQYF",
+      "CASSGPGKDAQYNF",
+      "CSAAPRDRGSSEQYF",
+      "CASRSKWDGGSF",
+      "CGSKFIDRGGSPLHF",
+      "CASEPDRDLEKSLFF",
+      "CASSQSLSTSHDTQYF",
+      "CASAFQGQPQHQCSLHF",
+      "CGATSGGTNTQYF",
+      "CASSLELTQGEADTQYF",
+      "CASSSLQGPHNEQYF",
+      "CATSYPLRLNQTQYL",
+      "CASRASGILNNSQFF",
+      "CALSQAPDNGGTDNTQYF",
+      "CGGTARGVGAYEQYF",
+      "CAASQPWDLGTTSAFF",
+      "CASSELGGILAKNIQYF",
+      "CAANQEWGSGNTIYEF",
+      "CASRASPYEQHYF",
+      "CASSQDMRLLHYNF",
+      "CASSLMGVDEHHYF",
+      "CAASYLSGVNNEMQFF",
+      "CASSLRIGLVAAGGDTQYF"
+    ]
+  },
+  "_summary": {
+    "mean_auroc": {
+      "ergo": 0.4870499465811966
+    },
+    "ranking": {
+      "ergo": {
+        "mean_top1_target": 0.6988754843672117,
+        "mean_top5_target": 0.5721008650958538,
+        "mean_top1_auroc": 0.8975694444444445,
+        "mean_top5_auroc": 0.8680662393162394,
+        "mean_top1_composite": 0.6284239474787481,
+        "mean_hit_rate": 0.045000000000000005
+      }
+    },
+    "v1_baseline": 0.4538,
+    "checkpoint": "/tmp/tcrppo_checkpoints/test24_final.pt",
+    "n_tcrs": 50,
+    "n_decoys": 50,
+    "scorers": [
+      "ergo"
+    ]
+  }
+}

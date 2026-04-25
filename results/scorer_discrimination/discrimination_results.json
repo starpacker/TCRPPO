@@ -1,0 +1,199 @@
+{
+  "results": {
+    "ergo": {
+      "GILGFVFTL": {
+        "tier_a": {
+          "auroc": 0.528364,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.51688,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        },
+        "tier_d": {
+          "auroc": 0.5636,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        }
+      },
+      "NLVPMVATV": {
+        "tier_a": {
+          "auroc": 0.473236,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.472384,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        },
+        "tier_d": {
+          "auroc": 0.46732,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        }
+      },
+      "GLCTLVAML": {
+        "tier_a": {
+          "auroc": 0.44465600000000005,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.467928,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        },
+        "tier_d": {
+          "auroc": 0.47373399999999993,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        }
+      },
+      "LLWNGPMAV": {
+        "tier_a": {
+          "auroc": 0.506544,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.479016,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        }
+      },
+      "YLQPRTFLL": {
+        "tier_a": {
+          "auroc": 0.383352,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.38342400000000004,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        },
+        "tier_d": {
+          "auroc": 0.431744,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        }
+      },
+      "FLYALALLL": {
+        "tier_a": {
+          "auroc": 0.40048828125,
+          "n_tcrs": 32,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.46841796875,
+          "n_tcrs": 32,
+          "n_decoys": 50
+        }
+      },
+      "SLYNTVATL": {
+        "tier_a": {
+          "auroc": 0.31048800000000004,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.311616,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        },
+        "tier_d": {
+          "auroc": 0.29245600000000005,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        }
+      },
+      "KLGGALQAK": {
+        "tier_a": {
+          "auroc": 0.4999,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.5041359999999999,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        }
+      },
+      "AVFDRKSDAK": {
+        "tier_a": {
+          "auroc": 0.5587846153846153,
+          "n_tcrs": 50,
+          "n_decoys": 26
+        },
+        "tier_b": {
+          "auroc": 0.478504,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        }
+      },
+      "IVTDFSVIK": {
+        "tier_a": {
+          "auroc": 0.396484,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.38515199999999994,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        }
+      },
+      "SPRWYFYYL": {
+        "tier_a": {
+          "auroc": 0.348648,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.262472,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        }
+      },
+      "RLRAEAQVK": {
+        "tier_a": {
+          "auroc": 0.635248,
+          "n_tcrs": 50,
+          "n_decoys": 100
+        },
+        "tier_b": {
+          "auroc": 0.636272,
+          "n_tcrs": 50,
+          "n_decoys": 50
+        }
+      }
+    }
+  },
+  "summary": {
+    "ergo": {
+      "tier_a": {
+        "mean_auroc": 0.45718274138621795,
+        "std_auroc": 0.09010252851062797,
+        "n_targets": 12
+      },
+      "tier_b": {
+        "mean_auroc": 0.4471834973958333,
+        "std_auroc": 0.09477002877221813,
+        "n_targets": 12
+      },
+      "tier_d": {
+        "mean_auroc": 0.4457708,
+        "std_auroc": 0.08812741680634918,
+        "n_targets": 5
+      },
+      "overall": {
+        "mean_auroc": 0.4510775470822282,
+        "std_auroc": 0.0918770069925035,
+        "n_samples": 29
+      }
+    }
+  }
+}
