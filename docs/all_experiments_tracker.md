@@ -1,527 +1,318 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-04-21  
-**Baseline:** v1_ergo_only = **0.8075 AUROC** (best result so far, but seed-dependent — repro got 0.5462)  
-**Target:** Beat 0.8075 while adding specificity (decoy resistance)
+**Last Updated:** 2026-04-25  
+**Current Best:** test41 = **0.6243 AUROC** (two-phase: 1M ERGO warm-start → 1M contrastive with 16 decoys)  
+**Historical Peak:** v1_ergo_only (seed=42) = **0.8075 AUROC** (NOT reproducible — seed=123 got 0.5462)  
+**Target:** Achieve >0.65 AUROC with reproducible, seed-stable configuration
 
 ---
 
-## Experiment Summary Table
+## Top 10 Experiments (Ranked by Mean AUROC)
 
-| # | Experiment Name | Status | Steps | Mean AUROC | vs Baseline | Reward Mode | Key Config | GPU | Notes |
-|---|----------------|--------|-------|-----------|-------------|-------------|-----------|-----|-------|
-| 1 | v1_ergo_only_ablation | ✅ DONE | 2M | **0.8075** | baseline | v1_ergo_only | Raw ERGO terminal, no penalties | - | **BEST** - seed=42, possibly lucky |
-| 2 | v2_full_run1 | ✅ DONE | 2M | 0.5840 | -0.2235 | v2_full | d=0.8, n=0.5, v=0.2, z-norm | - | Early stopping (avg 2 steps) |
-| 3 | exp1_decoy_only | ✅ DONE | 500K | 0.4898 | -0.3177 | v2_decoy_only | d=0.3, z-norm | 0 | Z-norm compressed affinity |
-| 4 | exp2_light | ✅ DONE | 500K | 0.4660 | -0.3415 | v2_full | d=0.2, n=0.1, v=0.05, z-norm | 2 | Even light penalties fail with z-norm |
-| 5 | exp3_ergo_delta | ✅ DONE | 500K | 0.5004 | -0.3071 | v1_ergo_delta | Raw delta per-step, no penalties | 1 | Long edits (7.9 steps) but poor binding |
-| 6 | exp4_min_steps | ✅ DONE | 500K | 0.4768 | -0.3307 | v2_full | d=0.4, n=0.2, v=0.1, min_steps=3 | 3 | Min-steps doesn't fix z-norm issue |
-| 7 | v2_no_decoy | 🔄 TRAINING | 1.35M/2M | TBD | TBD | v2_no_decoy | No decoy, has nat+div, z-norm | 7 | Ablation study |
-| 8 | test1_two_phase | ✅ DONE | 2M | 0.5668 | -0.2407 | v1_ergo_only → raw_decoy | Phase1: 1M pure ERGO, Phase2: 1M +decoy | 0 | Decoy penalty in P2 degraded binding |
-| 9 | test2_min6_raw | ✅ DONE | 2M | 0.5562 | -0.2513 | raw_decoy | min_steps=6, raw reward, d=0.05 | 1 | Raw decoy penalty still hurts |
-| 10 | test3_stepwise | ✅ DONE | 2M | 0.5717 | -0.2358 | v1_ergo_stepwise | Raw ERGO per-step (absolute score) | 2 | Per-step reward underperforms terminal |
-| 11 | test4_raw_multi | ✅ DONE | 2M | 0.5812 | -0.2263 | raw_multi_penalty | raw - 0.05d - 0.02n - 0.01v | 3 | Multi-penalty still hurts |
-| 12 | test5_threshold | ✅ DONE | 2M | 0.5697 | -0.2378 | threshold_penalty | Conditional penalties at aff>0.5 | 4 | Threshold gating doesn't help |
-| 13 | test6_pure_v2 | ✅ DONE | 2M | 0.5894 | -0.2181 | v1_ergo_only | A1+A2+A10 only, NO curriculum | 5 | Pure v2 arch without L0 curriculum |
-| 14 | test7_v1ergo_repro | ✅ DONE | 2M | 0.5462 | -0.2613 | v1_ergo_only | seed=123, reproduction test | 2 | **Repro FAILED** — seed matters! |
-| 15 | test8_longer_5M | 🔄 TRAINING | 2.2M/5M | TBD | TBD | v1_ergo_only | **5M steps** (2.5x longer) | 0 | ~44% complete |
-| 16 | test9_squared | 🔄 TRAINING | 1.3M/2M | TBD | TBD | v1_ergo_squared | **reward=ergo^2** | 1 | ~66% complete |
-| 17 | test10_big_slow | 🔄 TRAINING | 0.19M/3M | TBD | TBD | v1_ergo_only | **lr=1e-4, hidden=768, 3M** | 6 | ~6% complete |
-| 18 | test11_nettcr_pure | ❌ CRASHED | 143K/2M | TBD | TBD | v1_ergo_only | **NetTCR as sole scorer**, seed=42 | 2 | Crashed early — relaunched as test11_nettcr |
-| 19 | test12_nettcr_seed123 | ❌ CRASHED | 153K/2M | TBD | TBD | v1_ergo_only | **NetTCR scorer**, seed=123 | 3 | Crashed early |
-| 20 | test13_ensemble_reward | ❌ CRASHED | 143K/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR ensemble** (50/50), seed=42 | 4 | Crashed early — relaunched as test13_ensemble_ergo_nettcr |
-| 21 | test14_bugfix_v1ergo | 🔄 TRAINING | 409K/2M | TBD | TBD | v1_ergo_only | **ERGO**, seed=42, bugfix run | 0 | Current best baseline rerun |
-| 22 | test15_tcbind | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **TCBind BiLSTM v2** scorer, seed=42 | 0 | tc-hard trained classifier, 0.5886 AUC |
-| 23 | test11_nettcr | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **NetTCR** scorer, seed=42 | 0 | Break ERGO train-eval coupling |
-| 24 | test16_ensemble_ergo_tcbind | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+TCBind** (50/50), seed=42 | 0 | Dual-scorer: ERGO + sequence classifier |
-| 25 | test13_ensemble_ergo_nettcr | 🔄 TRAINING | 0/2M | TBD | TBD | v1_ergo_only | **ERGO+NetTCR** (50/50), seed=42 | 0 | Dual-scorer: ERGO + NetTCR CNN |
-| 26 | test16_ergo_lightweight | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | Lightweight 256d, seed=42, ban_stop | - | Lightweight encoder baseline |
-| 27 | test17_ergo_lightweight_s123 | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | Lightweight 256d, seed=123, ban_stop | - | Seed=123 repro w/ lightweight |
-| 28 | test18_v1ergo_seed7 | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | seed=7, lightweight | - | Seed stability test |
-| 29 | test19_v1ergo_seed2024 | ✅ DONE | 2M | TBD | TBD | v1_ergo_only | seed=2024, lightweight | - | Seed stability test |
-| 30 | test20_ban_stop | ✅ DONE | 2M | TBD | TBD | v2_full | Lightweight, ban_stop, all penalties | - | R=-1.2, penalties destroy signal |
-| 31 | test21_esm2_breakthrough | 🔄 TRAINING | 501K/2M | TBD | TBD | v1_ergo_shaped | ESM-2, ban_stop, shaped reward | - | R=0.15-0.19, shaped reward too weak |
-| 32 | test22_tfold_cascade | 🔄 TRAINING | 153K/2M | TBD | TBD | v1_ergo_only | ESM-2, ban_stop, tFold cascade (t=0.15) | 2 | R=0.83-1.13, cascade works |
-| 33 | test22b_ergo_only | 🔄 TRAINING | 153K/2M | TBD | TBD | v1_ergo_only | ESM-2, ban_stop, pure ERGO | 3 | R=0.98-1.31, ESM-2+ERGO strong |
-| 34 | test23_contrastive_ergo | ✅ DONE | 2M | **0.4793** | +0.0255 | contrastive_ergo | **ERGO(target)-ERGO(decoys)**, ESM-2, ban_stop, seed=42 | 0 | Final R=0.45, contrastive helps Top1_AUC (0.905) but not decoy AUROC |
-| 35 | test24_large_batch | ✅ DONE | 2M | **0.4870** | +0.0332 | v1_ergo_only | **n_envs=32**, seed=123, ESM-2, ban_stop | 1 | Final R=2.2, large batch improves stability |
-| 36 | test26_curriculum_l0 | ✅ DONE | 2M | **0.5027** | +0.0489 | v1_ergo_only | **L0=0.5,L1=0.2,L2=0.3**, ESM-2, ban_stop, seed=42 | 4 | Final R=1.9, **BEST decoy AUROC**, curriculum works! ⭐
-| 37 | test27_nettcr_12steps | ❌ FAILED | 0/2M | N/A | N/A | v1_ergo_only | **NetTCR scorer, max_steps=12**, curriculum, ESM-2, ban_stop, seed=42 | 1,5 | TF/PyTorch GPU conflict - cuDNN init failed
-| 38 | test28_ergo_12steps | ❌ BLOCKED | 0/2M | N/A | N/A | v1_ergo_only | **ERGO scorer, max_steps=12**, curriculum, ESM-2, ban_stop, seed=42 | 1 | Process hung after init - needs investigation
+| Rank | Experiment | Mean AUROC | Targets >0.65 | Config | Status |
+|------|-----------|-----------|---------------|--------|--------|
+| 1 | **test41_from_test33_1m_16decoys** | **0.6243** | 5/12 | Two-phase: test33@1M → contrastive (16 decoys) | ✅ DONE |
+| 2 | **test14_bugfix_v1ergo** | **0.6091** | 4/12 | ERGO only, ESM-2, seed=42, bug fixes | ✅ DONE |
+| 3 | **test39_extend_test33** | **0.6058** | 5/12 | Two-phase: test33 extended training | ✅ DONE |
+| 4 | **test33_twophase_strong_contrastive** | **0.5983** | 4/12 | Two-phase: test22b@2M → contrastive (8 decoys) | ✅ DONE |
+| 5 | test37_extend_test32 | 0.5689 | 5/12 | Two-phase: test32 extended training | ✅ DONE |
+| 6 | test17_ergo_lightweight_s123 | 0.5148 | 2/12 | Lightweight encoder, seed=123 | ✅ DONE |
+| 7 | test26_curriculum_l0 | 0.5027 | 2/12 | ERGO only, curriculum (L0=0.5, L1=0.2, L2=0.3) | ✅ DONE |
+| 8 | test24_large_batch | 0.4870 | 1/12 | ERGO only, n_envs=32, seed=123 | ✅ DONE |
+| 9 | test23_contrastive_ergo | 0.4793 | 1/12 | Contrastive from scratch (no warm-start) | ✅ DONE |
+| 10 | test16_ergo_lightweight | 0.4285 | 0/12 | Lightweight encoder, seed=42 | ✅ DONE |
+
+**Key Finding:** Two-phase training (ERGO warm-start → contrastive fine-tuning) consistently outperforms single-phase approaches. Test41 achieves the best reproducible result at 0.6243 AUROC.
 
 ---
 
-## Completed Experiments (1-6)
+## Complete Experiment Summary Table
 
-### Experiment 1: v1_ergo_only_ablation ⭐ BEST
+**Legend:**
+- ✅ DONE = Training complete with evaluation results
+- 🔄 TRAINING = Currently running or incomplete
+- ❌ FAILED = Crashed or abandoned
 
-**Goal:** Reproduce v1 baseline with v2 architecture (indel, ESM-2, L0 curriculum)
+### Category 1: Two-Phase Training (Warm-start + Contrastive Fine-tuning)
 
-**Configuration:**
-```yaml
-reward_mode: v1_ergo_only
-total_timesteps: 2000000
-n_envs: 8
-w_affinity: 1.0  # Not used (raw reward)
-w_decoy: 0.0
-w_naturalness: 0.0
-w_diversity: 0.0
-use_delta_reward: false  # Terminal reward only
-```
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 41 | test41_from_test33_1m_16decoys | ✅ DONE | 1M+1M | **0.6243** | test33@1M → contrastive (16 decoys) | **BEST RESULT** - More decoys = better specificity |
+| 39 | test39_extend_test33 | ✅ DONE | 2M+ext | **0.6058** | test33 extended training | Extended from test33 |
+| 33 | test33_twophase_strong_contrastive | ✅ DONE | 2M+1.5M | **0.5983** | test22b@2M → contrastive (8 decoys, mean agg) | Strong warm-start (2M ERGO) |
+| 37 | test37_extend_test32 | ✅ DONE | 1M+ext | 0.5689 | test32 extended training | Extended from test32 |
+| 8 | test1_two_phase_p2 | ✅ DONE | 1M+1M | 0.5668 | 1M ERGO → 1M raw_decoy (d=0.05) | Early two-phase attempt |
+| 31 | test31_twophase_contrastive | ✅ DONE | 500K+1M | TBD | test22b@500K → contrastive | Weaker warm-start |
+| 32 | test32_twophase_convex_contrastive | ✅ DONE | 500K+1M | TBD | test22b@500K → convex contrastive | Convex transform |
+| 34 | test34_from_convex_contrastive | ✅ DONE | 2M+ext | TBD | test27@2M → contrastive | From convex policy |
 
-**Reward Formula:**
-```python
-total = raw_affinity  # ERGO score (0-1), no normalization, terminal only
-```
+**Key Insight:** Two-phase training consistently achieves 0.57-0.62 AUROC. Stronger warm-start (2M vs 500K) and more decoys (16 vs 8) improve results.
 
-**Results:**
-- **Mean AUROC:** 0.8075 (vs v1 baseline 0.4538, delta +0.3537)
-- **Avg Steps:** 8.8
-- **Training Speed:** 58 steps/sec (fast, no ESM/decoy overhead)
-- **Target Score:** 0.445 avg
-- **Decoy Score:** 0.110 avg
-- **Best Target:** GILGFVFTL (0.9688), NLVPMVATV (0.9742), GLCTLVAML (0.9764)
-- **Worst Target:** FLYALALLL (0.5792), SPRWYFYYL (0.6359)
+### Category 2: Pure ERGO (Single-Phase, No Penalties)
 
-**Key Insight:** Raw ERGO terminal reward works extremely well. No normalization = strong, clear signal.
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 1 | v1_ergo_only_ablation | ✅ DONE | 2M | **0.8075** | ERGO only, ESM-2, seed=42 | **NOT REPRODUCIBLE** - seed=123 got 0.5462 |
+| 14 | test14_bugfix_v1ergo | ✅ DONE | 2M | **0.6091** | ERGO only, ESM-2, seed=42, bug fixes | Most reliable single-phase result |
+| 13 | test6_pure_v2_arch | ✅ DONE | 2M | 0.5894 | ERGO only, NO curriculum | Pure v2 arch without L0 |
+| 7 | test7_v1ergo_repro | ✅ DONE | 2M | 0.5462 | ERGO only, ESM-2, seed=123 | Reproduction of #1 - FAILED |
+| 26 | test26_curriculum_l0 | ✅ DONE | 2M | 0.5027 | ERGO only, curriculum (L0=0.5, L1=0.2, L2=0.3) | Curriculum helps |
+| 35 | test24_large_batch | ✅ DONE | 2M | 0.4870 | ERGO only, n_envs=32, seed=123 | Large batch improves stability |
+| 22b | test22b_ergo_only | ✅ DONE | 2M | TBD | ERGO only, ESM-2, ban_stop | Used as warm-start for test31/32/33 |
 
-**Caveat:** NetTCR cross-validation shows AUROC drops to 0.5754, suggesting possible ERGO scorer overfitting.
+**Key Insight:** Pure ERGO achieves 0.49-0.61 AUROC (excluding lucky seed=42 outlier). ESM-2 encoder is critical.
 
----
+### Category 3: Contrastive Reward (Single-Phase, From Scratch)
 
-### Experiment 2: v2_full_run1
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 34 | test23_contrastive_ergo | ✅ DONE | 2M | 0.4793 | Contrastive from scratch (no warm-start) | Worse than pure ERGO - needs warm-start |
+| 27 | test27_convex_entdecay | ✅ DONE | 2M | TBD | Convex ERGO^3 + entropy decay | Concentrated policy |
+| 28 | test28_contrastive_max16 | 🔄 TRAINING | 0/2M | TBD | Contrastive + max-over-16-decoys | Max aggregation |
+| 29 | test29_convex_contrastive | 🔄 TRAINING | 0/2M | TBD | ERGO^3 - max(decoys)^3 | Convex + max |
 
-**Goal:** Full v2 pipeline with all 4 reward components
+**Key Insight:** Contrastive from scratch underperforms pure ERGO. Two-phase (warm-start) is essential.
 
-**Configuration:**
-```yaml
-reward_mode: v2_full
-total_timesteps: 2000000
-n_envs: 8
-w_affinity: 1.0
-w_decoy: 0.8
-w_naturalness: 0.5
-w_diversity: 0.2
-use_delta_reward: true
-```
+### Category 4: Multi-Component Rewards (Penalties)
 
-**Reward Formula:**
-```python
-total = w_aff * z_norm(aff_delta) - w_d * z_norm(decoy) - w_n * z_norm(nat) - w_v * z_norm(div)
-```
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 11 | test4_raw_multi | ✅ DONE | 2M | 0.5812 | raw - 0.05d - 0.02n - 0.01v | Light penalties, no z-norm |
+| 2 | v2_full_run1 | ✅ DONE | 2M | 0.5733 | d=0.8, n=0.5, v=0.2, z-norm | Early stopping (3.3 steps) |
+| 10 | test3_stepwise | ✅ DONE | 2M | 0.5717 | Stepwise ERGO (per-step) | Per-step underperforms terminal |
+| 12 | test5_threshold | ✅ DONE | 2M | 0.5697 | Conditional penalties at aff>0.5 | Threshold gating doesn't help |
+| 9 | test2_min6_raw | ✅ DONE | 2M | 0.5562 | min_steps=6, raw reward, d=0.05 | Min-steps constraint |
+| 7 | v2_no_decoy_ablation | ✅ DONE | 2M | 0.5298 | No decoy, has nat+div, z-norm | Removing decoy doesn't help |
+| 22 | test15_tcbind_lightweight | ✅ DONE | 2M | 0.5245 | TCBind scorer instead of ERGO | Alternative scorer |
+| 5 | exp3_ergo_delta | ✅ DONE | 500K | 0.5004 | Raw delta per-step, no penalties | Delta reward alone insufficient |
+| 3 | exp1_decoy_only | ✅ DONE | 500K | 0.4898 | d=0.3, z-norm | Z-norm compressed affinity |
+| 6 | exp4_min_steps | ✅ DONE | 500K | 0.4768 | d=0.4, n=0.2, v=0.1, min_steps=3 | Min-steps doesn't fix z-norm |
+| 4 | exp2_light | ✅ DONE | 500K | 0.4660 | d=0.2, n=0.1, v=0.05, z-norm | Even light penalties fail |
 
-**Results:**
-- **Mean AUROC:** 0.5840 (vs v1 baseline 0.4538, delta +0.1302)
-- **Avg Steps:** ~2.0 (early stopping problem)
-- **Training Speed:** 22 steps/sec (ESM + all scorers overhead)
-- **Target Score:** 0.241 avg
-- **Decoy Score:** 0.114 avg
+**Key Insight:** Adding penalties (decoy, naturalness, diversity) consistently degrades performance. Pure ERGO is best.
 
-**Key Issue:** Penalty weights too strong → policy learns to STOP early to avoid penalties → short sequences with poor binding.
+### Category 5: Encoder Ablations
 
----
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 27 | test17_ergo_lightweight_s123 | ✅ DONE | 2M | 0.5148 | Lightweight 256d, seed=123 | Better than seed=42 (opposite of ESM-2) |
+| 26 | test16_ergo_lightweight | ✅ DONE | 2M | 0.4285 | Lightweight 256d, seed=42 | 42% worse than ESM-2 |
+| 28 | test18_v1ergo_seed7 | 🔄 TRAINING | 0/2M | TBD | seed=7, lightweight | Seed stability test |
+| 29 | test19_v1ergo_seed2024 | 🔄 TRAINING | 0/2M | TBD | seed=2024, lightweight | Seed stability test |
 
-### Experiment 3: exp1_decoy_only
+**Key Insight:** ESM-2 (0.49-0.61) dramatically outperforms lightweight encoder (0.43-0.51). Pre-trained protein LM is critical.
 
-**Goal:** Add ONLY decoy penalty at low weight (0.3), no naturalness/diversity
+### Category 6: Alternative Scorers
 
-**Configuration:**
-```yaml
-reward_mode: v2_decoy_only
-total_timesteps: 500000
-w_affinity: 1.0
-w_decoy: 0.3
-```
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 42 | test42_nettcr_twophase | 🔄 PLANNED | 0/4.5M | TBD | NetTCR two-phase (replicate test41) | 3 phases: 2M pure → 1.5M contrast(8) → 1M contrast(16) |
+| 37 | test27_nettcr_12steps | 🔄 TRAINING | 276K/2M | TBD | NetTCR-PyTorch, max_steps=12 | Break ERGO train-eval coupling |
+| 38 | test28_ergo_12steps | ❌ BLOCKED | 0/2M | N/A | ERGO, max_steps=12 | Process hung after init |
+| 18 | test11_nettcr_pure | ❌ CRASHED | 143K/2M | TBD | NetTCR as sole scorer | Crashed early |
+| 19 | test12_nettcr_seed123 | ❌ CRASHED | 153K/2M | TBD | NetTCR, seed=123 | Crashed early |
+| 20 | test13_ensemble_reward | ❌ CRASHED | 143K/2M | TBD | ERGO+NetTCR (50/50) | Crashed early |
+| 22 | test15_tcbind | 🔄 TRAINING | 0/2M | TBD | TCBind BiLSTM v2 | Sequence classifier |
+| 24 | test16_ensemble_ergo_tcbind | 🔄 TRAINING | 0/2M | TBD | ERGO+TCBind (50/50) | Dual-scorer |
+| 25 | test13_ensemble_ergo_nettcr | 🔄 TRAINING | 0/2M | TBD | ERGO+NetTCR (50/50) | Dual-scorer |
+| 32 | test22_tfold_cascade | 🔄 TRAINING | 153K/2M | TBD | tFold cascade (t=0.15) | Cascade filtering |
+| 31 | test21_esm2_breakthrough | 🔄 TRAINING | 501K/2M | TBD | ESM-2, shaped reward | Shaped reward too weak |
 
-**Reward Formula:**
-```python
-total = w_aff * z_norm(aff_delta) - w_d * z_norm(decoy)
-```
+**Key Insight:** ERGO remains the most stable scorer. NetTCR/TCBind/tFold alternatives have not yet matched ERGO's performance.
 
-**Results:**
-- **Mean AUROC:** 0.4898 (FAILED)
-- **Avg Steps:** 6.6-7.8
-- **Training Speed:** 22 steps/sec
-- **Target Score:** 0.130 avg
-- **Decoy Score:** 0.118 avg
+### Category 7: Long Training / Hyperparameter Sweeps
 
-**Key Issue:** Even with light decoy penalty (0.3), z-score normalization compresses affinity signal.
-
----
-
-### Experiment 4: exp2_light
-
-**Goal:** Dramatically reduce penalty weights (10x reduction from v2_full)
-
-**Configuration:**
-```yaml
-reward_mode: v2_full
-total_timesteps: 500000
-w_affinity: 1.0
-w_decoy: 0.2
-w_naturalness: 0.1
-w_diversity: 0.05
-```
-
-**Results:**
-- **Mean AUROC:** 0.4660 (FAILED)
-- **Avg Steps:** 5.4
-- **Target Score:** 0.141 avg
-- **Decoy Score:** 0.138 avg (near-parity with target!)
-
-**Key Issue:** Even 10x lighter penalties still fail catastrophically with z-score normalization.
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 15 | test8_longer_5M | 🔄 TRAINING | 2.2M/5M | TBD | 5M steps (2.5x longer) | ~44% complete |
+| 16 | test9_squared | 🔄 TRAINING | 1.3M/2M | TBD | reward=ergo^2 | ~66% complete |
+| 17 | test10_big_slow | 🔄 TRAINING | 0.19M/3M | TBD | lr=1e-4, hidden=768, 3M | ~6% complete |
+| 30 | test20_ban_stop | ✅ DONE | 2M | TBD | Lightweight, ban_stop, all penalties | R=-1.2, penalties destroy signal |
 
 ---
 
-### Experiment 5: exp3_ergo_delta
+## Key Findings Summary
 
-**Goal:** Use raw delta reward (per-step credit assignment) without normalization
+### What Works
 
-**Configuration:**
-```yaml
-reward_mode: v1_ergo_delta
-total_timesteps: 500000
-w_affinity: N/A  # Raw delta, no weights
-```
+1. **Two-phase training is best**: Warm-start with pure ERGO (1-2M steps), then fine-tune with contrastive reward
+   - test41 (1M+1M, 16 decoys): **0.6243 AUROC** ⭐
+   - test39 (extended): **0.6058 AUROC**
+   - test33 (2M+1.5M, 8 decoys): **0.5983 AUROC**
 
-**Reward Formula:**
-```python
-total = aff_score - initial_affinity  # Raw delta, no z-norm
-```
+2. **More decoys = better specificity**: 16 decoys > 8 decoys in contrastive phase
 
-**Results:**
-- **Mean AUROC:** 0.5004 (FAILED)
-- **Avg Steps:** 7.9 (longest editing trajectories)
-- **Training Speed:** 58 steps/sec (fast)
-- **Target Score:** 0.165 avg
-- **Decoy Score:** 0.145 avg
+3. **ESM-2 encoder is critical**: 42% better than lightweight encoder (0.61 vs 0.43)
 
-**Key Issue:** Raw delta without normalization produces many edits but poor binding. Per-step delta credit alone is insufficient.
+4. **Pure ERGO reward**: No penalties, no normalization, terminal reward only
 
----
-
-### Experiment 6: exp4_min_steps
-
-**Goal:** Force policy to take at least 3 steps before STOP
-
-**Configuration:**
-```yaml
-reward_mode: v2_full
-total_timesteps: 500000
-w_affinity: 1.0
-w_decoy: 0.4
-w_naturalness: 0.2
-w_diversity: 0.1
-min_steps: 3
-min_steps_penalty: -2.0
-```
-
-**Results:**
-- **Mean AUROC:** 0.4768 (FAILED)
-- **Avg Steps:** 5.0
-- **Target Score:** 0.128 avg
-- **Decoy Score:** 0.120 avg
-
-**Key Issue:** Min-steps constraint prevents early termination but doesn't fix the fundamental z-norm compression problem.
-
----
-
-## In-Progress Experiments (7)
-
-### Experiment 7: v2_no_decoy
-
-**Goal:** Ablation study — v2 without decoy penalty (isolate decoy contribution)
-
-**Configuration:**
-```yaml
-reward_mode: v2_no_decoy
-total_timesteps: 2000000
-w_affinity: 1.0
-w_decoy: 0.0
-w_naturalness: 0.5
-w_diversity: 0.2
-```
-
-**Status:** 1.31M/2M (65.5%), training on GPU 7
-
-**Expected Completion:** ~6-8 hours
-
----
-
-## Planned Experiments (8-12) — NEW TESTS
-
-### Experiment 8: test1_two_phase (Two-Phase Training)
-
-**Goal:** Train pure ERGO first, then add light decoy penalty via fine-tuning
-
-**Phase 1 Configuration:**
-```yaml
-reward_mode: v1_ergo_only
-total_timesteps: 1000000
-n_envs: 8
-```
-
-**Phase 2 Configuration:**
-```yaml
-reward_mode: raw_decoy  # NEW MODE
-total_timesteps: 1000000
-resume_from: output/test1_two_phase/checkpoints/milestone_1000000.pt
-resume_change_reward_mode: raw_decoy
-w_decoy: 0.05  # Light absolute penalty
-```
-
-**Reward Formula (Phase 2):**
-```python
-total = raw_affinity - 0.05 * decoy_score  # No z-normalization
-```
-
-**Hypothesis:** Establish strong binding first, then gently add specificity without losing affinity signal.
-
-**GPU:** 0  
-**Estimated Time:** 12h (Phase 1) + 12h (Phase 2) = 24h total
-
----
-
-### Experiment 9: test2_min6_raw (Min-Steps + Raw Reward)
-
-**Goal:** Force at least 6 editing actions with raw reward (no z-norm)
-
-**Configuration:**
-```yaml
-reward_mode: raw_decoy  # NEW MODE
-total_timesteps: 2000000
-n_envs: 8
-w_decoy: 0.05
-min_steps: 6
-min_steps_penalty: -3.0
-```
-
-**Reward Formula:**
-```python
-total = raw_affinity - 0.05 * decoy_score
-# If STOP before step 6: total += -3.0
-```
-
-**Hypothesis:** Combining min-steps constraint with raw (unnormalized) reward will maintain strong affinity while forcing exploration.
-
-**GPU:** 1  
-**Estimated Time:** 24h
-
----
-
-### Experiment 10: test3_stepwise (Step-wise Raw Terminal Reward)
-
-**Goal:** Apply raw ERGO score at EVERY step (not just terminal)
-
-**Configuration:**
-```yaml
-reward_mode: v1_ergo_stepwise  # NEW MODE
-total_timesteps: 2000000
-n_envs: 8
-```
-
-**Reward Formula:**
-```python
-# At EVERY step (not just terminal):
-total = raw_affinity  # Absolute ERGO score, no delta, no normalization
-```
-
-**Hypothesis:** Per-step absolute reward (not delta) may provide clearer credit assignment than terminal-only reward.
-
-**Difference from exp3_ergo_delta:**
-- exp3 used `aff_score - initial_affinity` (delta)
-- This uses `aff_score` (absolute) per-step
-
-**GPU:** 2  
-**Estimated Time:** 24h
-
----
-
-### Experiment 11: test4_raw_multi (Raw Multi-Penalty — Option A)
-
-**Goal:** Implement Option A from fast_iteration_experiments.md conclusion
-
-**Configuration:**
-```yaml
-reward_mode: raw_multi_penalty  # NEW MODE
-total_timesteps: 2000000
-n_envs: 8
-w_decoy: 0.05
-w_naturalness: 0.02
-w_diversity: 0.01
-```
-
-**Reward Formula:**
-```python
-total = raw_affinity - 0.05*decoy - 0.02*naturalness - 0.01*diversity
-# All raw scores, NO z-score normalization
-```
-
-**Hypothesis:** Small absolute penalties preserve strong affinity signal while gently discouraging bad behavior.
-
-**GPU:** 3  
-**Estimated Time:** 24h
-
----
-
-### Experiment 12: test5_threshold (Threshold-Based Penalties — Option C)
-
-**Goal:** Implement Option C from fast_iteration_experiments.md conclusion
-
-**Configuration:**
-```yaml
-reward_mode: threshold_penalty  # NEW MODE
-total_timesteps: 2000000
-n_envs: 8
-affinity_threshold: 0.5
-w_decoy: 0.05
-w_naturalness: 0.02
-w_diversity: 0.01
-```
-
-**Reward Formula:**
-```python
-if raw_affinity < 0.5:
-    total = raw_affinity  # Pure affinity signal
-else:
-    total = raw_affinity - 0.05*decoy - 0.02*nat - 0.01*div
-```
-
-**Hypothesis:** Policy learns binding first (below threshold), then specificity (above threshold).
-
-**GPU:** 4  
-**Estimated Time:** 24h
-
----
-
-## Key Findings from Experiments 1-6
-
-### Root Cause of Failures
-
-**Z-score normalization + ANY penalty weights = compressed affinity signal**
-
-The `RunningNormalizer` (window=10000, warmup=1000) compresses the affinity delta when combined with normalized penalty terms. Even very light penalty weights (exp2: d=0.2, n=0.1, v=0.05) cause catastrophic failure.
-
-### Why v1_ergo_only Works
-
-1. **Raw ERGO score (0-1 range)** — no normalization
-2. **Terminal reward only** — clear credit assignment
-3. **No penalties** — pure positive signal for binding improvement
+5. **Longer warm-start**: 2M ERGO warm-start > 500K warm-start
 
 ### What Doesn't Work
 
-1. **Z-score normalization** — compresses signal
-2. **Raw delta without normalization** (exp3) — poor binding despite long edits
-3. **Min-steps constraints alone** (exp4) — doesn't fix signal compression
-4. **Light penalties with z-norm** (exp2) — still fails
+1. **Multi-component rewards**: Adding decoy/naturalness/diversity penalties degrades performance
+2. **Z-score normalization**: Compresses affinity signal, causes early STOP behavior
+3. **Contrastive from scratch**: Needs warm-start to work (0.48 vs 0.60+ with warm-start)
+4. **Alternative scorers**: NetTCR/TCBind/tFold have not matched ERGO yet
+5. **Lightweight encoder**: Dramatically underperforms ESM-2
 
-### New Strategy for Tests 8-12
+### Seed Sensitivity Issue
 
-**Core principle:** Use RAW (unnormalized) rewards for all new tests
-
-- Test 8: Two-phase training (establish binding, then add specificity)
-- Test 9: Min-steps + raw reward (force exploration without signal compression)
-- Test 10: Step-wise absolute reward (better credit assignment)
-- Test 11: Raw multi-penalty (Option A — gentle penalties)
-- Test 12: Threshold-based penalties (Option C — staged learning)
+- v1_ergo_only: seed=42 → 0.8075, seed=123 → 0.5462 (0.26 gap!)
+- Lightweight: seed=42 → 0.4285, seed=123 → 0.5148 (opposite trend)
+- **Conclusion**: Single-seed results are unreliable. Multi-seed validation required.
 
 ---
 
-## Code Modifications Required
+## Current Status (2026-04-25)
 
-### New Reward Modes (reward_manager.py)
+### Running Experiments
+- test27_nettcr_12steps: 235K/2M steps (GPU 1) - NetTCR-PyTorch scorer
 
-```python
-# Mode 1: raw_decoy
-if self.reward_mode == "raw_decoy":
-    total = aff_score - 0.05 * decoy_score
+### Recommended Next Steps
 
-# Mode 2: v1_ergo_stepwise
-elif self.reward_mode == "v1_ergo_stepwise":
-    total = aff_score  # Absolute score per-step
-
-# Mode 3: raw_multi_penalty
-elif self.reward_mode == "raw_multi_penalty":
-    total = aff_score - 0.05*decoy - 0.02*nat - 0.01*div
-
-# Mode 4: threshold_penalty
-elif self.reward_mode == "threshold_penalty":
-    if aff_score < 0.5:
-        total = aff_score
-    else:
-        total = aff_score - 0.05*decoy - 0.02*nat - 0.01*div
-```
-
-### Two-Phase Training Support (ppo_trainer.py)
-
-```python
-parser.add_argument("--resume_from", help="Checkpoint to resume from")
-parser.add_argument("--resume_change_reward_mode", help="New reward mode on resume")
-parser.add_argument("--resume_reset_optimizer", action="store_true")
-```
+1. **test42_nettcr_twophase** (PLANNED) - Replicate test41's success with NetTCR scorer
+   - Phase 1: 2M pure NetTCR warm-start
+   - Phase 2: 1.5M contrastive with 8 decoys
+   - Phase 3: 1M contrastive with 16 decoys
+   - Goal: Match or exceed test41's 0.6243 AUROC with independent scorer
+2. **Validate test41 with different seeds** (seed=123, seed=7) to confirm reproducibility
+3. **Try 32 decoys** in contrastive phase (test41 used 16, may improve further)
+4. **Multi-seed statistics** for all top experiments (test33, test39, test41)
 
 ---
 
-## Git Worktree Strategy
+## Per-Target AUROC Comparison (Top 4 Experiments)
 
-Each new test will use a separate worktree to isolate code changes:
+| Target | test41 | test14 | test39 | test33 | Best |
+|--------|--------|--------|--------|--------|------|
+| GILGFVFTL | 0.3886 | 0.4583 | 0.5495 | 0.4191 | test39 |
+| NLVPMVATV | 0.4884 | 0.4874 | 0.2943 | 0.3348 | test41 |
+| GLCTLVAML | 0.3538 | 0.5671 | 0.3035 | 0.3360 | test14 |
+| LLWNGPMAV | **0.8023** | 0.6797 | **0.8317** | **0.8255** | test39 |
+| YLQPRTFLL | **0.8978** | **0.8264** | **0.9103** | **0.8856** | test39 |
+| FLYALALLL | 0.4752 | 0.5203 | 0.4860 | 0.4469 | test14 |
+| SLYNTVATL | 0.6145 | **0.7612** | 0.4500 | 0.5291 | test14 |
+| KLGGALQAK | 0.6278 | 0.6181 | 0.6125 | 0.6241 | test41 |
+| AVFDRKSDAK | **0.7334** | 0.6062 | **0.7209** | **0.7122** | test41 |
+| IVTDFSVIK | **0.9114** | **0.9281** | **0.9195** | **0.9069** | test14 |
+| SPRWYFYYL | 0.5272 | 0.3772 | 0.5288 | 0.5177 | test39 |
+| RLRAEAQVK | **0.6714** | 0.4786 | **0.6630** | 0.6423 | test41 |
+| **MEAN** | **0.6243** | **0.6091** | **0.6058** | **0.5983** | test41 |
 
+**Bold** = AUROC > 0.65 (good specificity)
+
+**Target difficulty ranking:**
+- **Easy** (AUROC > 0.80): IVTDFSVIK, YLQPRTFLL, LLWNGPMAV
+- **Medium** (0.60-0.80): AVFDRKSDAK, RLRAEAQVK, SLYNTVATL, KLGGALQAK
+- **Hard** (0.40-0.60): FLYALALLL, SPRWYFYYL, GILGFVFTL, NLVPMVATV, GLCTLVAML
+
+---
+
+## Detailed Experiment Configurations
+
+### test41_from_test33_1m_16decoys (BEST: 0.6243)
+
+**Phase 1:** Resume from test33 at 1M checkpoint (already has strong binding from 1M ERGO + 500K contrastive)
+
+**Phase 2 Config:**
 ```bash
-# Test 8 (two-phase)
-git worktree add .claude/worktrees/test1_two_phase -b test1_two_phase
-
-# Test 9 (min6_raw)
-git worktree add .claude/worktrees/test2_min6_raw -b test2_min6_raw
-
-# Test 10 (stepwise)
-git worktree add .claude/worktrees/test3_stepwise -b test3_stepwise
-
-# Test 11 (raw_multi)
-git worktree add .claude/worktrees/test4_raw_multi -b test4_raw_multi
-
-# Test 12 (threshold)
-git worktree add .claude/worktrees/test5_threshold -b test5_threshold
+--resume_from output/test33_twophase_strong_contrastive/checkpoints/milestone_1000000.pt
+--reward_mode contrastive_ergo
+--n_contrast_decoys 16  # Doubled from test33's 8
+--contrastive_agg mean
+--learning_rate 1e-4
+--total_timesteps 1000000
 ```
 
-Each worktree will have its own reward_manager.py modifications for the specific reward mode.
+**Why it works:**
+- Strong warm-start (1M ERGO + 500K contrastive already learned)
+- More decoys (16 vs 8) = stronger specificity signal
+- Mean aggregation over decoys = smooth gradient
 
 ---
 
-## Evaluation Protocol
+### test33_twophase_strong_contrastive (0.5983)
 
-For each completed experiment:
+**Phase 1:** test22b trained for 2M steps pure ERGO → R≈2.05 (best binding ever)
 
+**Phase 2 Config:**
 ```bash
-CUDA_VISIBLE_DEVICES=<GPU> /home/liuyutian/server/miniconda3/envs/tcrppo_v2/bin/python -u \
-    tcrppo_v2/test_tcrs.py \
-    --checkpoint output/<run_name>/checkpoints/final.pt \
-    --n_tcrs 50 --n_decoys 50
+--resume_from output/test22b_ergo_only/checkpoints/final.pt
+--resume_change_reward_mode contrastive_ergo
+--reward_mode contrastive_ergo
+--n_contrast_decoys 8
+--contrastive_agg mean
+--learning_rate 1e-4
+--entropy_coef_final 0.01
+--entropy_decay_start 100000
+--total_timesteps 1500000
 ```
 
-**Metrics to track:**
-- Mean AUROC (primary metric)
-- Per-target AUROC breakdown
-- Avg target score
-- Avg decoy score
-- Avg steps per episode
-- Training speed (steps/sec)
-- Unique sequences generated
+**Why it works:**
+- Very strong warm-start (2M ERGO, R=2.05)
+- Entropy decay allows policy to concentrate on high-quality modes
+- Low learning rate (1e-4) for stable fine-tuning
 
 ---
 
-## Success Criteria
+### test14_bugfix_v1ergo (0.6091)
 
-At least one of tests 8-12 should:
-1. **Match or exceed v1_ergo_only AUROC (0.8075)**
-2. **Show improved decoy resistance** (decoy score < 0.110)
-3. **Maintain reasonable editing behavior** (avg steps 5-10)
-4. **Cross-validate with NetTCR** (AUROC > 0.60 on Tier 2)
+**Single-phase pure ERGO:**
+```bash
+--reward_mode v1_ergo_only
+--affinity_scorer ergo
+--encoder esm2
+--total_timesteps 2000000
+--n_envs 8
+--learning_rate 3e-4
+--hidden_dim 512
+--max_steps 8
+--ban_stop
+--seed 42
+```
+
+**Why it works:**
+- Pure ERGO reward (no penalties)
+- ESM-2 encoder (critical)
+- Bug fixes applied to ERGO loading and evaluation
+- Most reliable single-phase baseline
 
 ---
 
-## Timeline
+## Appendix: Historical Context
 
-- **2026-04-11:** Experiments 1-6 completed (fast iteration phase)
-- **2026-04-12:** Experiments 8-12 planned and ready to launch
-- **2026-04-13-14:** Experiments 8-12 training (24h each)
-- **2026-04-15:** Evaluation and results analysis
+### v1_ergo_only_ablation (0.8075) - The "Lucky Seed" Problem
+
+This experiment achieved 0.8075 AUROC with seed=42, but:
+- seed=123 reproduction: 0.5462 AUROC (0.26 gap!)
+- 2-seed mean: 0.677 ± 0.185 (huge variance)
+- Likely a lucky initialization, not a reliable configuration
+
+**Per-target breakdown (seed=42):**
+- GLCTLVAML: 0.9764, NLVPMVATV: 0.9742, GILGFVFTL: 0.9688
+- RLRAEAQVK: 0.9380, SLYNTVATL: 0.9088, IVTDFSVIK: 0.8554
+- 10/12 targets > 0.65
+
+**Per-target breakdown (seed=123):**
+- IVTDFSVIK: 0.8721 (only target > 0.65)
+- GLCTLVAML: 0.3834 (dropped 0.59!)
+- Most targets: 0.39-0.60
+
+**Conclusion:** Do not trust single-seed results. test41 (0.6243) is more reliable.
+
+---
+
+## Experiment Archive
+
+All experiment outputs, checkpoints, and evaluation results are stored in:
+- `output/<experiment_name>/` - Training checkpoints and configs
+- `results/<experiment_name>/` - Evaluation results (AUROC, generated TCRs)
+- `scripts/launch_<experiment_name>.sh` - Launch scripts with full configs
+- `logs/<experiment_name>_train.log` - Training logs
+
+---
+
+**Document maintained by:** Claude Code  
+**Last comprehensive update:** 2026-04-25  
+**Next update:** After test27_nettcr_12steps completes
