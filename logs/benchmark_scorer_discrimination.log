@@ -1,0 +1,46 @@
+Loading tc-hard pairs from data/tc_hard_targets.json...
+  Loaded 12 targets
+    GILGFVFTL: 50 TCRs
+    NLVPMVATV: 50 TCRs
+    GLCTLVAML: 50 TCRs
+    LLWNGPMAV: 50 TCRs
+    YLQPRTFLL: 50 TCRs
+    FLYALALLL: 32 TCRs
+    SLYNTVATL: 50 TCRs
+    KLGGALQAK: 50 TCRs
+    AVFDRKSDAK: 50 TCRs
+    IVTDFSVIK: 50 TCRs
+    SPRWYFYYL: 50 TCRs
+    RLRAEAQVK: 50 TCRs
+
+Initializing ERGO scorer...
+
+============================================================
+Benchmarking ERGO
+============================================================
+ergo targets:   0%|          | 0/12 [00:00<?, ?it/s]ergo targets:   8%|▊         | 1/12 [00:08<01:30,  8.21s/it]ergo targets:  17%|█▋        | 2/12 [00:17<01:31,  9.12s/it]ergo targets:  25%|██▌       | 3/12 [00:26<01:21,  9.03s/it]ergo targets:  33%|███▎      | 4/12 [00:32<00:59,  7.48s/it]ergo targets:  42%|████▏     | 5/12 [00:43<01:03,  9.06s/it]ergo targets:  50%|█████     | 6/12 [00:48<00:44,  7.49s/it]ergo targets:  58%|█████▊    | 7/12 [00:56<00:38,  7.68s/it]ergo targets:  67%|██████▋   | 8/12 [01:02<00:28,  7.04s/it]ergo targets:  75%|███████▌  | 9/12 [01:03<00:15,  5.30s/it]ergo targets:  83%|████████▎ | 10/12 [01:08<00:10,  5.05s/it]ergo targets:  92%|█████████▏| 11/12 [01:12<00:04,  4.85s/it]ergo targets: 100%|██████████| 12/12 [01:17<00:00,  4.88s/it]ergo targets: 100%|██████████| 12/12 [01:17<00:00,  6.45s/it]
+
+============================================================
+DISCRIMINATION BENCHMARK SUMMARY
+============================================================
+
+Scorer     Tier     Mean AUROC   Std      N Targets 
+------------------------------------------------------------
+ergo       tier_a   0.4572       0.0901   12        
+ergo       tier_b   0.4472       0.0948   12        
+ergo       tier_d   0.4458       0.0881   5         
+ergo       overall  0.4511       0.0919   29        
+
+Results saved to results/scorer_discrimination/discrimination_results.json
+
+============================================================
+INTERPRETATION GUIDE
+============================================================
+AUROC > 0.7: Good discrimination (scorer can distinguish target from decoys)
+AUROC 0.5-0.7: Moderate discrimination
+AUROC < 0.5: Poor discrimination (worse than random)
+
+Tier difficulty:
+  tier_a (point mutants): Easiest — should have highest AUROC
+  tier_b (structural variants): Moderate
+  tier_d (VDJdb known binders): Hardest — cross-reactive peptides

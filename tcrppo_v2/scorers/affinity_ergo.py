@@ -45,7 +45,11 @@ class AffinityERGOScorer(BaseScorer):
         return model
 
     def _get_predictions(self, tcrs: List[str], peps: List[str]) -> List[float]:
-        """Get ERGO binding predictions for a batch."""
+        """Get ERGO binding predictions for a batch.
+
+        Note: bypass ae.predict() which has a bug that truncates results when
+        all peptides have the same length (conflates pep_lens[-1] with padding count).
+        """
         tcrs_copy = copy.deepcopy(tcrs)
         peps_copy = copy.deepcopy(peps)
         signs = [0] * len(tcrs_copy)
@@ -53,8 +57,26 @@ class AffinityERGOScorer(BaseScorer):
         batches = ae.get_full_batches(
             tcrs_copy, peps_copy, signs, ERGO_TCR_ATOX, ERGO_PEP_ATOX, batch_size, ERGO_MAX_LEN
         )
-        preds = ae.predict(self.model, batches, self.device)
+        # Use our own predict loop to avoid ae.predict's truncation bug
+        preds = self._predict_batches(batches)
         return preds[: len(tcrs)]
+
+    def _predict_batches(self, batches) -> List[float]:
+        """Run model inference on batches without the truncation bug in ae.predict."""
+        self.model.eval()
+        preds = []
+        with torch.no_grad():
+            for batch in batches:
+                tcrs_t, padded_peps, pep_lens, batch_signs = batch
+                if not isinstance(tcrs_t, torch.Tensor):
+                    tcrs_t = torch.tensor(tcrs_t).to(self.device)
+                else:
+                    tcrs_t = tcrs_t.detach().clone().to(self.device)
+                padded_peps = padded_peps.to(self.device)
+                pep_lens = pep_lens.to(self.device)
+                probs = self.model(tcrs_t, padded_peps, pep_lens)
+                preds.extend([t[0] for t in probs.cpu().data.tolist()])
+        return preds
 
     def _build_gpu_batches(self, tcrs: List[str], peps: List[str]):
         """Build batches and push to GPU once for MC Dropout reuse."""

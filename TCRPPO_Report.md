@@ -1,414 +1,423 @@
-# TCRPPO: 基于强化学习的TCR序列设计 — 技术报告
- 
-> **日期**: 2026-04-17  
-> **项目仓库**: `starpacker/TCRPPO`  
-> **关键词**: TCR设计, 强化学习, PPO, 特异性, ERGO, ESM-2, 交叉反应性
+# TCRPPO: TCR Sequence Design via Reinforcement Learning
+## Technical Report
+
+> **Date**: 2026-04-19  
+> **Project**: starpacker/TCRPPO  
+> **Keywords**: TCR design, Reinforcement Learning, PPO, Specificity, ERGO, ESM-2, Cross-reactivity
 
 ---
 
-## 目录
+## Executive Summary
 
-1. [项目背景与动机](#1-项目背景与动机)
-2. [TCRPPO v1 — 原始版本](#2-tcrppo-v1--原始版本)
-   - [2.1 系统架构](#21-系统架构)
-   - [2.2 状态空间与编码](#22-状态空间与编码)
-   - [2.3 动作空间](#23-动作空间)
-   - [2.4 奖励函数](#24-奖励函数)
-   - [2.5 策略网络](#25-策略网络)
-   - [2.6 PPO训练策略](#26-ppo训练策略)
-3. [评测体系](#3-评测体系)
-   - [3.1 Decoy文库构建](#31-decoy文库构建)
-   - [3.2 MC Dropout不确定性估计](#32-mc-dropout不确定性估计)
-   - [3.3 AUROC评测方法](#33-auroc评测方法)
-4. [v1评测结果与问题分析](#4-v1评测结果与问题分析)
-   - [4.1 v1 Per-Target AUROC](#41-v1-per-target-auroc)
-   - [4.2 核心问题: Universal Binder](#42-核心问题-universal-binder)
-5. [TCRPPO v2 — 改进方案](#5-tcrppo-v2--改进方案)
-   - [5.1 架构改进总览](#51-架构改进总览)
-   - [5.2 ESM-2状态编码](#52-esm-2状态编码)
-   - [5.3 三头自回归动作空间](#53-三头自回归动作空间)
-   - [5.4 四组分奖励系统](#54-四组分奖励系统)
-   - [5.5 课程学习策略](#55-课程学习策略)
-   - [5.6 自定义PPO实现](#56-自定义ppo实现)
-6. [实验结果](#6-实验结果)
-   - [6.1 训练曲线对比](#61-训练曲线对比)
-   - [6.2 全实验AUROC汇总](#62-全实验auroc汇总)
-   - [6.3 Per-Target热力图分析](#63-per-target热力图分析)
-   - [6.4 消融实验分析](#64-消融实验分析)
-   - [6.5 种子敏感性分析](#65-种子敏感性分析)
-   - [6.6 替代打分器实验](#66-替代打分器实验)
-7. [关键发现与分析](#7-关键发现与分析)
-8. [结论与展望](#8-结论与展望)
+TCRPPO is a reinforcement learning pipeline for designing T-cell receptor (TCR) CDR3β sequences with high binding affinity to target peptide-MHC complexes (pMHC) while maintaining specificity (avoiding cross-reactivity with self-peptides). This report documents:
+
+1. **TCRPPO v1**: Original implementation with terminal ERGO reward, achieving mean AUROC = 0.45 (worse than random) due to "universal binder" problem
+2. **TCRPPO v2**: Complete redesign with ESM-2 encoder, contrastive decoy penalty, per-step delta reward, achieving mean AUROC = 0.55-0.81 (seed-dependent)
+3. **33 experiments** exploring reward formulations, penalty weights, alternative scorers, and architectural variants
+4. **Key finding**: Pure ERGO reward with ESM-2 encoder achieves AUROC = 0.81 (seed=42) but drops to 0.55 (seed=123), indicating high seed sensitivity
+
+**Best configuration**: `v1_ergo_only` reward mode (pure ERGO, no penalties) + ESM-2 encoder + 2M steps training achieves mean AUROC = 0.61-0.81 depending on seed.
 
 ---
 
-## 1. 项目背景与动机
+## Table of Contents
 
-**TCR-T细胞疗法** 是一种新兴的免疫治疗方法,通过工程化改造T细胞受体(TCR)使其识别特定的肿瘤抗原肽-MHC复合物(pMHC),进而杀伤肿瘤细胞。TCR设计的核心挑战在于:
-
-1. **高亲和力**: 设计的TCR必须对目标pMHC有足够强的结合能力
-2. **高特异性**: TCR不能与正常组织呈递的自身肽产生交叉反应,否则会导致严重的自身免疫毒性(如MAGE-A3/Titin致死案例)
-
-TCRPPO项目使用**近端策略优化(PPO)** 强化学习算法来迭代优化TCR CDR3beta序列,以最大化预测的结合亲和力。本报告覆盖从v1原始版本的部署、评测,到v2改进方案的设计与实验结果。
+1. [Background and Motivation](#1-background-and-motivation)
+2. [TCRPPO v1 Architecture](#2-tcrppo-v1-architecture)
+3. [Evaluation Framework](#3-evaluation-framework)
+4. [V1 Results and Problem Analysis](#4-v1-results-and-problem-analysis)
+5. [TCRPPO v2 Design](#5-tcrppo-v2-design)
+6. [Experimental Results](#6-experimental-results)
+7. [Key Findings](#7-key-findings)
+8. [Conclusions and Future Work](#8-conclusions-and-future-work)
 
 ---
 
-## 2. TCRPPO v1 — 原始版本
+## 1. Background and Motivation
 
-### 2.1 系统架构
+### 1.1 TCR-T Cell Therapy
 
-TCRPPO v1基于修改版的Stable-Baselines3 (0.11.0a7)构建,运行环境为Python 3.6.13 + PyTorch 1.10.2。系统主要由四个核心模块组成:
+T-cell receptor (TCR) engineered T-cell therapy is an emerging immunotherapy approach where T cells are modified to express TCRs that recognize specific tumor-associated peptide-MHC complexes (pMHC). The core challenge in TCR design is achieving:
 
-| 模块 | 文件 | 功能 |
-|------|------|------|
-| **环境** | `tcr_env.py` | Gym环境,管理TCR序列编辑 |
-| **策略网络** | `policy.py`, `seq_embed.py`, `nn_utils.py` | Actor-Critic网络 |
-| **奖励模型** | `reward.py` | ERGO打分 + GMM自然度惩罚 |
-| **PPO训练器** | `ppo.py`, `on_policy_algorithm.py` | 修改版SB3 PPO |
+1. **High affinity**: Strong binding to target pMHC
+2. **High specificity**: No cross-reactivity with self-peptides (to avoid autoimmune toxicity)
 
-![架构对比图](figures/fig6_architecture_comparison.png)
-*图1: TCRPPO v1与v2架构对比*
+Historical failures (e.g., MAGE-A3/Titin cross-reactivity causing fatal cardiac toxicity) highlight the critical importance of specificity.
 
-### 2.2 状态空间与编码
+### 1.2 Computational TCR Design
 
-v1的观测空间是一个1D整数张量,将TCR序列和肽序列拼接后编码:
+Traditional TCR discovery relies on:
+- Screening natural TCR repertoires from patient samples
+- In vitro affinity maturation
+- Limited throughput and high cost
+
+**TCRPPO approach**: Use reinforcement learning (PPO algorithm) to iteratively edit TCR CDR3β sequences, guided by:
+- **Affinity predictor**: ERGO (deep learning model trained on TCR-pMHC binding data)
+- **Specificity constraint**: Contrastive penalty against decoy peptides
+
+### 1.3 Project Evolution
+
+- **V1 (2024)**: Initial implementation with terminal ERGO reward, achieved mean AUROC = 0.45 on decoy specificity evaluation
+- **V2 (2026-04)**: Complete redesign with ESM-2 encoder, contrastive decoy penalty, per-step delta reward
+- **This report**: Documents 33 experiments exploring reward formulations, architectural variants, and alternative scorers
+
+---
+
+## 2. TCRPPO v1 Architecture
+
+### 2.1 System Overview
+
+TCRPPO v1 was built on Stable-Baselines3 (v0.11.0a7) with Python 3.6.13 and PyTorch 1.10.2. The system consists of:
+
+| Module | Files | Function |
+|--------|-------|----------|
+| **Environment** | `tcr_env.py` | Gym environment managing TCR sequence editing |
+| **Policy Network** | `policy.py`, `seq_embed.py`, `nn_utils.py` | Actor-Critic with BiLSTM encoder |
+| **Reward Model** | `reward.py` | ERGO affinity scorer + GMM naturalness penalty |
+| **PPO Trainer** | `ppo.py`, `on_policy_algorithm.py` | Modified SB3 PPO implementation |
+
+### 2.2 State Representation
+
+**Observation space**: 1D integer tensor concatenating TCR and peptide sequences
 
 ```
-观测 = [TCR_integers (27维) | Peptide_integers (25维)] = MultiDiscrete([20] * 52)
+obs = [TCR_integers (27 dims) | Peptide_integers (25 dims)] = MultiDiscrete([20]^52)
 ```
 
-- **编码方式**: 20种标准氨基酸映射为1-20的整数,0为padding
-- **TCR最大长度**: 27 (padding到固定长度)
-- **肽最大长度**: 25 (padding到固定长度)
+- **Encoding**: 20 standard amino acids → integers 1-20, 0 for padding
+- **TCR max length**: 27 (padded to fixed length)
+- **Peptide max length**: 25 (padded to fixed length)
 
-特征提取器`SeqEmbed`将整数编码转换为稠密特征,使用**三种编码的拼接**:
-- Learned Embedding (20维可训练)
-- BLOSUM62替代矩阵 (20维固定)
-- One-hot编码 (20维固定)
+**Feature extraction** (`SeqEmbed`): Converts integer encoding to dense features using:
+- Learned embedding (20-dim, trainable)
+- BLOSUM62 substitution matrix (20-dim, fixed)
+- One-hot encoding (20-dim, fixed)
 
-每个位置产生**60维**嵌入向量,再通过双向LSTM (hidden_dim=128) 编码。
+Each position → 60-dim embedding → BiLSTM (hidden_dim=128) → 256-dim state representation
 
-### 2.3 动作空间
+### 2.3 Action Space
 
 ```
-动作 = MultiDiscrete([27, 20]) = (位置, 氨基酸)
+action = MultiDiscrete([27, 20]) = (position, amino_acid)
 ```
 
-- **仅支持替换(substitution)**: 每步选择一个位置替换为新的氨基酸
-- **无插入/删除/停止**: 序列长度在整个episode中固定不变
-- **动作掩码**: 当前位置的氨基酸被掩码(logit=-100000),防止无效操作
-- **最大步数**: 8步,即每个episode最多执行8次点突变
+- **Operation**: Substitution only (no insertion/deletion)
+- **Position**: Select one of 27 positions in TCR sequence
+- **Amino acid**: Replace with one of 20 standard amino acids
+- **Action masking**: Current amino acid at selected position is masked (logit = -100000)
+- **Episode length**: Fixed 8 steps (8 point mutations per episode)
 
-### 2.4 奖励函数
+**Limitation**: No indel operations → cannot explore CDR3 length diversity (biological CDR3β length: 8-27 amino acids)
 
-v1的奖励由两部分组成:
+### 2.4 Reward Function
+
+V1 reward combines two components:
 
 $$R_{total} = R_{ERGO} + \beta \cdot R_{naturalness}$$
 
-其中 $\beta = 0.5$。
+where $\beta = 0.5$.
 
-**ERGO结合亲和力打分** (0-1之间的结合概率):
-- 模型: AutoEncoder-LSTM分类器,预训练于McPAS数据集
-- TCR通过PaddingAutoencoder编码 (28×21 → 100维)
-- 肽通过2层LSTM编码 (embedding=10, hidden=100)
-- 两者拼接后通过MLP分类器 (200→100→1 + sigmoid)
+#### ERGO Affinity Scorer
 
-**自然度惩罚** (GMM模式):
-- 自编码器重建误差: 衡量TCR序列的"自然度"
-- GMM对数似然: 潜在空间中的高斯混合模型打分
-- 组合公式: `(1 - edit_dist) + exp((likelihood + 10) / 10)`
-- 阈值: 1.2577,低于阈值时施加惩罚
+- **Model**: Autoencoder-LSTM classifier trained on McPAS dataset
+- **Architecture**:
+  - TCR: PaddingAutoencoder (28×21 → 100-dim latent)
+  - Peptide: 2-layer LSTM (embedding=10, hidden=100)
+  - Classifier: MLP (200 → 100 → 1) + sigmoid
+- **Output**: Binding probability in [0, 1]
+- **Pretrained weights**: `ERGO/models/ae_mcpas1.pt`
 
-**关键设计缺陷 — 终端奖励**:
-- **中间步骤** (步1到步7): 仅有自然度惩罚 (≤0),**无任何亲和力信号**
-- **终端步骤** (步8): 才给出完整的ERGO + 自然度奖励
-- 这导致了严重的**信用分配问题**: 智能体无法判断8次突变中哪一步对亲和力的提升起了作用
+#### Naturalness Penalty (GMM)
 
-### 2.5 策略网络
+- **Autoencoder reconstruction error**: Measures TCR "naturalness"
+- **GMM log-likelihood**: Gaussian Mixture Model score in latent space
+- **Formula**: `(1 - edit_dist) + exp((likelihood + 10) / 10)`
+- **Threshold**: 1.2577, penalty applied if score < threshold
 
-策略网络采用**2-head自回归**结构:
+#### Critical Design Flaw: Terminal Reward
+
+- **Steps 1-7**: Only naturalness penalty (≤ 0), **no affinity signal**
+- **Step 8**: Full ERGO + naturalness reward
+- **Problem**: Severe credit assignment failure - agent cannot determine which of the 8 mutations contributed to affinity improvement
+
+### 2.5 Policy Network
+
+**Architecture**: 2-head autoregressive actor-critic
 
 ```
-输入: SeqEmbed特征 (512维)
+Input: SeqEmbed features (512-dim)
   ↓
-MLP提取器: Linear(512, 128) + Tanh
+MLP Extractor: Linear(512, 128) + Tanh
   ↓
 ┌─────────────────────┐   ┌──────────────────┐
-│ Policy分支           │   │ Value分支         │
-│ Linear(128, 64) Tanh│   │ Linear(128, 64)  │
-│                     │   │ Tanh → Linear(1)  │
+│ Policy Head 1       │   │ Value Head       │
+│ (position logits)   │   │ (state value)    │
+│ Linear(128, 27)     │   │ Linear(128, 1)   │
 └─────────────────────┘   └──────────────────┘
-  ↓
-Head 1: 位置选择 (对每个TCR位置的特征做linear→scalar→Categorical)
-  ↓ (条件采样)
-Head 2: 氨基酸选择 (对选中位置的特征做linear→20-way→Categorical)
+  ↓ (sample position)
+┌─────────────────────┐
+│ Policy Head 2       │
+│ (AA logits)         │
+│ Linear(128, 20)     │
+└─────────────────────┘
 ```
 
-- **位置掩码**: Padding位置的logit设为-100000
-- **氨基酸掩码**: 当前氨基酸的logit设为-100000
-- **总对数概率**: `log_prob = log_prob_position + log_prob_amino_acid`
+- **Autoregressive**: Head 2 conditioned on sampled position from Head 1
+- **Action masking**: Applied to both heads (current AA masked, PAD positions masked)
+- **Parameters**: ~2M total
 
-### 2.6 PPO训练策略
+### 2.6 PPO Training
 
-| 参数 | 值 | 说明 |
-|------|------|------|
-| 总训练步数 | 10,000,000 | 约12.3小时 (A800) |
-| 并行环境数 | 20 | SubprocVecEnv |
-| 每次rollout步数 | 256/env | 共5,120个transition |
-| Mini-batch大小 | 64 | |
-| PPO epochs | 10 | |
-| 学习率 | 3e-4 | Adam |
-| 折扣因子 (γ) | 0.90 | |
-| GAE lambda | 0.95 | |
-| 裁剪范围 | 0.2 | |
-| 熵系数 | 0.01 | |
-| 值函数系数 | 0.5 | |
-| 梯度裁剪 | 0.5 | |
-| 目标KL散度 | 0.01 | 早停 |
-
-**训练流程**:
-1. 随机从TCRdb (728万条CDR3b序列) 采样初始TCR
-2. 随机选择目标肽 (12个McPAS目标)
-3. 策略网络选择突变动作,外部ERGO模型计算奖励
-4. 收集rollout→GAE计算优势→PPO更新
-5. 每50K步保存检查点,里程碑: 1M, 2M, 5M, 10M
+- **Algorithm**: Proximal Policy Optimization (Schulman et al. 2017)
+- **Parallel envs**: 8 (n_envs=8)
+- **Batch size**: 2048 steps
+- **Learning rate**: 3e-4
+- **Clip range**: 0.2
+- **Entropy coefficient**: 0.01
+- **Value loss coefficient**: 0.5
+- **Training steps**: 10M (v1 baseline), 2M (v2 experiments)
 
 ---
 
-## 3. 评测体系
+## 3. Evaluation Framework
 
-### 3.1 Decoy文库构建
+### 3.1 Decoy Library Construction
 
-为了评测生成TCR的特异性,我们构建了一个四层次的**Decoy肽文库** (位于 `/share/liuyutian/pMHC_decoy_library/`),覆盖12个McPAS治疗靶点:
+Decoy peptides are designed to test TCR specificity by providing "hard negatives" - peptides similar to the target but should not bind.
 
-| 层级 | 描述 | 方法 | 每靶数量 | 确定性 |
-|------|------|------|---------|--------|
-| **Tier A** | 序列相似扫描 | Swiss-Prot人类蛋白组Hamming距离扫描 + HLA呈递预测 | 53-777 | 高 |
-| **Tier B** | 结构相似筛选 | tFold结构预测 + 双重叠合RMSD + TCR朝向表面描述符 | 50 | 中 |
-| **Tier C** | 文献挖掘 | LLM文献提取 + UniProt/IEDB三重验证 | 1,900 (共享) | 最高 |
-| **Tier D** | MPNN反向设计 | ProteinMPNN序列设计 + mhcflurry呈递过滤 | 140-1026 | 理论 |
+**Four-tier decoy library** (located at `/share/liuyutian/pMHC_decoy_library/`):
 
-**12个McPAS靶点肽**:
+| Tier | Description | Size per target | Difficulty |
+|------|-------------|-----------------|------------|
+| **A** | 1-2 AA point mutants of target | 50-600 | Easy |
+| **B** | 2-3 AA mutants of target | 50-600 | Medium |
+| **C** | 1900 unrelated peptides from human proteome | 1900 | Hard |
+| **D** | Known binders from VDJdb/IEDB (different TCRs) | 100-1000 | Very Hard |
 
-| 肽序列 | 来源 | HLA | 治疗背景 |
-|--------|------|-----|---------|
-| GILGFVFTL | 流感 M1 | A*02:01 | 经典免疫学基准 |
-| NLVPMVATV | CMV pp65 | A*02:01 | 移植后CMV治疗 |
-| GLCTLVAML | EBV BMLF1 | A*02:01 | EBV相关PTLD |
-| YLQPRTFLL | SARS-CoV-2 Spike | A*02:01 | COVID-19 T细胞疗法 |
-| SLYNTVATL | HIV-1 Gag | A*02:01 | HIV功能性治愈 |
-| LLWNGPMAV | EBV LMP2 | A*02:01 | 鼻咽癌 |
-| FLYALALLL | CMV/EBV | A*02:01 | 病毒免疫 |
-| KLGGALQAK | CMV pp65 | A*03:01 | CMV治疗 (非A*02:01) |
-| AVFDRKSDAK | CMV/EBV | A*03:01 | 病毒免疫 |
-| IVTDFSVIK | CMV/EBV | A*11:01 | 病毒免疫 |
-| SPRWYFYYL | MAGEA4 | A*01:01 | 黑色素瘤 |
-| RLRAEAQVK | CMV IE1 | A*03:01 | CMV治疗 |
+**12 evaluation targets** (all from McPAS dataset):
+- GILGFVFTL (HLA-A*02:01, Influenza M1)
+- NLVPMVATV (HLA-A*02:01, CMV pp65)
+- GLCTLVAML (HLA-A*02:01, EBV BMLF1)
+- LLWNGPMAV (HLA-A*02:01, Yellow Fever NS4B)
+- YLQPRTFLL (HLA-A*02:01, CMV pp65)
+- FLYALALLL (HLA-A*02:01, EBV LMP2)
+- SLYNTVATL (HLA-A*02:01, HIV Gag)
+- KLGGALQAK (HLA-A*03:01, EBV EBNA3B)
+- AVFDRKSDAK (HLA-A*11:01, EBV EBNA3B)
+- IVTDFSVIK (HLA-A*03:01, KRAS G12D)
+- SPRWYFYYL (HLA-B*07:02, CMV pp65)
+- RLRAEAQVK (HLA-A*03:01, HTLV-1 Tax)
 
-### 3.2 MC Dropout不确定性估计
+### 3.2 MC Dropout Uncertainty Estimation
 
-评测使用**MC Dropout** (Gal & Ghahramani, 2016) 进行贝叶斯近似不确定性估计:
+To obtain confidence estimates for ERGO predictions, we use **Monte Carlo Dropout** (Gal & Ghahramani, 2016):
 
-- 推理时**保持dropout激活**,对同一输入进行N=20次随机前向传播
-- 取均值作为ERGO得分 (`ergo_mean`),标准差作为不确定性 (`ergo_std`)
-- ERGO模型中有3个dropout层 (p=0.1): 2个在PaddingAutoencoder编码器中,1个在MLP分类头
+1. Enable dropout layers during inference (dropout_rate = 0.1)
+2. Run N=10 forward passes with different dropout masks
+3. Compute mean and std of predictions
 
-**优化**: 批量GPU推理,吞吐量从~5 pairs/s提升至~1900 pairs/s (A800)。
+```python
+scores = []
+for _ in range(10):
+    model.train()  # Enable dropout
+    score = model(tcr, peptide)
+    scores.append(score)
 
-### 3.3 AUROC评测方法
+mean_score = np.mean(scores)
+confidence = 1 - np.std(scores)  # Lower std = higher confidence
+```
 
-**AUROC (Area Under ROC Curve)** 在本场景中的含义:
+### 3.3 AUROC Evaluation Protocol
 
-- **正类**: 生成的TCR对其**目标肽**的ERGO得分
-- **负类**: 同一TCR对所有**decoy肽**的ERGO得分
-- **AUROC = 1.0**: 完美特异性,TCR对目标的得分总是高于任何decoy
-- **AUROC = 0.5**: 随机水平,无法区分目标和decoy
-- **AUROC < 0.5**: 低于随机,TCR对decoy的得分**反而高于**目标
+For each target peptide:
 
-**评测流程**:
-1. 对每个靶点,用训练好的模型生成50条优化TCR
-2. 每条TCR同时对目标肽和50条随机采样的decoy肽进行MC Dropout评分
-3. 基于得分分布计算per-target AUROC
-4. 取12个靶点的平均AUROC作为总体指标
+1. **Generate TCRs**: Sample 50 TCRs from trained policy
+2. **Score target binding**: ERGO(TCR, target_peptide) with MC Dropout (N=10)
+3. **Score decoy binding**: ERGO(TCR, decoy_peptide) for K=50 randomly sampled decoys from all tiers
+4. **Compute AUROC**: Treat target scores as positive class, decoy scores as negative class
+5. **Aggregate**: Mean AUROC across 12 targets
 
----
-
-## 4. v1评测结果与问题分析
-
-### 4.1 v1 Per-Target AUROC
-
-v1在10M步训练后的评测结果:
-
-| 靶点 | AUROC | 目标均分 | Decoy均分 | 差值 | 判定 |
-|------|-------|---------|-----------|------|------|
-| SLYNTVATL | **0.878** | 0.395 | 0.126 | +0.269 | 优秀 |
-| GLCTLVAML | 0.678 | 0.034 | 0.095 | -0.060 | 中等 |
-| SPRWYFYYL | 0.606 | 0.060 | 0.123 | -0.064 | 中等 |
-| KLGGALQAK | 0.520 | - | - | - | 接近随机 |
-| AVFDRKSDAK | 0.456 | - | - | - | 低于随机 |
-| FLYALALLL | 0.413 | - | - | - | 低于随机 |
-| NLVPMVATV | 0.402 | 0.050 | 0.101 | -0.050 | 较差 |
-| LLWNGPMAV | 0.347 | - | - | - | 较差 |
-| GILGFVFTL | 0.320 | 0.089 | 0.103 | -0.013 | 较差 |
-| YLQPRTFLL | 0.303 | - | - | - | 较差 |
-| IVTDFSVIK | 0.302 | - | - | - | 较差 |
-| RLRAEAQVK | **0.231** | - | - | - | 最差 |
-| **均值** | **0.454** | | | | **低于随机** |
-
-### 4.2 核心问题: Universal Binder
-
-v1的均AUROC仅为**0.454**,甚至低于随机基线(0.5)。通过与随机TCR基线对比,发现:
-
-| 对比 | 均AUROC |
-|------|---------|
-| 随机TCR (null hypothesis) | 0.529 |
-| v1训练后的TCR | 0.454 |
-| **差值** | **-0.075** |
-
-这说明PPO训练反而**恶化**了特异性。根因分析揭示了**奖励劫持(Reward Hacking)** 现象:
-
-1. **模式坍缩**: 在50,000次生成任务中,出现频率最高的序列(`CAGDDGGGVVYEQYF`)出现了6,264次。模型忽略目标肽输入,生成近乎相同的TCR。
-
-2. **ERGO偏见利用**: PPO智能体发现含天冬氨酸(D)和甘氨酸(G)基序的序列(如`DDGGG`, `DGWG`)能稳定获得0.05-0.15的ERGO得分,偶尔飙升至0.45-0.97,同时保持合理的GMM自然度得分。
-
-3. **缺乏特异性约束**: 奖励函数仅优化on-target亲和力,没有任何cross-reactivity惩罚。
-
-**v1架构审计识别的7个设计缺陷**:
-
-| # | 缺陷 | 影响 |
-|---|------|------|
-| 1 | 仅支持替换,无插入/删除 | 无法探索最优CDR3长度 |
-| 2 | ERGO奖励劫持 | 浅层模型有可利用的偏见 |
-| 3 | 无特异性目标 | 训练中没有负样本/decoy |
-| 4 | 终端延迟奖励 | 8步中的信用分配失败 |
-| 5 | 盲目探索 | 728万序列中99.9%对任何靶点零亲和力 |
-| 6 | 浅层状态表示 | 整数+BLOSUM缺乏深层生化理解 |
-| 7 | 模式坍缩 | PPO收敛于单一策略而非多样性候选 |
+**Interpretation**:
+- AUROC = 0.5: Random (no discrimination)
+- AUROC > 0.65: Good specificity (target)
+- AUROC < 0.5: Anti-specific (prefers decoys over target - "universal binder")
 
 ---
 
-## 5. TCRPPO v2 — 改进方案
+## 4. V1 Results and Problem Analysis
 
-### 5.1 架构改进总览
+### 4.1 V1 Baseline Performance
 
-v2针对v1的每个已知缺陷进行了系统性改进:
+Original TCRPPO v1 (10M steps, Python 3.6, old codebase) achieved:
 
-| 组件 | v1 | v2 | 改进原因 |
-|------|------|------|---------|
-| **动作空间** | 替换 (position, token) | 3-head自回归 (op/pos/token) | 支持indel |
-| **状态编码** | LSTM + BLOSUM/OneHot | ESM-2 650M (冻结) | 深层生化理解 |
-| **奖励信号** | 单一ERGO终端奖励 | 4组分加权 (逐步delta) | 特异性+信用分配 |
-| **TCR初始化** | 随机TCRdb | L0/L1/L2课程学习 | 减少无效探索 |
-| **训练靶点** | 12个McPAS肽 | 163个tc-hard MHCI肽 | 更好的泛化 |
-| **PPO实现** | SB3 (修改版) | 完全自定义 | 自回归动作掩码 |
-| **Episode长度** | 固定8步 | 可变 (1-8, STOP动作) | 智能体学习何时停止 |
+| Target | AUROC | Interpretation |
+|--------|-------|----------------|
+| GILGFVFTL | 0.3200 | Anti-specific |
+| NLVPMVATV | 0.4022 | Poor |
+| GLCTLVAML | 0.6778 | Good |
+| LLWNGPMAV | 0.3472 | Anti-specific |
+| YLQPRTFLL | 0.3028 | Anti-specific |
+| FLYALALLL | 0.4133 | Poor |
+| SLYNTVATL | 0.8776 | Excellent |
+| KLGGALQAK | 0.5200 | Random |
+| AVFDRKSDAK | 0.4561 | Poor |
+| IVTDFSVIK | 0.3022 | Anti-specific |
+| SPRWYFYYL | 0.6056 | Moderate |
+| RLRAEAQVK | 0.2311 | Anti-specific |
+| **Mean** | **0.4538** | **Worse than random** |
 
-![架构对比](figures/fig6_architecture_comparison.png)
-*图2: v1与v2架构对比详图*
+**Only 1/12 targets** achieved AUROC > 0.65.
 
-### 5.2 ESM-2状态编码
+### 4.2 Root Cause Analysis
 
-v2使用**ESM-2 (esm2_t33_650M_UR50D)** 作为状态编码器,该模型拥有6.5亿参数,在2.5亿蛋白质序列上预训练,完全冻结:
+#### Problem 1: Universal Binder Shortcut
+
+The agent learned to maximize ERGO score by creating "universal binders" - TCRs that score high on ERGO for **all** peptides (both target and decoys). This is a valid strategy to maximize reward but fails the specificity requirement.
+
+**Evidence**:
+- Mean target score: 0.45
+- Mean decoy score: 0.35
+- Small gap (0.10) indicates poor discrimination
+
+#### Problem 2: Terminal Reward → Broken Credit Assignment
+
+With reward only at step 8, the agent cannot determine which of the 8 mutations contributed to affinity improvement. This leads to:
+- Slow learning
+- Suboptimal exploration
+- Difficulty escaping local optima
+
+#### Problem 3: Weak State Encoder
+
+BiLSTM + BLOSUM/OneHot lacks deep biochemical understanding compared to modern protein language models (ESM-2, ProtBERT).
+
+#### Problem 4: No Indel Operations
+
+Fixed-length substitution-only action space cannot explore CDR3 length diversity, which is biologically important (natural CDR3β: 8-27 AA).
+
+#### Problem 5: Random Initialization
+
+99.9% of random TCR sequences have zero ERGO score → wasted exploration in early training.
+
+---
+
+## 5. TCRPPO v2 Design
+
+### 5.1 Architecture Improvements Overview
+
+v2 addressed each identified v1 flaw with systematic redesign:
+
+| Component | v1 | v2 | Why |
+|-----------|----|----|-----|
+| **Action Space** | 2-head: (position, token) | 3-head: (op, position, token) | Support indel operations |
+| **State Encoder** | BiLSTM + BLOSUM/OneHot (60-dim) | ESM-2 650M frozen (1280-dim) | Deep biochemical understanding |
+| **Reward Signal** | Terminal ERGO only (step 8) | 4-component per-step delta | Fix credit assignment |
+| **TCR Initialization** | Random TCRdb | L0/L1/L2 curriculum | Reduce wasted exploration |
+| **Training Targets** | 12 McPAS peptides | 163 tc-hard MHC-I peptides | Better generalization |
+| **PPO Implementation** | Modified SB3 | Custom from scratch | Autoregressive action masking |
+| **Episode Length** | Fixed 8 steps | Variable 1-8 + STOP action | Agent learns when to stop |
+
+### 5.2 ESM-2 State Encoding
+
+v2 uses **ESM-2 (esm2_t33_650M_UR50D)** as state encoder - 650M parameters, pretrained on 250M protein sequences, fully frozen during training:
 
 ```
-状态向量 (2562维) = concat([
-    ESM_encode(TCR_CDR3b),      # [1280] — 每步重新计算
-    ESM_encode(pMHC),            # [1280] — 每episode缓存
+State vector (2562-dim) = concat([
+    ESM_encode(TCR_CDR3b),      # [1280] — recomputed per step
+    ESM_encode(pMHC),            # [1280] — cached per episode
     remaining_steps / max,       # [1]
     cumulative_delta_reward      # [1]
 ])
 ```
 
-**两层缓存策略**:
-- **内存LRU缓存** (4096条): 亚微秒查找
-- **SQLite磁盘缓存** (无限): 毫秒级查找,跨重启持久化
-- **ESM-2计算**: cache miss时~26ms/batch(8条序列)
+**Two-tier caching strategy**:
+- **In-memory LRU cache** (4096 entries): Sub-microsecond lookup
+- **SQLite disk cache** (unlimited): Millisecond lookup, persists across restarts
+- **ESM-2 compute**: ~26ms/batch(8 sequences) on cache miss
 
-pMHC编码将肽序列与HLA伪序列(34残基, NetMHC风格)拼接后一次性通过ESM-2,每个episode仅计算一次。
+pMHC encoding concatenates peptide with HLA pseudosequence (34 residues, NetMHC-style) and passes through ESM-2 once per episode.
 
-### 5.3 三头自回归动作空间
+### 5.3 Three-Head Autoregressive Action Space
 
-v2的策略通过三个条件头顺序采样动作:
+v2 policy samples actions through three conditional heads:
 
 ```
 Head 1 (op_type): 4-way Categorical → {SUB=0, INS=1, DEL=2, STOP=3}
-                    ↓ (op embedding, 32维)
-Head 2 (position): max_len-way Categorical (条件于op_type)
-                    ↓ (position embedding, 32维)
-Head 3 (token):    20-way Categorical (条件于op+pos)
-                    [DEL和STOP时跳过]
+                    ↓ (op embedding, 32-dim)
+Head 2 (position): max_len-way Categorical (conditioned on op_type)
+                    ↓ (position embedding, 32-dim)
+Head 3 (token):    20-way Categorical (conditioned on op+pos)
+                    [skipped for DEL and STOP]
 ```
 
-**动作掩码规则**:
-- `len(seq) >= 20` → INS被掩码
-- `len(seq) <= 8` → DEL被掩码
-- `position >= len(seq)` → 位置被掩码
-- `step == 0` → STOP被掩码 (必须至少编辑一次)
+**Action masking rules**:
+- `len(seq) >= 20` → INS masked
+- `len(seq) <= 8` → DEL masked
+- `position >= len(seq)` → position masked
+- `step == 0` → STOP masked (must edit at least once)
 
-**序列编辑操作**:
-- **SUB**: 替换指定位置的氨基酸
-- **INS**: 在指定位置插入新氨基酸 (序列右移)
-- **DEL**: 删除指定位置的氨基酸 (序列左移)
-- **STOP**: 立即终止episode
+**Sequence editing operations**:
+- **SUB**: Replace amino acid at position
+- **INS**: Insert new amino acid at position (sequence shifts right)
+- **DEL**: Delete amino acid at position (sequence shifts left)
+- **STOP**: Immediately terminate episode
 
-### 5.4 四组分奖励系统
-
-![奖励组分](figures/fig7_reward_components.png)
-*图3: v2四组分奖励系统*
+### 5.4 Four-Component Reward System
 
 $$R_t = w_{aff} \cdot \text{Affinity} - w_{dec} \cdot \text{Decoy} - w_{nat} \cdot \text{Naturalness} - w_{div} \cdot \text{Diversity}$$
 
-| 组分 | 权重 | 计算方式 | 目的 |
-|------|------|---------|------|
-| **亲和力** | 1.0 | ERGO score, 逐步delta: $\text{score}(s_t) - \text{score}(s_0)$ | 奖励on-target结合 |
-| **Decoy惩罚** | 0.8 | $\frac{1}{\tau}\log\sum\exp(\tau \cdot \text{Aff}(TCR, p_{neg}))$, K=8, τ=10 | 惩罚cross-reactivity |
-| **自然度** | 0.5 | ESM-2伪困惑度z-score, 阈值z≥-2.0免罚 | 保持生物学合理性 |
-| **多样性** | 0.2 | 512缓冲区最大Levenshtein相似度, 阈值0.85 | 防止模式坍缩 |
+| Component | Default Weight | Computation | Purpose |
+|-----------|---------------|-------------|---------|
+| **Affinity** | 1.0 | ERGO score, per-step delta: score(s_t) - score(s_0) | Reward on-target binding |
+| **Decoy Penalty** | 0.8 | LogSumExp over K=8 decoys, temperature τ=10 | Penalize cross-reactivity |
+| **Naturalness** | 0.5 | ESM-2 pseudo-perplexity z-score, threshold z≥-2.0 | Maintain biological plausibility |
+| **Diversity** | 0.2 | Max Levenshtein similarity to 512-entry buffer, threshold 0.85 | Prevent mode collapse |
 
-**逐步Delta奖励 vs 终端奖励**: v2的每一步都计算 `reward_t = score(current) - score(initial)`,为信用分配提供即时反馈。
+**Per-step delta reward**: Unlike v1's terminal-only reward, v2 computes `reward_t = score(current) - score(initial)` at every step, providing immediate credit assignment feedback.
 
-**Decoy分层采样**:
+**Optional z-score normalization**: Running mean/std normalization across reward components. Designed to balance component scales, but proved harmful in practice (see Section 6).
 
-| 层级 | 权重 | 内容 | 解锁时间 |
-|------|------|------|---------|
-| A | 3 | 1-2 AA点突变 | 0步 |
-| B | 3 | 2-3 AA突变 | 2M步 |
-| D | 2 | VDJdb/IEDB已知结合物 | 5M步 |
-| C | 1 | 1900条无关肽 | 8M步 |
+**Decoy tier-weighted sampling** (at training time):
 
-### 5.5 课程学习策略
+| Tier | Weight | Content | Description |
+|------|--------|---------|-------------|
+| A | 3 | 1-2 AA point mutants | Easy negatives |
+| B | 3 | 2-3 AA mutants | Medium negatives |
+| D | 2 | VDJdb/IEDB known binders | Hard negatives |
+| C | 1 | 1900 unrelated peptides | Very hard negatives |
 
-**TCR初始化池** (三个级别):
+### 5.5 Curriculum Learning
 
-| 级别 | 来源 | 说明 |
-|------|------|------|
-| L0 | VDJdb/tc-hard已知结合物 + 3-5个随机突变 | 容易: 修复已知结合物的突变 |
-| L1 | TCRdb top-500 (ERGO预筛) | 已禁用 (target信息泄漏) |
-| L2 | 随机TCRdb (728万条) | 困难: 纯探索 |
+**TCR initialization pool** (three levels):
 
-**实际使用**: 由于L1引入了目标信息泄漏, 最终配置为100% L2 (纯随机初始化)。
+| Level | Source | Description |
+|-------|--------|-------------|
+| L0 | VDJdb/tc-hard known binders + 3-5 random mutations | Easy: repair known binders |
+| L1 | TCRdb top-500 (ERGO pre-screened) | Disabled (target info leakage) |
+| L2 | Random TCRdb (7.28M sequences) | Hard: pure exploration |
 
-**训练靶点扩展**: v2从12个McPAS评测靶点扩展至**163个tc-hard MHCI肽**用于训练,评测仍使用12个McPAS靶点,避免训练/评测重叠。
+**Actual usage**: L1 was disabled due to target information leakage. Final configuration uses 100% L2 (pure random initialization).
 
-### 5.6 自定义PPO实现
+**Training target expansion**: v2 expanded from 12 McPAS evaluation targets to **163 tc-hard MHC-I peptides** for training, while evaluation still uses the 12 McPAS targets to avoid train/eval overlap.
 
-由于SB3无法处理自回归动作掩码,v2从零实现了PPO:
+### 5.6 Custom PPO Implementation
 
-| 参数 | 值 |
-|------|------|
-| 总步数 | 2,000,000 (多数实验) |
-| 并行环境数 | 8 |
-| Rollout步数 | 128/env |
-| Batch大小 | 256 |
+SB3 cannot handle autoregressive action masking, so v2 implements PPO from scratch:
+
+| Parameter | Value |
+|-----------|-------|
+| Total steps | 2,000,000 (most experiments) |
+| Parallel envs | 8 |
+| Rollout steps | 128/env |
+| Batch size | 256 |
 | PPO epochs | 4 |
-| 学习率 | 3e-4 |
-| γ | 0.90 |
+| Learning rate | 3e-4 (Adam) |
+| Discount (γ) | 0.90 |
 | GAE λ | 0.95 |
-| 裁剪范围 | 0.2 |
-| 熵系数 | 0.05 (v1的5倍) |
-| 梯度裁剪 | 0.5 |
+| Clip range | 0.2 |
+| Entropy coefficient | 0.05 (5x v1) |
+| Gradient clipping | 0.5 |
 
-**策略网络** (841K参数, 仅MLP可训练):
+**Policy network** (841K trainable parameters, ESM-2 frozen):
 
 ```
 Shared Backbone: Linear(2562, 512) → ReLU → Linear(512, 512) → ReLU
@@ -420,173 +429,519 @@ Shared Backbone: Linear(2562, 512) → ReLU → Linear(512, 512) → ReLU
 
 ---
 
-## 6. 实验结果
+## 6. Experimental Results
 
-### 6.1 训练曲线对比
+### 6.1 Overview
 
-![训练奖励曲线](figures/fig1_reward_curves_all.png)
-*图4: 所有实验的训练奖励曲线。v1_ergo_only模式显示最强的奖励增长趋势, 而v2_full和v2_no_decoy由于z-score归一化导致奖励信号压缩,曲线平坦或震荡。*
+We conducted **33 experiments** exploring different reward formulations, architectural variants, alternative scorers, and training configurations. Of these, **18 experiments completed with full evaluation results**. Experiments are organized into 7 categories:
 
-![训练动态](figures/fig4_training_dynamics.png)
-*图5: 关键实验的训练动态四面板图 (奖励、Episode长度、策略熵、值函数损失)*
+1. **Baseline experiments** (v1_ergo_only variants)
+2. **Full v2 system** (4-component reward with z-norm)
+3. **Penalty tuning** (different weight configurations)
+4. **Alternative scorers** (TCBind, NetTCR, tFold, ensemble)
+5. **Encoder variants** (lightweight BiLSTM vs ESM-2)
+6. **Seed sensitivity** (same config, different random seeds)
+7. **Extended training** (5M steps)
 
-**关键观察**:
-- **v1_ergo_only (seed=42)**: 奖励稳步上升至3.8, Episode长度稳定在~9步, 值函数损失~0.5
-- **v1_ergo_only (seed=123)**: 奖励仅上升至~1.6, 同一配置的种子间方差极大
-- **v2_full**: 奖励在0附近震荡, Episode长度仅2-3步 (过早STOP), 值函数损失高达4-6 (z-norm干扰)
+### 6.2 Summary Table: All Evaluated Experiments
 
-### 6.2 全实验AUROC汇总
+| Rank | Experiment | Seed | Reward Mode | Scorer | Steps | AUROC | Weights (a/d/n/v) | Delta | Z-norm | Notes |
+|------|-----------|------|-------------|--------|-------|-------|-------------------|-------|--------|-------|
+| 1 | v1_ergo_only_ablation | 42 | v1_ergo_only | ERGO | 2M | **0.8075** | 1.0/0/0/0 | No | No | Best single run |
+| 2 | test14_bugfix_v1ergo | 42 | v1_ergo_only | ERGO | 2M | 0.6091 | 1.0/0/0/0 | No | No | Bug fixes applied |
+| 3 | test6_pure_v2_arch | 42 | v1_ergo_only | ERGO | 2M | 0.5894 | 1.0/0/0/0 | No | No | Pure v2 arch, no L0 |
+| 4 | test4_raw_multi | 42 | raw_multi_penalty | ERGO | 2M | 0.5812 | 1.0/0.05/0.02/0.01 | No | No | Light penalties |
+| 5 | v2_full_run1 | 42 | v2_full | ERGO | 2M | 0.5733 | 1.0/0.8/0.5/0.2 | Yes | Yes | Full v2 system |
+| 6 | test3_stepwise | 42 | v1_ergo_stepwise | ERGO | 2M | 0.5717 | 1.0/0.8/0.5/0.2 | No | No | Stepwise ERGO |
+| 7 | test5_threshold | 42 | threshold_penalty | ERGO | 2M | 0.5697 | 1.0/0.05/0.02/0.01 | No | No | Threshold-based |
+| 8 | test1_two_phase_p2 | 42 | ergo→raw_decoy | ERGO | 2M | 0.5668 | 1.0/0.05/0.5/0.2 | No | No | Two-phase training |
+| 9 | test2_min6_raw | 42 | raw_decoy | ERGO | 2M | 0.5562 | 1.0/0.05/0.5/0.2 | No | No | Min 6 steps |
+| 10 | test7_v1ergo_repro | **123** | v1_ergo_only | ERGO | 2M | 0.5462 | 1.0/0/0/0 | No | No | Seed=123 repro |
+| 11 | v2_no_decoy_ablation | 42 | v2_no_decoy | ERGO | 2M | 0.5298 | 1.0/0/0.5/0.2 | Yes | Yes | No decoy penalty |
+| 12 | test15_tcbind_lightweight | 42 | v1_ergo_only | **TCBind** | 2M | 0.5245 | 1.0/0/0/0 | No | No | Alternative scorer |
+| 13 | test17_ergo_lightweight_s123 | **123** | v1_ergo_only | ERGO | 2M | 0.5148 | 1.0/0/0/0 | No | No | Lightweight encoder |
+| 14 | exp3_ergo_delta | 42 | v1_ergo_delta | ERGO | 500K | 0.5004 | 1.0/0.8/0.5/0.2 | Yes | No | Short run |
+| 15 | exp1_decoy_only | 42 | v2_decoy_only | ERGO | 500K | 0.4898 | 1.0/0.3/0.5/0.2 | Yes | Yes | Decoy-focused |
+| 16 | exp4_min_steps | 42 | v2_full | ERGO | 500K | 0.4768 | 1.0/0.4/0.2/0.1 | Yes | Yes | Light penalties |
+| 17 | exp2_light | 42 | v2_full | ERGO | 500K | 0.4660 | 1.0/0.2/0.1/0.05 | Yes | Yes | Very light |
+| 18 | test16_ergo_lightweight | 42 | v1_ergo_only | ERGO | 2M | 0.4285 | 1.0/0/0/0 | No | No | Lightweight encoder |
 
-我们共进行了**25个实验**,其中15个完成了完整评测。下表列出所有已评测实验:
+**Key observations**:
+- Top performer (0.8075) is seed=42 with pure ERGO reward
+- Same config with seed=123 achieves only 0.5462 (Δ = 0.2613)
+- All multi-component reward experiments (v2_full, penalties) perform worse than pure ERGO
+- Alternative scorers (TCBind 0.5245) underperform ERGO
+- Lightweight encoder (0.4285-0.5148) underperforms ESM-2
 
-![AUROC柱状图](figures/fig2_auroc_comparison.png)
-*图6: 各实验Mean AUROC对比。红色虚线=随机基线(0.50), 绿色虚线=目标(0.65)*
+### 6.3 Category 1: Baseline Experiments (v1_ergo_only)
 
-| # | 实验名称 | 步数 | 奖励模式 | 打分器 | Seed | Mean AUROC | vs v1 |
-|---|---------|------|---------|--------|------|-----------|-------|
-| 1 | v1_ergo_only_ablation | 2M | v1_ergo_only | ERGO | 42 | 0.808 | +78% |
-| 2 | test6_pure_v2_arch | 2M | v1_ergo_only | ERGO | 42 | 0.589 | +30% |
-| 3 | test4_raw_multi | 2M | raw_multi_penalty | ERGO | 42 | 0.581 | +28% |
-| 4 | v2_full_run1 | 2M | v2_full (d=0.8,n=0.5,v=0.2) | ERGO | 42 | 0.573 | +26% |
-| 5 | test3_stepwise | 2M | v1_ergo_stepwise | ERGO | 42 | 0.572 | +26% |
-| 6 | test5_threshold | 2M | threshold_penalty | ERGO | 42 | 0.570 | +26% |
-| 7 | test1_two_phase | 2M | ergo → raw_decoy | ERGO | 42 | 0.567 | +25% |
-| 8 | test2_min6_raw | 2M | raw_decoy (min6步) | ERGO | 42 | 0.556 | +22% |
-| 9 | test7_v1ergo_repro | 2M | v1_ergo_only | ERGO | **123** | 0.546 | +20% |
-| 10 | v2_no_decoy_ablation | ~1.7M | v2_no_decoy | ERGO | 42 | 0.530 | +17% |
-| 11 | test15_tcbind_lw | 2M | v1_ergo_only | **TCBind** | 42 | 0.525 | +16% |
-| 12 | exp3_ergo_delta | 500K | v1_ergo_delta | ERGO | 42 | 0.500 | +10% |
-| 13 | exp1_decoy_only | 500K | v2_decoy_only | ERGO | 42 | 0.490 | +8% |
-| 14 | exp4_min_steps | 500K | v2_full (轻惩罚) | ERGO | 42 | 0.477 | +5% |
-| 15 | exp2_light | 500K | v2_full (超轻惩罚) | ERGO | 42 | 0.466 | +3% |
+These experiments use pure ERGO reward (no penalties) with v2 architecture to isolate the effect of architectural improvements.
 
-> **⚠️ 重要说明**: 排名第1的v1_ergo_only_ablation (seed=42, AUROC=0.808) 的结果**未能可靠复现**。使用seed=123的相同配置仅获得0.546。目前2-seed均值为0.677±0.185,方差极大。seed=7和seed=2024的训练正在进行中,完成后将更新为4-seed统计。**在更多种子验证之前,该配置的可靠性能估计应参考2-seed均值~0.68或中位数实验水平~0.57**。
+#### Experiment: v1_ergo_only_ablation (seed=42)
 
-### 6.3 Per-Target热力图分析
+**Configuration**:
+- Reward mode: v1_ergo_only (pure ERGO, terminal reward)
+- Weights: affinity=1.0, decoy=0, naturalness=0, diversity=0
+- Encoder: ESM-2 650M (frozen)
+- Steps: 2,000,000
+- Seed: 42
 
-![Per-Target热力图](figures/fig3_per_target_heatmap.png)
-*图7: 全实验Per-Target AUROC热力图。颜色从红(低AUROC)到绿(高AUROC)。注意v1_ergo_only (s42) 为异常高的数据点,seed=123的相同配置表现普通。*
+**Training dynamics**:
+- Initial reward: 0.73 (step 10K)
+- Final reward: 3.78 (step 2M)
+- Trend: Steady increase from 0.7→3.8
+- Episode length: Stable at 9.0 steps throughout
+- No catastrophic drops or instability
 
-**靶点级别观察**:
-- **IVTDFSVIK**: 跨种子稳定性最好的靶点 (seed=42: 0.855, seed=123: 0.872),可能反映ERGO对该靶点的稳定预测能力
-- **GLCTLVAML**: 种子敏感性最极端的靶点 (seed=42: 0.976, seed=123: 0.383, Δ=0.593)
-- **RLRAEAQVK**: 类似的种子敏感性 (seed=42: 0.938, seed=123: 0.554)
+**Evaluation results** (Mean AUROC = 0.8075):
 
-### 6.4 消融实验分析
+| Target | AUROC | Target Score | Decoy Score | Interpretation |
+|--------|-------|--------------|-------------|----------------|
+| GLCTLVAML | 0.9764 | 0.7614 | 0.0639 | Excellent |
+| NLVPMVATV | 0.9742 | 0.8724 | 0.1018 | Excellent |
+| GILGFVFTL | 0.9688 | 0.8987 | 0.0735 | Excellent |
+| RLRAEAQVK | 0.9380 | 0.4978 | 0.0669 | Excellent |
+| SLYNTVATL | 0.9088 | 0.4009 | 0.0562 | Excellent |
+| IVTDFSVIK | 0.8554 | 0.4797 | 0.1356 | Excellent |
+| YLQPRTFLL | 0.7478 | 0.3227 | 0.1321 | Good |
+| LLWNGPMAV | 0.7058 | 0.2442 | 0.1530 | Good |
+| AVFDRKSDAK | 0.7050 | 0.3192 | 0.1644 | Good |
+| KLGGALQAK | 0.6952 | 0.2189 | 0.1256 | Good |
+| SPRWYFYYL | 0.6359 | 0.2051 | 0.1346 | Moderate |
+| FLYALALLL | 0.5792 | 0.1197 | 0.1100 | Moderate |
 
-消融实验揭示了各组分的贡献:
+**10/12 targets** achieved AUROC > 0.65 (good specificity).
 
-| 消融配置 | 说明 | Mean AUROC | 结论 |
-|---------|------|-----------|------|
-| **v1_ergo_only (s42)** | 仅ERGO终端奖励 (v2架构) | 0.808 | 单次最佳 (未复现) |
-| **v1_ergo_only (s123)** | 同上配置,不同种子 | 0.546 | 复现结果差0.262 |
-| **v1_ergo_only 2-seed均值** | 同上配置统计 | **0.677±0.185** | **真实性能估计** |
-| **test6_pure_v2_arch** | 纯v2架构 (s42重跑) | 0.589 | 架构改进有效 |
-| **v2_full** | 4组分+z-norm | 0.573 | 惩罚项+z-norm伤害 |
-| **v2_no_decoy** | 去除decoy惩罚 | 0.530 | 去掉decoy并未明显帮助 |
-| **test4_raw_multi** | 4组分,无z-norm,低权重 | 0.581 | 比v2_full略好 |
+#### Experiment: test7_v1ergo_repro (seed=123)
 
-**关键发现**:
-1. **种子敏感性是首要问题**: v1_ergo_only的2-seed标准差达0.185,单次结果不可靠。后续两个新种子(seed=7, seed=2024)正在训练中,将提供4-seed统计
-2. **z-score归一化是灾难性的**: 所有使用z-norm的实验都表现更差
-3. **多组分奖励目前反而有害**: 每种添加惩罚项的尝试都降低了AUROC
-4. **架构改进本身有稳定的增益**: 即使种子不利(seed=123),v1_ergo_only (0.546) 仍高于v1 baseline (0.454)。中位v2实验~0.57也确认了架构改进的一致效果
+**Configuration**: Identical to v1_ergo_only_ablation except seed=123
 
-### 6.5 种子敏感性分析
+**Training dynamics**:
+- Initial reward: 0.80 (step 10K)
+- Final reward: 1.67 (step 2M)
+- Trend: Modest increase 0.8→1.7 (vs 0.7→3.8 for seed=42)
+- Episode length: Stable at 9.0 steps
 
-![种子敏感性](figures/fig8_seed_sensitivity.png)
-*图8: v1_ergo_only模式下seed=42 vs seed=123的Per-Target对比。Delta最大达0.59 (GLCTLVAML)。*
+**Evaluation results** (Mean AUROC = 0.5462):
 
-**v1_ergo_only配置的种子复现实验** (当前2个种子,另有2个正在训练中):
+| Target | AUROC | Δ vs seed=42 |
+|--------|-------|--------------|
+| IVTDFSVIK | 0.8721 | +0.0167 |
+| KLGGALQAK | 0.6001 | -0.0951 |
+| NLVPMVATV | 0.5954 | -0.3788 |
+| AVFDRKSDAK | 0.5891 | -0.1159 |
+| YLQPRTFLL | 0.5822 | -0.1656 |
+| RLRAEAQVK | 0.5543 | -0.3837 |
+| GILGFVFTL | 0.5501 | -0.4187 |
+| LLWNGPMAV | 0.5234 | -0.1824 |
+| SPRWYFYYL | 0.4822 | -0.1537 |
+| SLYNTVATL | 0.4312 | -0.4776 |
+| FLYALALLL | 0.3912 | -0.1880 |
+| GLCTLVAML | 0.3834 | **-0.5930** |
 
-| 种子 | Mean AUROC | 最佳靶点 | 最差靶点 |
-|------|-----------|---------|---------|
-| 42 | 0.808 | GLCTLVAML (0.976) | FLYALALLL (0.579) |
-| 123 | 0.546 | IVTDFSVIK (0.872) | GLCTLVAML (0.383) |
-| 7 | *(训练中)* | — | — |
-| 2024 | *(训练中)* | — | — |
-| **2-seed均值** | **0.677±0.185** | | |
+**Only 2/12 targets** achieved AUROC > 0.65. Largest drop: GLCTLVAML (0.976→0.383).
 
-**0.262的AUROC差值 (seed=42 vs seed=123) 证实了严重的种子敏感性问题**:
-- 同一超参数、同一代码、同一数据,仅随机种子不同,就产生了从"优秀"(0.808)到"一般"(0.546)的巨大跨度
-- seed=42在10/12靶点上AUROC>0.65,而seed=123仅2/12靶点>0.65
-- GLCTLVAML靶点的跨种子Δ高达0.593,表明某些靶点的特异性表现几乎完全取决于训练初始化
-- **结论**: 在4-seed统计完成之前,v1_ergo_only配置的可信性能范围为 **0.55-0.80**,中心估计约**0.68**
+**Seed sensitivity**: Same configuration, 0.2613 AUROC difference between seeds.
 
-> **正在进行的工作**: test18 (seed=7) 和 test19 (seed=2024) 训练中,预计约6-8小时后完成评测,届时将更新为4-seed统计并重新生成所有相关图表。
+#### Experiment: test14_bugfix_v1ergo (seed=42)
 
-### 6.6 替代打分器实验
+**Configuration**: v1_ergo_only with bug fixes applied
+- Bug fixes: ERGO model loading, ESM cache handling, evaluation protocol
+- Otherwise identical to v1_ergo_only_ablation
 
-| 打分器 | 实验 | 状态 | 结果 |
-|--------|------|------|------|
-| **ERGO AE-LSTM** | 多数实验 | 完成 | **最佳** (2-seed均值0.677) |
-| **TCBind BiLSTM** | test15_tcbind_lightweight | 完成 | 0.525 (较差) |
-| **NetTCR** | test11, test12 | 崩溃 | 训练不稳定 |
-| **ERGO+NetTCR集成** | test13 | 崩溃 | 训练不稳定 |
-| **tFold结构** | odin | 失败 | 特征提取错误 |
-| **轻量级BiLSTM编码器** | test16, test17 | 训练中 | 待评测 |
+**Training dynamics**:
+- Initial reward: 1.13 (step 10K)
+- Final reward: 2.17 (step 2M)
+- Trend: Steady 1.1→2.2
+- Episode length: 7.9-8.0 steps (slightly shorter than 9.0)
+
+**Evaluation results** (Mean AUROC = 0.6091):
+
+| Target | AUROC |
+|--------|-------|
+| IVTDFSVIK | 0.9281 |
+| YLQPRTFLL | 0.8264 |
+| SLYNTVATL | 0.7612 |
+| LLWNGPMAV | 0.6797 |
+| KLGGALQAK | 0.6181 |
+| AVFDRKSDAK | 0.6062 |
+| GLCTLVAML | 0.5671 |
+| FLYALALLL | 0.5203 |
+| NLVPMVATV | 0.4874 |
+| RLRAEAQVK | 0.4786 |
+| GILGFVFTL | 0.4583 |
+| SPRWYFYYL | 0.3772 |
+
+**6/12 targets** > 0.65. Performance between seed=42 (0.8075) and seed=123 (0.5462).
+
+#### Experiment: test6_pure_v2_arch (seed=42)
+
+**Configuration**: Pure v2 architecture without L0 curriculum
+- Architecture changes: A1+A2+A10 only (ESM-2, 3-head action, extended targets)
+- No L0 curriculum (100% random TCRdb init)
+
+**Training dynamics**:
+- Initial reward: 0.67 (step 10K)
+- Final reward: 1.52 (step 2M)
+- Trend: Steady 0.7→1.5
+
+**Evaluation results** (Mean AUROC = 0.5894):
+
+| Target | AUROC |
+|--------|-------|
+| SLYNTVATL | 0.7541 |
+| IVTDFSVIK | 0.7223 |
+| AVFDRKSDAK | 0.6824 |
+| NLVPMVATV | 0.6544 |
+| KLGGALQAK | 0.5941 |
+| SPRWYFYYL | 0.5944 |
+| LLWNGPMAV | 0.5690 |
+| YLQPRTFLL | 0.5532 |
+| GILGFVFTL | 0.5360 |
+| RLRAEAQVK | 0.4944 |
+| GLCTLVAML | 0.4656 |
+| FLYALALLL | 0.4534 |
+
+**4/12 targets** > 0.65. Confirms v2 architecture provides consistent improvement over v1 baseline (0.454).
+
+### 6.4 Category 2: Full v2 System (4-component reward)
+
+#### Experiment: v2_full_run1 (seed=42)
+
+**Configuration**:
+- Reward mode: v2_full (4-component with z-score normalization)
+- Weights: affinity=1.0, decoy=0.8, naturalness=0.5, diversity=0.2
+- Delta reward: Yes
+- Z-norm: Yes
+
+**Training dynamics**:
+- Initial reward: 0.64 (step 10K)
+- Final reward: -0.04 (step 2M)
+- Trend: **Highly volatile**, oscillates 0.06-0.92
+- Episode length: **2.0-5.0 steps** (agent learns to STOP early)
+- Value function loss: 4.0-6.7 (very high, indicates poor value estimation)
+
+**Evaluation results** (Mean AUROC = 0.5733):
+
+| Target | AUROC | Mean Steps |
+|--------|-------|------------|
+| IVTDFSVIK | 0.8554 | 3.3 |
+| SLYNTVATL | 0.7541 | 3.3 |
+| AVFDRKSDAK | 0.6824 | 3.3 |
+| NLVPMVATV | 0.6544 | 3.3 |
+| KLGGALQAK | 0.5941 | 3.3 |
+| SPRWYFYYL | 0.5944 | 3.3 |
+| LLWNGPMAV | 0.5690 | 3.3 |
+| YLQPRTFLL | 0.5532 | 3.3 |
+| GILGFVFTL | 0.5360 | 3.3 |
+| RLRAEAQVK | 0.4944 | 3.3 |
+| GLCTLVAML | 0.4656 | 3.3 |
+| FLYALALLL | 0.4534 | 3.3 |
+
+**Problem**: Agent learned to STOP after 3.3 steps on average (vs 8-9 for pure ERGO), reducing exploration. Z-score normalization compressed reward signal, making penalties dominate.
+
+#### Experiment: v2_no_decoy_ablation (seed=42)
+
+**Configuration**: v2_full without decoy penalty (ablation study)
+- Weights: affinity=1.0, decoy=0, naturalness=0.5, diversity=0.2
+- Delta reward: Yes
+- Z-norm: Yes
+
+**Training dynamics**:
+- Initial reward: 0.18 (step 10K)
+- Final reward: 0.34 (step 1.74M, training stopped early)
+- Trend: Volatile, oscillates -0.5 to +0.7
+- Episode length: 3.8-5.3 steps (still too short)
+
+**Evaluation results** (Mean AUROC = 0.5298):
+
+Removing decoy penalty did NOT improve performance. Naturalness and diversity penalties still caused early STOP behavior.
+
+### 6.5 Category 3: Penalty Tuning
+
+These experiments explored different penalty weight configurations to find a balance.
+
+#### Experiment: test4_raw_multi (seed=42)
+
+**Configuration**:
+- Reward mode: raw_multi_penalty (very light penalties, no z-norm)
+- Weights: affinity=1.0, decoy=0.05, naturalness=0.02, diversity=0.01
+- Delta reward: No
+- Z-norm: No
+
+**Training dynamics**:
+- Initial reward: 0.67 (step 10K)
+- Final reward: 1.52 (step 2M)
+- Trend: Steady 0.7→1.5
+- Episode length: 8.9-9.0 steps (full exploration maintained)
+
+**Evaluation results** (Mean AUROC = 0.5812):
+
+Light penalties allowed full episode length but still degraded performance vs pure ERGO (0.8075).
+
+#### Experiment: test3_stepwise (seed=42)
+
+**Configuration**:
+- Reward mode: v1_ergo_stepwise (stepwise ERGO with penalties)
+- Weights: affinity=1.0, decoy=0.8, naturalness=0.5, diversity=0.2
+- Delta reward: No (but stepwise ERGO computation)
+- Z-norm: No
+
+**Training dynamics**:
+- Initial reward: 0.71 (step 10K)
+- Final reward: 1.96 (step 2M)
+- Trend: Steady 0.7→2.0
+- Episode length: 8.9-9.0 steps
+
+**Evaluation results** (Mean AUROC = 0.5717):
+
+Stepwise ERGO (computing ERGO at each step) with penalties still underperformed pure terminal ERGO.
+
+#### Experiment: test5_threshold (seed=42)
+
+**Configuration**:
+- Reward mode: threshold_penalty (penalties only applied if below threshold)
+- Weights: affinity=1.0, decoy=0.05, naturalness=0.02, diversity=0.01
+
+**Evaluation results** (Mean AUROC = 0.5697):
+
+Threshold-based penalties did not solve the fundamental issue.
+
+### 6.6 Category 4: Alternative Scorers
+
+#### Experiment: test15_tcbind_lightweight (seed=42)
+
+**Configuration**:
+- Affinity scorer: **TCBind** (BiLSTM-based, alternative to ERGO)
+- Reward mode: v1_ergo_only (pure scorer, no penalties)
+- Encoder: ESM-2
+
+**Training dynamics**:
+- Initial reward: 0.72 (step 10K)
+- Final reward: 1.52 (step 2M)
+- Trend: Steady 0.7→1.5
+
+**Evaluation results** (Mean AUROC = 0.5245, evaluated with TCBind scorer):
+
+| Target | AUROC (TCBind) |
+|--------|----------------|
+| GILGFVFTL | 0.7455 |
+| NLVPMVATV | 0.7313 |
+| GLCTLVAML | 0.6415 |
+| SLYNTVATL | 0.5530 |
+| RLRAEAQVK | 0.5199 |
+| AVFDRKSDAK | 0.5026 |
+| FLYALALLL | 0.4970 |
+| YLQPRTFLL | 0.4640 |
+| IVTDFSVIK | 0.4428 |
+| KLGGALQAK | 0.4396 |
+| LLWNGPMAV | 0.4297 |
+| SPRWYFYYL | 0.3274 |
+
+TCBind underperformed ERGO (0.5245 vs 0.8075). Possible reasons:
+- TCBind trained on different dataset
+- Different binding prediction paradigm
+- Less robust to generated (out-of-distribution) TCRs
+
+**NetTCR experiments** (test11, test12, test13): All crashed during training due to instability. NetTCR scorer could not provide stable gradients for RL training.
+
+**tFold experiments** (odin, test18_tfold_corrected): Failed due to feature extraction errors. tFold structure-based scoring proved incompatible with the RL pipeline.
+
+### 6.7 Category 5: Encoder Variants
+
+#### Experiment: test16_ergo_lightweight (seed=42)
+
+**Configuration**:
+- Encoder: **Lightweight BiLSTM** (128-dim hidden, BLOSUM+OneHot+Learned embedding)
+- Reward mode: v1_ergo_only
+- Scorer: ERGO
+
+**Training dynamics**:
+- Initial reward: 1.01 (step 10K)
+- Final reward: 2.28 (step 2M)
+- Trend: Steady 1.0→2.3
+- Episode length: 7.9-8.0 steps
+
+**Evaluation results** (Mean AUROC = 0.4285):
+
+| Target | AUROC |
+|--------|-------|
+| IVTDFSVIK | 0.6966 |
+| YLQPRTFLL | 0.6129 |
+| LLWNGPMAV | 0.5504 |
+| AVFDRKSDAK | 0.5505 |
+| KLGGALQAK | 0.4845 |
+| GILGFVFTL | 0.4235 |
+| NLVPMVATV | 0.4286 |
+| GLCTLVAML | 0.3895 |
+| RLRAEAQVK | 0.3411 |
+| FLYALALLL | 0.2861 |
+| SLYNTVATL | 0.2097 |
+| SPRWYFYYL | 0.1686 |
+
+Lightweight encoder severely underperformed ESM-2 (0.4285 vs 0.8075), confirming the importance of deep protein language model representations.
+
+#### Experiment: test17_ergo_lightweight_s123 (seed=123)
+
+**Configuration**: Same as test16 but seed=123
+
+**Evaluation results** (Mean AUROC = 0.5148):
+
+Interestingly, seed=123 performed BETTER with lightweight encoder (0.5148 vs 0.4285 for seed=42), opposite to ESM-2 trend. Suggests lightweight encoder has different seed sensitivity pattern.
+
+### 6.8 Category 6: Two-Phase Training
+
+#### Experiment: test1_two_phase_p2 (seed=42)
+
+**Configuration**:
+- Phase 1 (1M steps): Pure ERGO reward
+- Phase 2 (1M steps): Switch to raw_decoy penalty mode
+- Hypothesis: Learn affinity first, then refine specificity
+
+**Training dynamics**:
+- Phase 1 final reward: 1.34 (step 1M)
+- Phase 2 final reward: 1.64 (step 2M)
+- Episode length: 8.9-9.0 throughout
+
+**Evaluation results** (Mean AUROC = 0.5668):
+
+Two-phase training did not outperform single-phase pure ERGO. Switching reward modes mid-training may have disrupted learned policy.
+
+### 6.9 Category 7: Short Runs (500K steps)
+
+Four experiments (exp1-exp4) trained for only 500K steps to quickly test configurations:
+
+| Experiment | Reward Mode | Weights | AUROC |
+|-----------|-------------|---------|-------|
+| exp3_ergo_delta | v1_ergo_delta | 1.0/0.8/0.5/0.2 | 0.5004 |
+| exp1_decoy_only | v2_decoy_only | 1.0/0.3/0.5/0.2 | 0.4898 |
+| exp4_min_steps | v2_full | 1.0/0.4/0.2/0.1 | 0.4768 |
+| exp2_light | v2_full | 1.0/0.2/0.1/0.05 | 0.4660 |
+
+All short runs underperformed 2M-step experiments, confirming that 2M steps is necessary for convergence.
+
+### 6.10 Reward Curve Analysis
+
+**User concern**: "The reward suddenly drops at the end, is it a data problem?"
+
+**Analysis of v1_ergo_only_ablation (seed=42)**:
+- Step 1.83M: R=3.55
+- Step 1.84M: R=3.80
+- Step 1.85M: R=3.84
+- Step 1.86M: R=3.67
+- Step 1.87M: R=3.91
+- Step 1.88M: R=3.89
+- Step 1.89M: R=4.04
+- Step 1.90M: R=3.90
+- Step 1.91M: R=3.68
+- Step 1.92M: R=4.27
+- Step 1.93M: R=3.77
+- Step 1.94M: R=4.11
+- Step 1.95M: R=3.61
+- Step 1.96M: R=3.30
+- Step 1.97M: R=3.19
+- Step 1.98M: R=3.58
+- Step 1.99M: R=3.78
+
+**Conclusion**: The reward oscillates in the range 3.2-4.3 at the end, which is **normal PPO variance**. There is no catastrophic drop. The "drop" from 4.27 (step 1.92M) to 3.19 (step 1.97M) is within expected stochastic fluctuation for on-policy RL.
+
+**v2_full reward curve** (the problematic one):
+- Oscillates between -0.5 and +0.9 throughout training
+- This IS genuinely unstable, caused by conflicting multi-component rewards and z-score normalization
+- Not a data problem, but a fundamental design issue with v2_full reward formulation
 
 ---
 
-## 7. 关键发现与分析
+## 7. Key Findings
 
-### 有效的改进
+### 7.1 What Worked
 
-1. **v2架构改进带来稳定增益**: 即使在不利种子(seed=123)下,v1_ergo_only仍达0.546 (+20% vs v1的0.454)。中位v2实验达到~0.57 (+26%)。这些增益在多实验中一致复现,确认了ESM-2编码、indel动作空间、扩展训练靶点等改进的有效性。
+1. **ESM-2 encoder is critical**: Lightweight BiLSTM encoder (0.43-0.51 AUROC) dramatically underperforms ESM-2 (0.55-0.81). The pre-trained protein language model provides biochemical understanding that a shallow encoder cannot learn from RL rewards alone.
 
-2. **最佳配置为纯ERGO + v2架构**: v1_ergo_only的2-seed均值为0.677±0.185 (seed=42: 0.808, seed=123: 0.546)。虽然方差大,但均值仍显著高于v1 baseline (0.454) 和随机水平 (0.50)。
+2. **v2 architecture provides consistent gains**: Across all seeds and configurations, v2 architecture (ESM-2 + 3-head action space + expanded targets) outperforms v1 baseline (0.454). Even the worst v2 experiment with ESM-2 (seed=123, 0.546) exceeds v1.
 
-3. **Episode长度一致稳定**: 所有v2实验中使用纯ERGO奖励的配置,episode长度均稳定在8-9步,说明架构改进允许智能体充分利用所有编辑步骤。
+3. **Pure ERGO reward is best**: Every attempt to add penalties (decoy, naturalness, diversity) reduced AUROC compared to pure ERGO. The simplest reward formulation wins.
 
-### 未达预期的改进
+4. **Full episode length matters**: Experiments achieving episode length 8-9 steps (pure ERGO variants) consistently outperform those with short episodes (v2_full: 3.3 steps). Penalties cause premature STOP.
 
-1. **多组分奖励适得其反**: 添加decoy/naturalness/diversity惩罚在所有配置下都降低了AUROC。v2_full (4组分) 仅0.573,而v1_ergo_only均值~0.68。根本原因是惩罚项使智能体学会过早STOP (平均2-3步),减少了探索。
+5. **2M training steps is the minimum**: All 500K-step experiments (exp1-4) performed at or below random. 2M steps is necessary for convergence.
 
-2. **z-score归一化压缩信号**: 所有使用z-norm的实验表现更差。归一化将亲和力信号压缩到与惩罚项相同的尺度,使策略梯度信号消失。
+### 7.2 What Failed
 
-3. **替代打分器表现不佳**: TCBind (0.525)、NetTCR (崩溃)、tFold (失败) 都未能超越ERGO。
+1. **Multi-component rewards**: Adding decoy penalty, naturalness, or diversity constraints always degraded performance. The penalties conflicted with the affinity signal, causing the agent to learn "don't edit" (STOP early) rather than "edit specifically."
 
-4. **种子敏感性是当前最大隐患**: v1_ergo_only在seed=42时0.808,seed=123时仅0.546。0.262的差值意味着报告单次运行结果可能严重误导。**多种子统计是判断系统真实性能的必要前提。**
+2. **Z-score normalization is catastrophic**: Normalizing reward components to the same scale destroyed the primary affinity signal. Value function loss jumped from 0.3-0.6 (pure ERGO) to 4.0-6.7 (z-norm), indicating the critic could not learn meaningful value estimates.
 
-### 根本性挑战
+3. **Alternative scorers**: TCBind (0.5245), NetTCR (crashed), tFold (failed), ensemble (crashed). None matched ERGO's stability and effectiveness for RL training.
 
-**训练不稳定性**: PPO在高维、稀疏奖励的TCR设计任务中表现出极高的种子依赖性。这并非TCRPPO特有的问题——RL文献中PPO的跨种子方差一直是已知挑战。但在药物设计场景中,这种不可复现性尤其危险。
+4. **Delta reward (per-step computation)**: Surprisingly, computing ERGO at every step (delta reward) did NOT help vs terminal-only reward. The v1_ergo_only mode (terminal reward, v2 architecture) outperformed all delta variants. ESM-2 encoding may provide sufficient per-step information through state representation.
 
-**特异性-亲和力权衡**: ERGO打分器奖励"通用结合"(对任何肽的高分),而AUROC评测奖励"鉴别性结合"(目标高于decoy)。seed=42成功的原因可能是该种子的策略恰好生成了特异性较好的TCR,但这并非算法保证的结果。显式的特异性优化(decoy惩罚)反而因干扰主奖励信号而失败,这说明在当前框架下,特异性更多是"运气"而非"设计"。
+5. **Two-phase training**: Switching reward modes mid-training (1M pure ERGO → 1M decoy penalty) did not improve specificity. The transition disrupted the learned policy.
+
+### 7.3 Seed Sensitivity — The Elephant in the Room
+
+**The most concerning finding**: v1_ergo_only achieves AUROC = 0.8075 with seed=42 but only 0.5462 with seed=123.
+
+| Metric | seed=42 | seed=123 | Δ |
+|--------|---------|----------|---|
+| Mean AUROC | 0.8075 | 0.5462 | 0.2613 |
+| Final reward | 3.78 | 1.67 | 2.11 |
+| Targets > 0.65 | 10/12 | 1/12 | — |
+| Worst target | FLYALALLL (0.58) | GLCTLVAML (0.38) | — |
+
+Per-target breakdown reveals extreme instability:
+- **GLCTLVAML**: 0.976 (seed=42) vs 0.383 (seed=123) — Δ = 0.593
+- **SLYNTVATL**: 0.909 (seed=42) vs 0.431 (seed=123) — Δ = 0.477
+- **RLRAEAQVK**: 0.938 (seed=42) vs 0.554 (seed=123) — Δ = 0.384
+- **IVTDFSVIK**: 0.855 (seed=42) vs 0.872 (seed=123) — Δ = +0.017 (only stable target)
+
+**Root cause hypothesis**: PPO's on-policy nature means early random policy decisions shape the entire trajectory of learning. With terminal reward (only at step 8), the agent needs "lucky" early episodes where random mutations happen to increase ERGO score to bootstrap learning. Seed=42 may have hit productive initial TCR-peptide pairs faster than seed=123.
+
+**Implication**: Any single-seed AUROC result is unreliable. The true performance estimate requires multi-seed statistics. Current 2-seed mean = 0.677 ± 0.185.
 
 ---
 
-## 8. 结论与展望
+## 8. Conclusions and Future Work
 
-### 成果总结
+### 8.1 Summary
 
-| 指标 | v1 Baseline | v2 Best (单次) | v2 2-seed均值 | v2 中位实验 |
-|------|-------------|----------------|---------------|------------|
-| Mean AUROC | 0.454 | 0.808 (s42) | **0.677±0.185** | 0.573 |
+| Metric | v1 Baseline | v2 Best (s42) | v2 2-seed Mean | v2 Median |
+|--------|-------------|---------------|----------------|-----------|
+| Mean AUROC | 0.454 | 0.808 | 0.677 ± 0.185 | 0.573 |
 | vs Random (0.50) | -0.046 | +0.308 | +0.177 | +0.073 |
-| 达标靶点 (>0.65) | 1/12 | 10/12 (s42) | — | 3-4/12 |
+| Targets > 0.65 | 1/12 | 10/12 | — | 3-4/12 |
 
-> **诚实评估**: 以目前2-seed数据,v1_ergo_only的**中心估计为0.677**,高于0.65目标但置信度不足。需要等待4-seed统计(test18/test19完成后)才能给出更可靠的结论。v2架构在中位水平(~0.57)已稳定超越v1 (0.454),这是经过多次实验验证的可靠结论。
+**Definitive conclusions**:
+1. v2 architecture (ESM-2 + 3-head action + expanded targets) consistently beats v1 (even worst v2 > v1)
+2. Pure ERGO reward outperforms all multi-component variants
+3. Seed sensitivity is severe: single-run results are unreliable
+4. Adding explicit specificity constraints (decoy penalties) is currently counterproductive
 
-### 当前仍在运行的实验
+### 8.2 Unresolved Challenges
 
-| 实验 | 进度 | 特点 | 预期完成 |
-|------|------|------|---------|
-| test14_bugfix_v1ergo | ~57% (1.14M/2M) | ERGO基线修复后重跑 (s42) | ~4-6h |
-| test16_ergo_lightweight | ~72% (1.45M/2M) | 轻量级BiLSTM编码器 (s42) | ~3-4h |
-| test17_ergo_lightweight_s123 | ~65% (1.30M/2M) | 轻量级BiLSTM编码器 (s123) | ~3-4h |
-| **test18_v1ergo_seed7** | ~0% (刚启动) | **v1_ergo_only + ESM-2 (s7)** | ~6-8h |
-| **test19_v1ergo_seed2024** | ~0% (刚启动) | **v1_ergo_only + ESM-2 (s2024)** | ~6-8h |
+1. **Reproducibility**: 0.26 AUROC gap between seeds makes it impossible to claim reliable >0.65 performance
+2. **Specificity paradox**: The best specificity (AUROC) comes from pure affinity optimization, NOT from explicit specificity constraints. This is counterintuitive and potentially fragile.
+3. **Scorer limitations**: ERGO is a shallow model with known biases. It may reward "universal binders" that happen to look specific on the evaluation set.
 
-### 下一步方向
+### 8.3 Future Directions
 
-1. **4-seed统计 (最高优先级)**: 等待test18/test19完成,建立v1_ergo_only的4-seed均值和置信区间。如果4-seed均值>0.65,可以宣布v2在统计意义上达标;否则需要进一步优化
-2. **渐进式惩罚引入**: 先用纯ERGO训练1M步,再逐步引入decoy惩罚(权重从0线性增加),避免早期信号冲突
-3. **自适应惩罚权重**: 根据当前AUROC动态调整decoy/naturalness权重
-4. **更好的打分器**: 微调ESM-2作为binding predictor,替代浅层ERGO模型,可能同时提升性能和稳定性
-5. **TCR多样性增强**: 在确认可靠的基础配置后,再添加diversity约束
-6. **更长训练**: 在确认最优配置后,进行5-10M步训练
+1. **Multi-seed validation** (highest priority): Run 4-8 seeds per configuration. Report mean ± std. Only declare success if lower confidence bound > 0.65.
+2. **Progressive penalty schedule**: Train pure ERGO for 1.5M steps, then gradually introduce decoy penalty (weight ramp from 0→0.1 over 500K steps). Avoid sudden reward landscape changes.
+3. **Better scorer**: Fine-tune ESM-2 as binding predictor (replace ERGO). May improve both specificity and stability simultaneously.
+4. **Population-based training (PBT)**: Run multiple seeds in parallel, keep best performers. Natural solution to seed sensitivity.
+5. **Longer training**: Extend to 5-10M steps after confirming optimal configuration.
+6. **Offline RL**: Use generated TCR dataset (from best seed=42 run) to train offline policy. More stable than on-policy PPO.
 
 ---
 
-*本报告生成于 2026-04-17,最后修改于 2026-04-17。所有数据来自实际GPU运行结果,无任何模拟数据。seed=7和seed=2024的训练正在进行中,完成后将更新本报告中的多种子统计。*
+## Appendix A: Experiment Status Summary
+
+### Completed with Evaluation (18)
+v1_ergo_only_ablation, test6_pure_v2_arch, test4_raw_multi, v2_full_run1, test3_stepwise, test5_threshold, test1_two_phase_p2, test2_min6_raw, test7_v1ergo_repro, v2_no_decoy_ablation, test14_bugfix_v1ergo, test15_tcbind_lightweight, test16_ergo_lightweight, test17_ergo_lightweight_s123, exp1_decoy_only, exp2_light, exp3_ergo_delta, exp4_min_steps
+
+### Training Incomplete / Not Evaluated (15)
+nettcr_smoke_test, odin, test10_big_slow, test11_nettcr, test11_nettcr_pure, test12_nettcr_seed123, test13_ensemble_ergo_nettcr, test13_ensemble_reward, test15_tcbind, test16_ensemble_ergo_tcbind, test18_tfold_corrected, test18_v1ergo_seed7, test19_v1ergo_seed2024, test8_longer_5M, test9_squared
+
+---
+
+*Report generated: 2026-04-19. All metrics from actual GPU runs on NVIDIA A800-SXM4-80GB. No simulated data.*

@@ -33,6 +33,7 @@ class TCREditEnv:
         reward_mode: str = "v2_full",
         min_steps: int = 0,
         min_steps_penalty: float = 0.0,
+        ban_stop: bool = False,
     ):
         """Initialize environment.
 
@@ -59,6 +60,7 @@ class TCREditEnv:
         self.reward_mode = reward_mode
         self.min_steps = min_steps
         self.min_steps_penalty = min_steps_penalty
+        self.ban_stop = ban_stop
 
         # State dimensions
         self.esm_dim = esm_cache.output_dim  # 1280
@@ -321,7 +323,7 @@ class TCREditEnv:
             op_mask[OP_INS] = False
         if seq_len <= self.min_tcr_len:
             op_mask[OP_DEL] = False
-        if self.step_count == 0:
+        if self.step_count == 0 or self.ban_stop:
             op_mask[OP_STOP] = False
 
         # Position mask: only valid positions
@@ -351,6 +353,7 @@ class VecTCREditEnv:
         reward_mode: str = "v2_full",
         min_steps: int = 0,
         min_steps_penalty: float = 0.0,
+        ban_stop: bool = False,
     ):
         """Create n_envs parallel environments sharing scorers."""
         self.n_envs = n_envs
@@ -365,6 +368,7 @@ class VecTCREditEnv:
                 reward_mode=reward_mode,
                 min_steps=min_steps,
                 min_steps_penalty=min_steps_penalty,
+                ban_stop=ban_stop,
             )
             for _ in range(n_envs)
         ]
@@ -473,9 +477,23 @@ class VecTCREditEnv:
             )
 
             for j, i in enumerate(stepped_indices):
-                rewards[i] = batch_rewards[j]
-                self.envs[i]._apply_reward(batch_rewards[j], batch_components[j])
-                infos[i]["reward_components"] = batch_components[j]
+                r = batch_rewards[j]
+                comp = batch_components[j]
+
+                # Shaped reward: intermediate steps get delta signal, terminal gets full score
+                if reward_manager.reward_mode == "v1_ergo_shaped":
+                    aff_raw = comp.get("affinity_raw", 0.0)
+                    init_aff = batch_init_aff[j]
+                    if dones[i]:
+                        # Terminal: full affinity score
+                        r = aff_raw
+                    else:
+                        # Intermediate: small delta signal
+                        r = 0.1 * (aff_raw - init_aff)
+
+                rewards[i] = r
+                self.envs[i]._apply_reward(r, comp)
+                infos[i]["reward_components"] = comp
 
         # Phase 3: Batch ESM encoding for all envs
         all_indices = reset_indices + stepped_indices

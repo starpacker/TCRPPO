@@ -15,6 +15,8 @@ CUDA_VISIBLE_DEVICES=0 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --n_contrast_decoys 4 \
     --affinity_scorer ergo \
     --encoder esm2 \
+    --esm_cache_path /tmp/esm_cache_test23.db \
+    --decoy_library_path /tmp/pMHC_decoy_library \
     --ban_stop \
     --total_timesteps 2000000 \
     --n_envs 8 \

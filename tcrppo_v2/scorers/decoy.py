@@ -144,6 +144,23 @@ class DecoyScorer(BaseScorer):
         indices = self.rng.choice(len(pool), size=k, replace=False, p=weights)
         return [pool[i] for i in indices]
 
+    def sample_decoys_by_tier(self, target: str, k_per_tier: int = 20) -> Dict[str, List[str]]:
+        """Sample decoys grouped by tier for per-tier AUROC evaluation.
+
+        Returns:
+            Dict mapping tier name -> list of decoy peptide sequences.
+        """
+        target_decoys = self.decoys.get(target, {})
+        result: Dict[str, List[str]] = {}
+        for tier in self.unlocked_tiers:
+            tier_peps = target_decoys.get(tier, [])
+            if not tier_peps:
+                continue
+            k = min(k_per_tier, len(tier_peps))
+            indices = self.rng.choice(len(tier_peps), size=k, replace=False)
+            result[tier] = [tier_peps[i] for i in indices]
+        return result
+
     def compute_logsumexp_penalty(
         self, tcr: str, decoy_peps: List[str]
     ) -> Tuple[float, float]:

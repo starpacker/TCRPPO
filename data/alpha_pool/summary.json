@@ -1,0 +1,74 @@
+{
+  "GILGFVFTL": {
+    "n_pairs": 50,
+    "n_raw_positive": 1849,
+    "n_alpha_fail": 8,
+    "n_beta_fail": 0
+  },
+  "NLVPMVATV": {
+    "n_pairs": 50,
+    "n_raw_positive": 264,
+    "n_alpha_fail": 1,
+    "n_beta_fail": 0
+  },
+  "GLCTLVAML": {
+    "n_pairs": 50,
+    "n_raw_positive": 303,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "LLWNGPMAV": {
+    "n_pairs": 50,
+    "n_raw_positive": 420,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "YLQPRTFLL": {
+    "n_pairs": 50,
+    "n_raw_positive": 261,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "FLYALALLL": {
+    "n_pairs": 38,
+    "n_raw_positive": 38,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "SLYNTVATL": {
+    "n_pairs": 3,
+    "n_raw_positive": 3,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "KLGGALQAK": {
+    "n_pairs": 50,
+    "n_raw_positive": 13637,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "AVFDRKSDAK": {
+    "n_pairs": 50,
+    "n_raw_positive": 1724,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "IVTDFSVIK": {
+    "n_pairs": 50,
+    "n_raw_positive": 728,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "SPRWYFYYL": {
+    "n_pairs": 50,
+    "n_raw_positive": 74,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  },
+  "RLRAEAQVK": {
+    "n_pairs": 50,
+    "n_raw_positive": 421,
+    "n_alpha_fail": 0,
+    "n_beta_fail": 0
+  }
+}

@@ -102,6 +102,16 @@
 
 **Key Insight:** ESM-2 (0.49-0.61) dramatically outperforms lightweight encoder (0.43-0.51). Pre-trained protein LM is critical.
 
+### Category 8: Curriculum Reward Scheduling + Peptide Filtering
+
+| # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
+|---|----------------|--------|-------|-----------|--------|-------|
+| 43a | test43a_curriculum_cold | 🔄 PLANNED | 0/3M | TBD | Cold-start, 3-phase schedule (ergo→multi→contrastive), 45 peptides | Tests curriculum from scratch |
+| 43b | test43b_curriculum_warm | 🔄 PLANNED | 0/2M | TBD | Warm-start (test41), 2-phase (multi→contrastive), 45 peptides | Tests naturalness after warm-start |
+| 43c | test43c_32decoys_filtered | 🔄 PLANNED | 0/2M | TBD | Warm-start (test41), 32 decoys, no naturalness, 45 peptides | Control: filtering + more decoys only |
+
+**Key Question:** Does improvement come from curriculum/naturalness (test43a/b) or just peptide filtering + more decoys (test43c)?
+
 ### Category 6: Alternative Scorers
 
 | # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |

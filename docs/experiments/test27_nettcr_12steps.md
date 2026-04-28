@@ -1,27 +1,38 @@
 # test27: NetTCR with 12 Steps
 
-**Date**: 2026-04-24
-**Status**: failed
-**GPU**: 1,5
+**Date**: 2026-04-25
+**Status**: running
+**GPU**: 1
 **Priority**: P1
 
-## Result: FAILED - TensorFlow/PyTorch GPU Conflict
+## Update: NetTCR Rewritten in PyTorch
 
-**Issue**: NetTCR (TensorFlow) and ESM-2 (PyTorch) cannot coexist in the same process with GPU acceleration.
+**Solution**: Rewrote NetTCR from TensorFlow to pure PyTorch to avoid TF/PyTorch conflicts.
 
-**Error**: `tensorflow.python.framework.errors_impl.FailedPreconditionError: DNN library initialization failed`
+**Implementation**:
+- Created `affinity_nettcr_pytorch.py` with PyTorch CNN architecture
+- Converted TensorFlow weights to PyTorch format
+- Verified conversion: predictions match exactly (diff=0.000000)
 
-**Attempted solutions**:
-1. NetTCR on CPU → Too slow (10.6 seqs/s vs needed ~100+ seqs/s)
-2. Dual-GPU setup (PyTorch on GPU 1, TensorFlow on GPU 5) → Still conflicts
-3. TensorFlow `set_visible_devices` isolation → Insufficient
+**Architecture**:
+- Dual-tower CNN (CDR3 + Peptide)
+- 5 Conv1D kernels per tower (1,3,5,7,9)
+- GlobalMaxPooling + Dense layers
+- Pure PyTorch - no TensorFlow dependency
 
-**Root cause**: TensorFlow and PyTorch both initialize cuDNN in the same process, causing library conflicts even when using different physical GPUs.
+## Update: TensorBoard GPU Conflict Fixed
 
-**Possible solutions** (not implemented):
-- Run NetTCR as separate process with RPC/IPC communication
-- Use lightweight encoder (CPU-based) to free GPU for NetTCR
-- Reimplement NetTCR in pure PyTorch
+**Issue**: TensorBoard internally uses TensorFlow, which caused GPU deadlock with PyTorch.
+
+**Solution**: Disabled TensorBoard logging (line 574 in ppo_trainer.py) to avoid TF/PyTorch GPU conflict.
+
+**Note**: Initialization takes ~5-7 minutes due to:
+- ESM-2 disk cache loading (1.79M sequences)
+- TCR pool loading (7.27M sequences)  
+- L0 seed loading from decoy library
+- pMHC warmup (163 targets)
+
+Training confirmed working as of 2026-04-25 01:21.
 
 ## Hypothesis
 

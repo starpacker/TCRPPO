@@ -266,19 +266,26 @@ class PPOTrainer:
         from tcrppo_v2.reward_manager import RewardManager
         from tcrppo_v2.env import VecTCREditEnv
 
-        # pMHC loader — train mode loads all tc-hard targets (~163)
-        pmhc_loader = PMHCLoader(mode="train")
+        # pMHC loader — optionally filter to specific targets
+        train_targets_cfg = self.config.get("train_targets", None)
+        if train_targets_cfg:
+            if os.path.isfile(train_targets_cfg):
+                with open(train_targets_cfg) as f:
+                    target_list = [line.strip() for line in f if line.strip()]
+            else:
+                target_list = [t.strip() for t in train_targets_cfg.split(",")]
+            pmhc_loader = PMHCLoader(targets=target_list)
+            print(f"  Filtered targets: {len(target_list)} peptides from {train_targets_cfg}")
+        else:
+            pmhc_loader = PMHCLoader(mode="train")
         targets = pmhc_loader.get_target_list()
 
         # Affinity scorer — selected by config["affinity_model"]
         affinity_model = self.config.get("affinity_model", "ergo")
         if affinity_model == "nettcr":
-            from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
-            # Use a second GPU for TensorFlow if available (logical GPU 1), otherwise CPU
-            cuda_devs = os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")
-            tf_gpu_id = 1 if len(cuda_devs) > 1 else None  # Logical GPU ID, not physical
-            affinity_scorer = AffinityNetTCRScorer(device=self.device, tf_gpu_id=tf_gpu_id)
-            print("  NetTCR loaded")
+            from tcrppo_v2.scorers.affinity_nettcr_pytorch import AffinityNetTCRPyTorchScorer
+            affinity_scorer = AffinityNetTCRPyTorchScorer(device=self.device)
+            print("  NetTCR-PyTorch loaded")
         elif affinity_model == "tfold":
             from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
             affinity_scorer = AffinityTFoldScorer(
@@ -443,11 +450,14 @@ class PPOTrainer:
               f"L0 targets={len(l0_targets)}/{len(targets)}, "
               f"L1 targets={len(l1_targets)}/{len(targets)}")
 
+        # Determine if reward schedule requires pre-loading all scorers
+        has_schedule = bool(self.config.get("reward_schedule"))
+
         # Decoy scorer (for reward, with LogSumExp penalty)
         decoy_scorer = None
         self.decoy_scorer = None
         # Load decoy scorer for any mode that uses decoy penalty or contrastive sampling
-        if self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo"):
+        if has_schedule or self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo"):
             from tcrppo_v2.scorers.decoy import DecoyScorer
             decoy_scorer = DecoyScorer(
                 decoy_library_path=decoy_lib_path,
@@ -465,7 +475,7 @@ class PPOTrainer:
 
         # Naturalness scorer (requires ESM-2 model — skip for lightweight encoder)
         naturalness_scorer = None
-        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
+        if has_schedule or self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
             if encoder_type == "lightweight":
                 print("  Naturalness scorer SKIPPED (lightweight encoder has no ESM-2 model)")
             else:
@@ -482,7 +492,7 @@ class PPOTrainer:
 
         # Diversity scorer
         diversity_scorer = None
-        if self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
+        if has_schedule or self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty"):
             from tcrppo_v2.scorers.diversity import DiversityScorer
             diversity_scorer = DiversityScorer(
                 buffer_size=self.config.get("diversity_buffer_size", 512),
@@ -572,14 +582,16 @@ class PPOTrainer:
             device=self.device,
         )
 
-        # TensorBoard
-        try:
-            from torch.utils.tensorboard import SummaryWriter
-            log_dir = os.path.join(self.output_dir, self.run_name, "tb_logs")
-            os.makedirs(log_dir, exist_ok=True)
-            self.logger = SummaryWriter(log_dir)
-        except ImportError:
-            self.logger = None
+        # TensorBoard - DISABLED due to TensorFlow/PyTorch GPU conflict
+        # TensorBoard internally uses TensorFlow which deadlocks with PyTorch on GPU
+        self.logger = None
+        # try:
+        #     from torch.utils.tensorboard import SummaryWriter
+        #     log_dir = os.path.join(self.output_dir, self.run_name, "tb_logs")
+        #     os.makedirs(log_dir, exist_ok=True)
+        #     self.logger = SummaryWriter(log_dir)
+        # except ImportError:
+        #     self.logger = None
 
         # Checkpoint dir
         self.ckpt_dir = os.path.join(self.output_dir, self.run_name, "checkpoints")
@@ -634,6 +646,10 @@ class PPOTrainer:
             archive["config"]["min_steps_penalty"] = self.config.get("min_steps_penalty", 0.0)
         if self.config.get("ban_stop", False):
             archive["config"]["ban_stop"] = True
+        if self.config.get("reward_schedule"):
+            archive["config"]["reward_schedule"] = self.config["reward_schedule"]
+        if self.config.get("train_targets"):
+            archive["config"]["train_targets"] = self.config["train_targets"]
 
         out_dir = os.path.join(self.output_dir, self.run_name)
         os.makedirs(out_dir, exist_ok=True)
@@ -682,6 +698,7 @@ class PPOTrainer:
         while global_step < self.total_timesteps:
             # Update decoy tier unlock schedule
             self._update_decoy_schedule(global_step)
+            self._update_reward_schedule(global_step)
 
             # Collect rollout
             self.buffer.reset()
@@ -906,6 +923,42 @@ class PPOTrainer:
             tiers = ["A", "B", "D", "C"]
         self.decoy_scorer.set_unlocked_tiers(tiers)
 
+    def _update_reward_schedule(self, global_step: int) -> None:
+        """Apply curriculum reward schedule transitions based on step count."""
+        schedule = self.config.get("reward_schedule")
+        if not schedule:
+            return
+        # Find the latest phase that should be active
+        current_phase = None
+        for phase in schedule:
+            if global_step >= phase["step"]:
+                current_phase = phase
+        if current_phase is None:
+            return
+        new_mode = current_phase.get("mode")
+        if not new_mode or new_mode == self.reward_manager.reward_mode:
+            return
+        # Transition
+        print(f"\n[Schedule] Step {global_step:,}: reward mode "
+              f"{self.reward_manager.reward_mode} -> {new_mode}")
+        self.reward_manager.reward_mode = new_mode
+        if "w_nat" in current_phase:
+            self.reward_manager.weights["naturalness"] = current_phase["w_nat"]
+        if "w_decoy" in current_phase:
+            self.reward_manager.weights["decoy"] = current_phase["w_decoy"]
+        if "w_diversity" in current_phase:
+            self.reward_manager.weights["diversity"] = current_phase["w_diversity"]
+        if "n_decoys" in current_phase:
+            self.reward_manager.n_contrast_decoys = current_phase["n_decoys"]
+        if "lr" in current_phase:
+            new_lr = current_phase["lr"]
+            for pg in self.optimizer.param_groups:
+                pg["lr"] = new_lr
+            print(f"  Learning rate -> {new_lr}")
+        print(f"  Weights: nat={self.reward_manager.weights['naturalness']}, "
+              f"decoy={self.reward_manager.weights['decoy']}, "
+              f"n_contrast_decoys={self.reward_manager.n_contrast_decoys}")
+
     def _get_entropy_coef(self, global_step: int) -> float:
         """Get entropy coefficient with optional linear decay."""
         if self.entropy_coef_final is None:
@@ -1109,6 +1162,17 @@ def main():
     parser.add_argument("--entropy_coef_final", type=float, default=None, help="Final entropy coefficient (enables linear decay)")
     parser.add_argument("--entropy_decay_start", type=int, default=None, help="Step to begin entropy decay (default: 1M)")
     parser.add_argument("--decoy_library_path", type=str, default=None, help="Path to pMHC decoy library (default: /share/liuyutian/pMHC_decoy_library)")
+
+    # Target peptide filtering
+    parser.add_argument("--train_targets", default=None, help="Comma-separated peptides or path to txt file (one peptide per line). Training uses only these; eval still uses all 12 McPAS.")
+
+    # Curriculum reward schedule
+    parser.add_argument("--reward_schedule", default=None,
+        help='JSON string defining reward phase schedule. '
+             'Format: [{"step":0,"mode":"v1_ergo_only"}, '
+             '{"step":500000,"mode":"raw_multi_penalty","w_nat":0.1,"w_decoy":0.02}, '
+             '{"step":1500000,"mode":"contrastive_ergo","n_decoys":16}]')
+
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -1195,6 +1259,10 @@ def main():
         config["entropy_coef_final"] = args.entropy_coef_final
     if args.entropy_decay_start is not None:
         config["entropy_decay_start"] = args.entropy_decay_start
+    if args.train_targets is not None:
+        config["train_targets"] = args.train_targets
+    if args.reward_schedule is not None:
+        config["reward_schedule"] = json.loads(args.reward_schedule)
 
     config.setdefault("run_name", "v2_run")
 
@@ -1205,7 +1273,14 @@ def main():
     trainer._resume_change_reward_mode = args.resume_change_reward_mode
     trainer._resume_reset_optimizer = args.resume_reset_optimizer
 
-    trainer.train()
+    try:
+        trainer.train()
+    except Exception as e:
+        print(f"\nFATAL ERROR during training:")
+        print(f"  {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

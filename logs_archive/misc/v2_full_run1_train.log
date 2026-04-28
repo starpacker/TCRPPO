@@ -1,0 +1,12 @@
+
+Starting training for 10,000,000 timesteps...
+Setting up PPO trainer: v2_full_run1
+  reward_mode=v2_full, n_envs=20
+  ERGO loaded
+  ESM-2 loaded (dim=1280)
+  TCR pool: 7280430 seqs, L0 targets=['GILGFVFTL', 'NLVPMVATV', 'GLCTLVAML', 'YLQPRTFLL', 'SLYNTVATL'], L1 targets=['IVTDFSVIK', 'GILGFVFTL', 'NLVPMVATV', 'LLWNGPMAV', 'GLCTLVAML', 'SLYNTVATL', 'FLYALALLL', 'KLGGALQAK', 'AVFDRKSDAK', 'SPRWYFYYL', 'YLQPRTFLL', 'RLRAEAQVK']
+  Decoy scorer loaded (K=32)
+  Naturalness scorer loaded
+  Diversity scorer loaded
+  VecEnv: 20 envs, obs_dim=2562
+  Policy: 2,008,852 parameters

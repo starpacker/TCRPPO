@@ -1,0 +1,328 @@
+=== AYAQKIFKI (HLA-A*24:02) ===
+11:36:32 [INFO] run_decoy: Target: AYAQKIFKI | HLA: HLA-A*24:02 | Strategies: ['a']
+11:36:32 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:36:32 [INFO] run_decoy.A: Target: AYAQKIFKI | HLA: HLA-A*24:02
+11:36:32 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:36:32 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:36:32 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:36:32 [INFO] decoy_a.scanner: Decoy A scan: target=AYAQKIFKI (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:36:34 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:36:35 [INFO] decoy_a.scanner: Decoy A: 121 hits within Hamming distance ≤ 4
+11:36:35 [INFO] decoy_a.scanner: Decoy A complete: 121 hits (1-mismatch: 0, 2-mismatch: 0)
+11:36:38 [INFO] run_decoy.A: Decoy A: 121 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/AYAQKIFKI/decoy_a_results.json
+11:36:38 [INFO] run_decoy: All requested strategies completed.
+=== CYTWNQMNL (HLA-A*24:02) ===
+11:36:38 [INFO] run_decoy: Target: CYTWNQMNL | HLA: HLA-A*24:02 | Strategies: ['a']
+11:36:39 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:36:39 [INFO] run_decoy.A: Target: CYTWNQMNL | HLA: HLA-A*24:02
+11:36:39 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:36:39 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:36:39 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:36:39 [INFO] decoy_a.scanner: Decoy A scan: target=CYTWNQMNL (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:36:40 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:36:41 [INFO] decoy_a.scanner: Decoy A: 34 hits within Hamming distance ≤ 4
+11:36:41 [INFO] decoy_a.scanner: Decoy A complete: 34 hits (1-mismatch: 0, 2-mismatch: 0)
+11:36:45 [INFO] run_decoy.A: Decoy A: 34 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/CYTWNQMNL/decoy_a_results.json
+11:36:45 [INFO] run_decoy: All requested strategies completed.
+=== IPYNSVTSSI (HLA-A*24:02) ===
+11:36:45 [INFO] run_decoy: Target: IPYNSVTSSI | HLA: HLA-A*24:02 | Strategies: ['a']
+11:36:46 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:36:46 [INFO] run_decoy.A: Target: IPYNSVTSSI | HLA: HLA-A*24:02
+11:36:46 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:36:46 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:36:46 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:36:46 [INFO] decoy_a.scanner: Decoy A scan: target=IPYNSVTSSI (len=10), HLA=HLA-A*24:02, max_hamming=4
+11:36:47 [INFO] decoy_a.scanner: Candidates of length 10 (excluding Non_Binders): 237587
+11:36:47 [INFO] decoy_a.scanner: Decoy A: 1 hits within Hamming distance ≤ 4
+11:36:47 [INFO] decoy_a.scanner: Decoy A complete: 1 hits (1-mismatch: 0, 2-mismatch: 0)
+11:36:50 [INFO] run_decoy.A: Decoy A: 1 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/IPYNSVTSSI/decoy_a_results.json
+11:36:50 [INFO] run_decoy: All requested strategies completed.
+=== LSPRWYFYYL (HLA-A*24:02) ===
+11:36:50 [INFO] run_decoy: Target: LSPRWYFYYL | HLA: HLA-A*24:02 | Strategies: ['a']
+11:36:50 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:36:50 [INFO] run_decoy.A: Target: LSPRWYFYYL | HLA: HLA-A*24:02
+11:36:50 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:36:50 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:36:50 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:36:50 [INFO] decoy_a.scanner: Decoy A scan: target=LSPRWYFYYL (len=10), HLA=HLA-A*24:02, max_hamming=4
+11:36:53 [INFO] decoy_a.scanner: Candidates of length 10 (excluding Non_Binders): 237587
+11:36:53 [INFO] decoy_a.scanner: Decoy A: 1 hits within Hamming distance ≤ 4
+11:36:53 [INFO] decoy_a.scanner: Decoy A complete: 1 hits (1-mismatch: 0, 2-mismatch: 0)
+11:36:58 [INFO] run_decoy.A: Decoy A: 1 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/LSPRWYFYYL/decoy_a_results.json
+11:36:58 [INFO] run_decoy: All requested strategies completed.
+=== NYNYLYRLF (HLA-A*24:02) ===
+11:36:58 [INFO] run_decoy: Target: NYNYLYRLF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:36:58 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:36:58 [INFO] run_decoy.A: Target: NYNYLYRLF | HLA: HLA-A*24:02
+11:36:58 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:36:58 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:36:58 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:36:58 [INFO] decoy_a.scanner: Decoy A scan: target=NYNYLYRLF (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:00 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:01 [INFO] decoy_a.scanner: Decoy A: 133 hits within Hamming distance ≤ 4
+11:37:01 [INFO] decoy_a.scanner: Decoy A complete: 133 hits (1-mismatch: 0, 2-mismatch: 1)
+11:37:04 [INFO] run_decoy.A: Decoy A: 133 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/NYNYLYRLF/decoy_a_results.json
+11:37:04 [INFO] run_decoy: All requested strategies completed.
+=== NYSGVVTTVMF (HLA-A*24:02) ===
+11:37:04 [INFO] run_decoy: Target: NYSGVVTTVMF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:04 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:04 [INFO] run_decoy.A: Target: NYSGVVTTVMF | HLA: HLA-A*24:02
+11:37:04 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:04 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:04 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:05 [INFO] decoy_a.scanner: Decoy A scan: target=NYSGVVTTVMF (len=11), HLA=HLA-A*24:02, max_hamming=4
+11:37:06 [INFO] decoy_a.scanner: Candidates of length 11 (excluding Non_Binders): 154073
+11:37:06 [INFO] decoy_a.scanner: Decoy A: 2 hits within Hamming distance ≤ 4
+11:37:06 [INFO] decoy_a.scanner: Decoy A complete: 2 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:08 [INFO] run_decoy.A: Decoy A: 2 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/NYSGVVTTVMF/decoy_a_results.json
+11:37:08 [INFO] run_decoy: All requested strategies completed.
+=== QYDPVAALF (HLA-A*24:02) ===
+11:37:09 [INFO] run_decoy: Target: QYDPVAALF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:09 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:09 [INFO] run_decoy.A: Target: QYDPVAALF | HLA: HLA-A*24:02
+11:37:09 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:09 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:09 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:09 [INFO] decoy_a.scanner: Decoy A scan: target=QYDPVAALF (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:11 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:11 [INFO] decoy_a.scanner: Decoy A: 217 hits within Hamming distance ≤ 4
+11:37:11 [INFO] decoy_a.scanner: Decoy A complete: 217 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:16 [INFO] run_decoy.A: Decoy A: 217 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/QYDPVAALF/decoy_a_results.json
+11:37:16 [INFO] run_decoy: All requested strategies completed.
+=== QYIKWPWYI (HLA-A*24:02) ===
+11:37:17 [INFO] run_decoy: Target: QYIKWPWYI | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:17 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:17 [INFO] run_decoy.A: Target: QYIKWPWYI | HLA: HLA-A*24:02
+11:37:17 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:17 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:17 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:17 [INFO] decoy_a.scanner: Decoy A scan: target=QYIKWPWYI (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:18 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:19 [INFO] decoy_a.scanner: Decoy A: 29 hits within Hamming distance ≤ 4
+11:37:19 [INFO] decoy_a.scanner: Decoy A complete: 29 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:23 [INFO] run_decoy.A: Decoy A: 29 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/QYIKWPWYI/decoy_a_results.json
+11:37:23 [INFO] run_decoy: All requested strategies completed.
+=== RYPLTFGWCF (HLA-A*24:02) ===
+11:37:24 [INFO] run_decoy: Target: RYPLTFGWCF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:27 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:27 [INFO] run_decoy.A: Target: RYPLTFGWCF | HLA: HLA-A*24:02
+11:37:27 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:27 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:27 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:27 [INFO] decoy_a.scanner: Decoy A scan: target=RYPLTFGWCF (len=10), HLA=HLA-A*24:02, max_hamming=4
+11:37:28 [INFO] decoy_a.scanner: Candidates of length 10 (excluding Non_Binders): 237587
+11:37:29 [INFO] decoy_a.scanner: Decoy A: 4 hits within Hamming distance ≤ 4
+11:37:29 [INFO] decoy_a.scanner: Decoy A complete: 4 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:31 [INFO] run_decoy.A: Decoy A: 4 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/RYPLTFGWCF/decoy_a_results.json
+11:37:31 [INFO] run_decoy: All requested strategies completed.
+=== SFHSLHLLF (HLA-A*24:02) ===
+11:37:31 [INFO] run_decoy: Target: SFHSLHLLF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:31 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:31 [INFO] run_decoy.A: Target: SFHSLHLLF | HLA: HLA-A*24:02
+11:37:31 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:31 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:31 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:32 [INFO] decoy_a.scanner: Decoy A scan: target=SFHSLHLLF (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:33 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:34 [INFO] decoy_a.scanner: Decoy A: 567 hits within Hamming distance ≤ 4
+11:37:34 [INFO] decoy_a.scanner: Decoy A complete: 567 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:37 [INFO] run_decoy.A: Decoy A: 567 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/SFHSLHLLF/decoy_a_results.json
+11:37:37 [INFO] run_decoy: All requested strategies completed.
+=== VYFLQSINF (HLA-A*24:02) ===
+11:37:37 [INFO] run_decoy: Target: VYFLQSINF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:37 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:37 [INFO] run_decoy.A: Target: VYFLQSINF | HLA: HLA-A*24:02
+11:37:37 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:37 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:37 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:37 [INFO] decoy_a.scanner: Decoy A scan: target=VYFLQSINF (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:39 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:40 [INFO] decoy_a.scanner: Decoy A: 171 hits within Hamming distance ≤ 4
+11:37:40 [INFO] decoy_a.scanner: Decoy A complete: 171 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:44 [INFO] run_decoy.A: Decoy A: 171 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/VYFLQSINF/decoy_a_results.json
+11:37:44 [INFO] run_decoy: All requested strategies completed.
+=== VYGIRLEHF (HLA-A*24:02) ===
+11:37:45 [INFO] run_decoy: Target: VYGIRLEHF | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:45 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:45 [INFO] run_decoy.A: Target: VYGIRLEHF | HLA: HLA-A*24:02
+11:37:45 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:45 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:45 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:45 [INFO] decoy_a.scanner: Decoy A scan: target=VYGIRLEHF (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:47 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:47 [INFO] decoy_a.scanner: Decoy A: 166 hits within Hamming distance ≤ 4
+11:37:47 [INFO] decoy_a.scanner: Decoy A complete: 166 hits (1-mismatch: 0, 2-mismatch: 0)
+11:37:52 [INFO] run_decoy.A: Decoy A: 166 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/VYGIRLEHF/decoy_a_results.json
+11:37:52 [INFO] run_decoy: All requested strategies completed.
+=== YYQLYSTQL (HLA-A*24:02) ===
+11:37:52 [INFO] run_decoy: Target: YYQLYSTQL | HLA: HLA-A*24:02 | Strategies: ['a']
+11:37:52 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:37:52 [INFO] run_decoy.A: Target: YYQLYSTQL | HLA: HLA-A*24:02
+11:37:52 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:37:52 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:37:52 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:37:52 [INFO] decoy_a.scanner: Decoy A scan: target=YYQLYSTQL (len=9), HLA=HLA-A*24:02, max_hamming=4
+11:37:54 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 599057
+11:37:55 [INFO] decoy_a.scanner: Decoy A: 170 hits within Hamming distance ≤ 4
+11:37:55 [INFO] decoy_a.scanner: Decoy A complete: 170 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:01 [INFO] run_decoy.A: Decoy A: 170 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/YYQLYSTQL/decoy_a_results.json
+11:38:01 [INFO] run_decoy: All requested strategies completed.
+DONE
+=== FPPTSFGPL (HLA-B*07:02) ===
+11:38:02 [INFO] run_decoy: Target: FPPTSFGPL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:02 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:02 [INFO] run_decoy.A: Target: FPPTSFGPL | HLA: HLA-B*07:02
+11:38:02 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:02 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:02 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:02 [INFO] decoy_a.scanner: Decoy A scan: target=FPPTSFGPL (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:38:05 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:38:06 [INFO] decoy_a.scanner: Decoy A: 852 hits within Hamming distance ≤ 4
+11:38:06 [INFO] decoy_a.scanner: Decoy A complete: 852 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:09 [INFO] run_decoy.A: Decoy A: 852 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/FPPTSFGPL/decoy_a_results.json
+11:38:09 [INFO] run_decoy: All requested strategies completed.
+=== FPQSAPHGVVF (HLA-B*07:02) ===
+11:38:09 [INFO] run_decoy: Target: FPQSAPHGVVF | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:09 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:09 [INFO] run_decoy.A: Target: FPQSAPHGVVF | HLA: HLA-B*07:02
+11:38:09 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:09 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:09 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:10 [INFO] decoy_a.scanner: Decoy A scan: target=FPQSAPHGVVF (len=11), HLA=HLA-B*07:02, max_hamming=4
+11:38:12 [INFO] decoy_a.scanner: Candidates of length 11 (excluding Non_Binders): 294178
+11:38:12 [INFO] decoy_a.scanner: Decoy A: 2 hits within Hamming distance ≤ 4
+11:38:12 [INFO] decoy_a.scanner: Decoy A complete: 2 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:15 [INFO] run_decoy.A: Decoy A: 2 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/FPQSAPHGVVF/decoy_a_results.json
+11:38:15 [INFO] run_decoy: All requested strategies completed.
+=== GPGHKARVL (HLA-B*07:02) ===
+11:38:16 [INFO] run_decoy: Target: GPGHKARVL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:16 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:16 [INFO] run_decoy.A: Target: GPGHKARVL | HLA: HLA-B*07:02
+11:38:16 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:16 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:16 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:16 [INFO] decoy_a.scanner: Decoy A scan: target=GPGHKARVL (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:38:19 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:38:20 [INFO] decoy_a.scanner: Decoy A: 639 hits within Hamming distance ≤ 4
+11:38:20 [INFO] decoy_a.scanner: Decoy A complete: 639 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:25 [INFO] run_decoy.A: Decoy A: 639 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/GPGHKARVL/decoy_a_results.json
+11:38:25 [INFO] run_decoy: All requested strategies completed.
+=== IPRRNVATL (HLA-B*07:02) ===
+11:38:26 [INFO] run_decoy: Target: IPRRNVATL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:26 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:26 [INFO] run_decoy.A: Target: IPRRNVATL | HLA: HLA-B*07:02
+11:38:26 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:26 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:26 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:26 [INFO] decoy_a.scanner: Decoy A scan: target=IPRRNVATL (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:38:28 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:38:30 [INFO] decoy_a.scanner: Decoy A: 534 hits within Hamming distance ≤ 4
+11:38:30 [INFO] decoy_a.scanner: Decoy A complete: 534 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:33 [INFO] run_decoy.A: Decoy A: 534 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/IPRRNVATL/decoy_a_results.json
+11:38:33 [INFO] run_decoy: All requested strategies completed.
+=== LPRRSGAAGA (HLA-B*07:02) ===
+11:38:33 [INFO] run_decoy: Target: LPRRSGAAGA | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:33 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:33 [INFO] run_decoy.A: Target: LPRRSGAAGA | HLA: HLA-B*07:02
+11:38:33 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:33 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:33 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:34 [INFO] decoy_a.scanner: Decoy A scan: target=LPRRSGAAGA (len=10), HLA=HLA-B*07:02, max_hamming=4
+11:38:36 [INFO] decoy_a.scanner: Candidates of length 10 (excluding Non_Binders): 374537
+11:38:36 [INFO] decoy_a.scanner: Decoy A: 188 hits within Hamming distance ≤ 4
+11:38:36 [INFO] decoy_a.scanner: Decoy A complete: 188 hits (1-mismatch: 0, 2-mismatch: 2)
+11:38:41 [INFO] run_decoy.A: Decoy A: 188 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/LPRRSGAAGA/decoy_a_results.json
+11:38:41 [INFO] run_decoy: All requested strategies completed.
+=== LPRWYFYYL (HLA-B*07:02) ===
+11:38:42 [INFO] run_decoy: Target: LPRWYFYYL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:42 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:42 [INFO] run_decoy.A: Target: LPRWYFYYL | HLA: HLA-B*07:02
+11:38:42 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:42 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:42 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:42 [INFO] decoy_a.scanner: Decoy A scan: target=LPRWYFYYL (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:38:45 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:38:46 [INFO] decoy_a.scanner: Decoy A: 144 hits within Hamming distance ≤ 4
+11:38:46 [INFO] decoy_a.scanner: Decoy A complete: 144 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:49 [INFO] run_decoy.A: Decoy A: 144 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/LPRWYFYYL/decoy_a_results.json
+11:38:49 [INFO] run_decoy: All requested strategies completed.
+=== MPASWVMRI (HLA-B*07:02) ===
+11:38:50 [INFO] run_decoy: Target: MPASWVMRI | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:51 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:51 [INFO] run_decoy.A: Target: MPASWVMRI | HLA: HLA-B*07:02
+11:38:51 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:51 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:51 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:51 [INFO] decoy_a.scanner: Decoy A scan: target=MPASWVMRI (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:38:53 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:38:54 [INFO] decoy_a.scanner: Decoy A: 94 hits within Hamming distance ≤ 4
+11:38:54 [INFO] decoy_a.scanner: Decoy A complete: 94 hits (1-mismatch: 0, 2-mismatch: 0)
+11:38:58 [INFO] run_decoy.A: Decoy A: 94 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/MPASWVMRI/decoy_a_results.json
+11:38:58 [INFO] run_decoy: All requested strategies completed.
+=== RPHERNGFTVL (HLA-B*07:02) ===
+11:38:58 [INFO] run_decoy: Target: RPHERNGFTVL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:38:58 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:38:58 [INFO] run_decoy.A: Target: RPHERNGFTVL | HLA: HLA-B*07:02
+11:38:58 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:38:58 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:38:58 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:38:59 [INFO] decoy_a.scanner: Decoy A scan: target=RPHERNGFTVL (len=11), HLA=HLA-B*07:02, max_hamming=4
+11:39:01 [INFO] decoy_a.scanner: Candidates of length 11 (excluding Non_Binders): 294178
+11:39:01 [INFO] decoy_a.scanner: Decoy A: 1 hits within Hamming distance ≤ 4
+11:39:01 [INFO] decoy_a.scanner: Decoy A complete: 1 hits (1-mismatch: 0, 2-mismatch: 0)
+11:39:05 [INFO] run_decoy.A: Decoy A: 1 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/RPHERNGFTVL/decoy_a_results.json
+11:39:05 [INFO] run_decoy: All requested strategies completed.
+=== RPPIFIRRL (HLA-B*07:02) ===
+11:39:05 [INFO] run_decoy: Target: RPPIFIRRL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:39:07 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:39:07 [INFO] run_decoy.A: Target: RPPIFIRRL | HLA: HLA-B*07:02
+11:39:07 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:39:07 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:39:07 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:39:07 [INFO] decoy_a.scanner: Decoy A scan: target=RPPIFIRRL (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:39:09 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:39:11 [INFO] decoy_a.scanner: Decoy A: 357 hits within Hamming distance ≤ 4
+11:39:11 [INFO] decoy_a.scanner: Decoy A complete: 357 hits (1-mismatch: 0, 2-mismatch: 0)
+11:39:15 [INFO] run_decoy.A: Decoy A: 357 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/RPPIFIRRL/decoy_a_results.json
+11:39:15 [INFO] run_decoy: All requested strategies completed.
+=== RPRGEVRFL (HLA-B*07:02) ===
+11:39:16 [INFO] run_decoy: Target: RPRGEVRFL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:39:16 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:39:16 [INFO] run_decoy.A: Target: RPRGEVRFL | HLA: HLA-B*07:02
+11:39:16 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:39:16 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:39:16 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:39:16 [INFO] decoy_a.scanner: Decoy A scan: target=RPRGEVRFL (len=9), HLA=HLA-B*07:02, max_hamming=4
+11:39:19 [INFO] decoy_a.scanner: Candidates of length 9 (excluding Non_Binders): 823978
+11:39:20 [INFO] decoy_a.scanner: Decoy A: 652 hits within Hamming distance ≤ 4
+11:39:20 [INFO] decoy_a.scanner: Decoy A complete: 652 hits (1-mismatch: 0, 2-mismatch: 1)
+11:39:22 [INFO] run_decoy.A: Decoy A: 652 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/RPRGEVRFL/decoy_a_results.json
+11:39:22 [INFO] run_decoy: All requested strategies completed.
+=== TPGPGVRYPL (HLA-B*07:02) ===
+11:39:23 [INFO] run_decoy: Target: TPGPGVRYPL | HLA: HLA-B*07:02 | Strategies: ['a']
+11:39:23 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:39:23 [INFO] run_decoy.A: Target: TPGPGVRYPL | HLA: HLA-B*07:02
+11:39:23 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:39:23 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:39:23 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:39:23 [INFO] decoy_a.scanner: Decoy A scan: target=TPGPGVRYPL (len=10), HLA=HLA-B*07:02, max_hamming=4
+11:39:25 [INFO] decoy_a.scanner: Candidates of length 10 (excluding Non_Binders): 374537
+11:39:26 [INFO] decoy_a.scanner: Decoy A: 100 hits within Hamming distance ≤ 4
+11:39:26 [INFO] decoy_a.scanner: Decoy A complete: 100 hits (1-mismatch: 0, 2-mismatch: 0)
+11:39:33 [INFO] run_decoy.A: Decoy A: 100 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/TPGPGVRYPL/decoy_a_results.json
+11:39:33 [INFO] run_decoy: All requested strategies completed.
+=== TPRVTGGGAM (HLA-B*07:02) ===
+11:39:33 [INFO] run_decoy: Target: TPRVTGGGAM | HLA: HLA-B*07:02 | Strategies: ['a']
+11:39:33 [INFO] run_decoy.A: === Decoy A: Sequence Homology Scan ===
+11:39:33 [INFO] run_decoy.A: Target: TPRVTGGGAM | HLA: HLA-B*07:02
+11:39:34 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+11:39:34 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:39:34 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+11:39:34 [INFO] decoy_a.scanner: Decoy A scan: target=TPRVTGGGAM (len=10), HLA=HLA-B*07:02, max_hamming=4
+11:39:36 [INFO] decoy_a.scanner: Candidates of length 10 (excluding Non_Binders): 374537
+11:39:36 [INFO] decoy_a.scanner: Decoy A: 44 hits within Hamming distance ≤ 4
+11:39:36 [INFO] decoy_a.scanner: Decoy A complete: 44 hits (1-mismatch: 0, 2-mismatch: 0)
+11:39:41 [INFO] run_decoy.A: Decoy A: 44 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_a/TPRVTGGGAM/decoy_a_results.json
+11:39:41 [INFO] run_decoy: All requested strategies completed.
+DONE
+

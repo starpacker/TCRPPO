@@ -38,13 +38,16 @@ class TCRPool:
         self.l0_mutation_range = l0_mutation_range
         self.l1_top_k = l1_top_k
 
-        # Default curriculum: L0 + L2 only (L1 banned — too heavyweight)
+        # Enhanced curriculum: gradual L0→L1→L2 progression
+        # 0-500K: pure L0 (learn what good TCRs look like)
+        # 500K-1M: 70% L0 + 30% L1 (start exploring ERGO top-K)
+        # 1M-2M: 50% L0 + 30% L1 + 20% L2 (add random exploration)
         if curriculum_schedule is None:
             curriculum_schedule = [
-                {"until": 1_000_000, "L0": 0.7, "L1": 0.0, "L2": 0.3},
-                {"until": 3_000_000, "L0": 0.4, "L1": 0.0, "L2": 0.6},
-                {"until": 6_000_000, "L0": 0.2, "L1": 0.0, "L2": 0.8},
-                {"until": None, "L0": 0.1, "L1": 0.0, "L2": 0.9},
+                {"until": 500_000, "L0": 1.0, "L1": 0.0, "L2": 0.0},
+                {"until": 1_000_000, "L0": 0.7, "L1": 0.3, "L2": 0.0},
+                {"until": 2_000_000, "L0": 0.5, "L1": 0.3, "L2": 0.2},
+                {"until": None, "L0": 0.3, "L1": 0.3, "L2": 0.4},
             ]
         self.curriculum_schedule = curriculum_schedule
 

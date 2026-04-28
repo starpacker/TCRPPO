@@ -1,0 +1,68 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: odin
+  reward_mode=v1_ergo_only, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  tFold V3.4 loaded (cache=79 entries, cache_only=False)
+  ESM-2 loaded (dim=1280, disk_cache=65 seqs)
+  pMHC loader: 163 targets
+  TCR pool: 7266860 seqs, L0 targets=256/163
+  VecEnv: 8 envs, obs_dim=2562
+  Policy: 2,006,829 parameters
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776350348.601297 1544570 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1776350348.658498 1544570 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776350350.342106 1544570 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+  Saved experiment.json to output/odin/experiment.json
+tFold extraction error for IASSYAGGQTYEQYF: Feature extraction failed
+tFold extraction error for SARPRPILYNEQFF: Feature extraction failed
+tFold extraction error for ILSSYAGGQTYEQYF: Feature extraction failed
+tFold extraction error for SARPRPPLYNEQFF: Feature extraction failed
+tFold extraction error for ILSSYAGGQTYYEQYF: Feature extraction failed
+tFold extraction error for SARPRPLYNEQFF: Feature extraction failed
+tFold extraction error for ILSSYAGGQTYYEQYF: Feature extraction failed
+tFold extraction error for SARPRPLYEQFF: Feature extraction failed
+tFold extraction error for SARPPLYEQFF: Feature extraction failed
+tFold extraction error for SARPPLYESQFF: Feature extraction failed
+tFold extraction error for TSARPPLYESQFF: Feature extraction failed
+tFold extraction error for TSARPPLYESQFF: Feature extraction failed
+tFold extraction error for TASSEYFPTDRKNTGELFF: Feature extraction failed
+tFold extraction error for TASSEYFPTDTRKNTGELFF: Feature extraction failed
+tFold extraction error for TASSEYFPTDIRKNTGELFF: Feature extraction failed
+tFold extraction error for TASSEFPTDIRKNTGELFF: Feature extraction failed
+tFold extraction error for TASSEFPTDIRKNTGELFF: Feature extraction failed
+tFold extraction error for GASRKVGSEQYF: Feature extraction failed
+tFold extraction error for GASRKVGSEQYF: Feature extraction failed
+tFold extraction error for FSVAAGGRETQYF: Feature extraction failed
+tFold extraction error for ESVAAGGRETQYF: Feature extraction failed
+tFold extraction error for ESVAAGGRETQYE: Feature extraction failed
+tFold extraction error for TATSRGYTGEEALFF: Feature extraction failed
+tFold extraction error for ESVAAGGRETQYE: Feature extraction failed
+tFold extraction error for TATSRGYNTGEEALFF: Feature extraction failed
+tFold extraction error for EMSVAAGGRETQYE: Feature extraction failed
+tFold extraction error for WASSPTREEEQYF: Feature extraction failed
+tFold extraction error for TATSRGYNTGQEEALFF: Feature extraction failed
+tFold extraction error for WMSVAAGGRETQYE: Feature extraction failed
+tFold extraction error for WASSPTREEEQYF: Feature extraction failed
+tFold extraction error for TATSRGYNTGQEEALFF: Feature extraction failed
+tFold extraction error for WMSVAALGRETQYE: Feature extraction failed
+tFold extraction error for WMSVAALGRETQYE: Feature extraction failed
+tFold extraction error for ASSLFLAGGQETQYF: Feature extraction failed
+tFold extraction error for ASSLFLAGQETQYF: Feature extraction failed
+tFold extraction error for ASSLLAGQETQYF: Feature extraction failed
+tFold extraction error for ASSLLAGYQETQYF: Feature extraction failed
+tFold extraction error for EASTTAAGALYYTF: Feature extraction failed
+tFold extraction error for ASSLLAGYQETQYF: Feature extraction failed
+tFold extraction error for EASATTAAGALYYTF: Feature extraction failed
+tFold extraction error for GASATTAAGALYYTF: Feature extraction failed
+tFold extraction error for SASEFRNPAGTDTQEYF: Feature extraction failed
+tFold extraction error for GASATTAGALYYTF: Feature extraction failed
+tFold extraction error for SASEFRNPAGTDTQEY: Feature extraction failed
+tFold extraction error for GASATTAGALYYTF: Feature extraction failed
+tFold extraction error for SSEFRNPAGTDTQEY: Feature extraction failed
+tFold extraction error for SSEFRNPAGTDTQEY: Feature extraction failed
+tFold extraction error for SAHGTSSSYNEQFF: Feature extraction failed
+tFold extraction error for SAHGTSSSYNEQFF: Feature extraction failed
+tFold extraction error for SAGPRNQGETQYF: Feature extraction failed

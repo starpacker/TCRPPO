@@ -689,3 +689,152 @@ class AffinityTFoldScorer(BaseScorer):
             "subprocess_calls": self._n_subprocess_calls,
             "total_scored": self._n_scored,
         }
+
+
+# ============================================================================
+# Cascade Scorer: ERGO (fast) + tFold (oracle for uncertain cases)
+# ============================================================================
+
+
+class TFoldCascadeScorer(BaseScorer):
+    """ERGO + tFold cascade scorer with uncertainty-gated arbitration.
+
+    Architecture:
+      1. ERGO MC Dropout: fast scoring (0.05s) + uncertainty estimation
+      2. If ERGO std > threshold → invoke tFold for arbitration
+      3. tFold: high-quality binding prediction (PerEpiAUC=0.82)
+
+    This provides strong reward signal while maintaining reasonable training speed.
+    Expected tFold invocation rate: ~10-20% of scoring calls.
+    """
+
+    def __init__(
+        self,
+        ergo_model_file: str,
+        tfold_scorer: AffinityTFoldScorer,
+        uncertainty_threshold: float = 0.15,
+        mc_samples: int = 10,
+        ergo_device: str = "cuda",
+    ):
+        """Initialize cascade scorer.
+
+        Args:
+            ergo_model_file: Path to ERGO model checkpoint.
+            tfold_scorer: Pre-initialized AffinityTFoldScorer instance.
+            uncertainty_threshold: ERGO std above which tFold is invoked.
+            mc_samples: Number of MC Dropout samples for ERGO.
+            ergo_device: Device for ERGO model.
+        """
+        from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+
+        self.uncertainty_threshold = uncertainty_threshold
+        self.tfold_scorer = tfold_scorer
+
+        # Initialize ERGO scorer
+        self.ergo_scorer = AffinityERGOScorer(
+            model_file=ergo_model_file,
+            device=ergo_device,
+            mc_samples=mc_samples,
+        )
+
+        # Telemetry
+        self._n_ergo_calls = 0
+        self._n_tfold_calls = 0
+
+        logger.info(
+            f"TFold cascade scorer initialized: threshold={uncertainty_threshold}, "
+            f"mc_samples={mc_samples}"
+        )
+
+    def score(self, tcr: str, peptide: str, **kwargs) -> Tuple[float, float]:
+        """Score with cascade logic.
+
+        Returns (score, confidence) where score is in [0, 1] range.
+        """
+        # Step 1: ERGO MC Dropout
+        means, stds = self.ergo_scorer.mc_dropout_score([tcr], [peptide])
+        ergo_score = float(means[0])
+        ergo_std = float(stds[0])
+        self._n_ergo_calls += 1
+
+        # Step 2: Check uncertainty
+        if ergo_std < self.uncertainty_threshold:
+            # Low uncertainty → trust ERGO
+            confidence = 1.0 - ergo_std
+            return ergo_score, max(0.0, min(1.0, confidence))
+
+        # Step 3: High uncertainty → invoke tFold
+        tfold_scores = self.tfold_scorer.score_batch_fast([tcr], [peptide])
+        self._n_tfold_calls += 1
+
+        # tFold score is already in [0, 1] range (from score_batch_fast)
+        tfold_score = tfold_scores[0]
+
+        # Return tFold score with high confidence
+        return tfold_score, 0.95
+
+    def score_batch(self, tcrs: list, peptides: list, **kwargs) -> Tuple[list, list]:
+        """Score batch with cascade logic.
+
+        First scores all with ERGO MC Dropout, then invokes tFold only for
+        uncertain cases.
+        """
+        n = len(tcrs)
+        if n == 0:
+            return [], []
+
+        # Step 1: ERGO MC Dropout for all
+        means, stds = self.ergo_scorer.mc_dropout_score(tcrs, peptides)
+        self._n_ergo_calls += n
+
+        scores = means.tolist()
+        confidences = (1.0 - stds).tolist()
+
+        # Step 2: Identify uncertain cases
+        uncertain_indices = [
+            i for i in range(n) if stds[i] >= self.uncertainty_threshold
+        ]
+
+        if not uncertain_indices:
+            return scores, [max(0.0, min(1.0, c)) for c in confidences]
+
+        # Step 3: Score uncertain cases with tFold (batched)
+        uncertain_tcrs = [tcrs[i] for i in uncertain_indices]
+        uncertain_peps = [peptides[i] for i in uncertain_indices]
+        tfold_scores = self.tfold_scorer.score_batch_fast(uncertain_tcrs, uncertain_peps)
+        self._n_tfold_calls += len(uncertain_indices)
+
+        # Update scores and confidences
+        for j, i in enumerate(uncertain_indices):
+            scores[i] = tfold_scores[j]
+            confidences[i] = 0.95
+
+        return scores, [max(0.0, min(1.0, c)) for c in confidences]
+
+    def score_batch_fast(self, tcrs: list, peptides: list) -> List[float]:
+        """Fast scoring with cascade logic (no confidence estimation).
+
+        Use for training reward computation.
+        """
+        scores, _ = self.score_batch(tcrs, peptides)
+        return scores
+
+    def get_telemetry(self) -> dict:
+        """Get cascade telemetry statistics."""
+        total = self._n_ergo_calls
+        tfold_pct = (self._n_tfold_calls / total * 100) if total > 0 else 0.0
+        tfold_stats = self.tfold_scorer.cache_stats
+
+        return {
+            "total_calls": total,
+            "tfold_calls": self._n_tfold_calls,
+            "tfold_pct": tfold_pct,
+            "tfold_cache_hits": tfold_stats["cache_hits"],
+            "tfold_cache_misses": tfold_stats["cache_misses"],
+            "tfold_cache_size": tfold_stats["cache_size"],
+        }
+
+    def reset_telemetry(self) -> None:
+        """Reset telemetry counters."""
+        self._n_ergo_calls = 0
+        self._n_tfold_calls = 0

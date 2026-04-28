@@ -1,0 +1,50 @@
+Loaded TCRs for 12 targets
+
+=== Tier 2: NetTCR Cross-Validation ===
+NetTCR: Loaded weights from /share/liuyutian/tcrppo_v2/data/nettcr_model.weights.h5
+  Mean AUROC: 0.5754 (took 134.5s)
+  NLVPMVATV: AUROC=0.8699, mean_binding=0.4640
+  AVFDRKSDAK: AUROC=0.3923, mean_binding=0.1169
+  LLWNGPMAV: AUROC=0.6572, mean_binding=0.2294
+  GLCTLVAML: AUROC=0.9781, mean_binding=0.6309
+  SPRWYFYYL: AUROC=0.3966, mean_binding=0.1143
+  YLQPRTFLL: AUROC=0.3872, mean_binding=0.1339
+  GILGFVFTL: AUROC=0.9015, mean_binding=0.4094
+  IVTDFSVIK: AUROC=0.4598, mean_binding=0.1940
+  RLRAEAQVK: AUROC=0.3585, mean_binding=0.1476
+  FLYALALLL: AUROC=0.4094, mean_binding=0.1242
+  KLGGALQAK: AUROC=0.6833, mean_binding=0.3243
+  SLYNTVATL: AUROC=0.4105, mean_binding=0.0983
+
+=== Tier 3: Sequence Analysis ===
+  Completed (33.8s)
+  NLVPMVATV: unique=50/50, mean_pairwise_lev=10.43, mean_min_dist_to_binders=8.20
+  AVFDRKSDAK: unique=50/50, mean_pairwise_lev=9.88, mean_min_dist_to_binders=6.56
+  LLWNGPMAV: unique=50/50, mean_pairwise_lev=10.33, mean_min_dist_to_binders=6.74
+  GLCTLVAML: unique=50/50, mean_pairwise_lev=10.53, mean_min_dist_to_binders=8.92
+  SPRWYFYYL: unique=50/50, mean_pairwise_lev=7.23, mean_min_dist_to_binders=5.42
+  YLQPRTFLL: unique=50/50, mean_pairwise_lev=12.65, mean_min_dist_to_binders=9.24
+  GILGFVFTL: unique=50/50, mean_pairwise_lev=11.54, mean_min_dist_to_binders=8.66
+  IVTDFSVIK: unique=50/50, mean_pairwise_lev=12.56, mean_min_dist_to_binders=8.34
+  RLRAEAQVK: unique=50/50, mean_pairwise_lev=11.96, mean_min_dist_to_binders=8.38
+  FLYALALLL: unique=50/50, mean_pairwise_lev=11.71, mean_min_dist_to_binders=8.18
+  KLGGALQAK: unique=50/50, mean_pairwise_lev=11.49, mean_min_dist_to_binders=7.32
+  SLYNTVATL: unique=50/50, mean_pairwise_lev=11.55, mean_min_dist_to_binders=9.50
+
+=== Summary ===
+Target            T1 AUROC   T2 AUROC   Unique  Binder Dist
+------------------------------------------------------------
+AVFDRKSDAK             N/A     0.3923       50         6.56
+FLYALALLL              N/A     0.4094       50         8.18
+GILGFVFTL              N/A     0.9015       50         8.66
+GLCTLVAML              N/A     0.9781       50         8.92
+IVTDFSVIK              N/A     0.4598       50         8.34
+KLGGALQAK              N/A     0.6833       50         7.32
+LLWNGPMAV              N/A     0.6572       50         6.74
+NLVPMVATV              N/A     0.8699       50         8.20
+RLRAEAQVK              N/A     0.3585       50         8.38
+SLYNTVATL              N/A     0.4105       50         9.50
+SPRWYFYYL              N/A     0.3966       50         5.42
+YLQPRTFLL              N/A     0.3872       50         9.24
+
+Results saved to results/v1_ergo_only_ablation/3tier_eval.json

@@ -1,0 +1,58 @@
+Evaluating checkpoint: output/test9_squared/checkpoints/milestone_1000000.pt
+Targets: ['GILGFVFTL', 'NLVPMVATV', 'GLCTLVAML', 'LLWNGPMAV', 'YLQPRTFLL', 'FLYALALLL', 'SLYNTVATL', 'KLGGALQAK', 'AVFDRKSDAK', 'IVTDFSVIK', 'SPRWYFYYL', 'RLRAEAQVK']
+N TCRs per target: 50
+N decoys per TCR: 50
+Loading ERGO scorer...
+Loading ESM cache...
+Loading pMHC loader...
+Loading TCR pool...
+Loading decoy scorer...
+Loading policy...
+
+============================================================
+Target: GILGFVFTL
+============================================================
+  Generated 50 TCRs in 1033.0s
+  Unique TCRs: 50 / 50
+  Mean steps: 8.0, Mean reward: 1.422
+  AUROC: 0.5339
+  Target score: 0.1972 +/- 0.2357
+  Decoy score: 0.1499 +/- 0.1593
+  Eval time: 4.7s
+
+============================================================
+Target: NLVPMVATV
+============================================================
+  Generated 50 TCRs in 1038.6s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.6, Mean reward: 1.481
+  AUROC: 0.6183
+  Target score: 0.2180 +/- 0.2093
+  Decoy score: 0.1326 +/- 0.1430
+  Eval time: 8.7s
+
+============================================================
+Target: GLCTLVAML
+============================================================
+  Generated 50 TCRs in 1298.9s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.8, Mean reward: 1.012
+  AUROC: 0.5160
+  Target score: 0.1328 +/- 0.1629
+  Decoy score: 0.1150 +/- 0.1340
+  Eval time: 2.1s
+
+============================================================
+Target: LLWNGPMAV
+============================================================
+  Generated 50 TCRs in 1127.5s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 0.947
+  AUROC: 0.4579
+  Target score: 0.0903 +/- 0.0916
+  Decoy score: 0.1287 +/- 0.1411
+  Eval time: 2.2s
+
+============================================================
+Target: YLQPRTFLL
+============================================================

@@ -1,0 +1,220 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test23_contrastive_ergo
+  reward_mode=contrastive_ergo, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  ERGO loaded
+  ESM-2 loaded (dim=1280, disk_cache=11754 seqs)
+  pMHC loader: 163 targets
+  TCR pool: 7266860 seqs, L0 targets=256/163, L1 targets=12/163
+  Decoy scorer loaded (K=8)
+  VecEnv: 8 envs, obs_dim=2562, ban_stop=True
+  pMHC warmup: 163 targets cached in 6.5s
+  Policy: 2,006,829 parameters
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776789768.430209 2017520 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1776789768.517468 2017520 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776789771.572035 2017520 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+  Saved experiment.json to output/test23_contrastive_ergo/experiment.json
+Step     10,240 | Eps:   1136 | R:   -0.034 | Len:   8.0 | PG:  -0.0280 | VF:   0.0540 | Ent:  5.477
+Step     20,480 | Eps:   2272 | R:   -0.067 | Len:   8.0 | PG:  -0.0227 | VF:   0.0544 | Ent:  5.256
+Step     30,720 | Eps:   3408 | R:    0.013 | Len:   8.0 | PG:  -0.0302 | VF:   0.0514 | Ent:  5.286
+Step     40,960 | Eps:   4552 | R:   -0.003 | Len:   8.0 | PG:  -0.0225 | VF:   0.0567 | Ent:  5.037
+Step     51,200 | Eps:   5688 | R:   -0.060 | Len:   8.0 | PG:  -0.0244 | VF:   0.0456 | Ent:  5.006
+Step     61,440 | Eps:   6824 | R:   -0.028 | Len:   8.0 | PG:  -0.0265 | VF:   0.0378 | Ent:  5.084
+Step     71,680 | Eps:   7960 | R:   -0.027 | Len:   8.0 | PG:  -0.0262 | VF:   0.0471 | Ent:  5.130
+Step     81,920 | Eps:   9096 | R:    0.105 | Len:   8.0 | PG:  -0.0221 | VF:   0.0946 | Ent:  5.118
+Step     92,160 | Eps:  10240 | R:   -0.096 | Len:   8.0 | PG:  -0.0302 | VF:   0.0530 | Ent:  5.024
+Step    102,400 | Eps:  11376 | R:   -0.070 | Len:   8.0 | PG:  -0.0268 | VF:   0.0513 | Ent:  5.363
+Step    112,640 | Eps:  12512 | R:    0.051 | Len:   8.0 | PG:  -0.0285 | VF:   0.0546 | Ent:  5.154
+Step    122,880 | Eps:  13648 | R:   -0.000 | Len:   8.0 | PG:  -0.0258 | VF:   0.0497 | Ent:  5.073
+Step    133,120 | Eps:  14792 | R:    0.045 | Len:   8.0 | PG:  -0.0260 | VF:   0.0687 | Ent:  5.008
+Step    143,360 | Eps:  15928 | R:    0.097 | Len:   8.0 | PG:  -0.0244 | VF:   0.0572 | Ent:  5.069
+Step    153,600 | Eps:  17064 | R:    0.065 | Len:   8.0 | PG:  -0.0219 | VF:   0.0630 | Ent:  4.977
+Step    163,840 | Eps:  18200 | R:   -0.005 | Len:   8.0 | PG:  -0.0252 | VF:   0.0582 | Ent:  4.949
+Step    174,080 | Eps:  19336 | R:    0.101 | Len:   8.0 | PG:  -0.0207 | VF:   0.0629 | Ent:  4.867
+Step    184,320 | Eps:  20480 | R:    0.060 | Len:   8.0 | PG:  -0.0236 | VF:   0.0637 | Ent:  4.725
+Step    194,560 | Eps:  21616 | R:    0.076 | Len:   8.0 | PG:  -0.0235 | VF:   0.0532 | Ent:  5.030
+Step    204,800 | Eps:  22752 | R:   -0.003 | Len:   8.0 | PG:  -0.0232 | VF:   0.0556 | Ent:  5.156
+Step    215,040 | Eps:  23888 | R:    0.101 | Len:   8.0 | PG:  -0.0230 | VF:   0.0541 | Ent:  4.991
+Step    225,280 | Eps:  25032 | R:    0.155 | Len:   8.0 | PG:  -0.0199 | VF:   0.0882 | Ent:  5.059
+Step    235,520 | Eps:  26168 | R:    0.166 | Len:   8.0 | PG:  -0.0223 | VF:   0.0856 | Ent:  5.173
+Step    245,760 | Eps:  27304 | R:    0.095 | Len:   8.0 | PG:  -0.0256 | VF:   0.0776 | Ent:  5.162
+Step    256,000 | Eps:  28440 | R:   -0.029 | Len:   8.0 | PG:  -0.0225 | VF:   0.0543 | Ent:  5.115
+Step    266,240 | Eps:  29576 | R:   -0.005 | Len:   8.0 | PG:  -0.0215 | VF:   0.0464 | Ent:  5.043
+Step    276,480 | Eps:  30720 | R:    0.032 | Len:   8.0 | PG:  -0.0176 | VF:   0.0610 | Ent:  4.905
+Step    286,720 | Eps:  31856 | R:   -0.032 | Len:   8.0 | PG:  -0.0243 | VF:   0.0503 | Ent:  5.196
+Step    296,960 | Eps:  32992 | R:    0.098 | Len:   8.0 | PG:  -0.0172 | VF:   0.0427 | Ent:  4.972
+Step    307,200 | Eps:  34128 | R:    0.247 | Len:   8.0 | PG:  -0.0219 | VF:   0.0993 | Ent:  4.899
+Step    317,440 | Eps:  35272 | R:    0.144 | Len:   8.0 | PG:  -0.0236 | VF:   0.0677 | Ent:  4.651
+Step    327,680 | Eps:  36408 | R:    0.103 | Len:   8.0 | PG:  -0.0125 | VF:   0.0801 | Ent:  4.611
+Step    337,920 | Eps:  37544 | R:    0.074 | Len:   8.0 | PG:  -0.0108 | VF:   0.0576 | Ent:  4.799
+Step    348,160 | Eps:  38680 | R:    0.186 | Len:   8.0 | PG:  -0.0242 | VF:   0.0976 | Ent:  4.976
+Step    358,400 | Eps:  39816 | R:    0.102 | Len:   8.0 | PG:  -0.0202 | VF:   0.0689 | Ent:  4.764
+Step    368,640 | Eps:  40960 | R:    0.103 | Len:   8.0 | PG:  -0.0224 | VF:   0.0529 | Ent:  4.441
+Step    378,880 | Eps:  42096 | R:    0.186 | Len:   8.0 | PG:  -0.0202 | VF:   0.0797 | Ent:  4.615
+Step    389,120 | Eps:  43232 | R:    0.150 | Len:   8.0 | PG:  -0.0241 | VF:   0.0642 | Ent:  4.615
+Step    399,360 | Eps:  44368 | R:    0.063 | Len:   8.0 | PG:  -0.0218 | VF:   0.0640 | Ent:  4.798
+Step    409,600 | Eps:  45512 | R:    0.054 | Len:   8.0 | PG:  -0.0160 | VF:   0.0717 | Ent:  4.647
+Step    419,840 | Eps:  46648 | R:    0.034 | Len:   8.0 | PG:  -0.0188 | VF:   0.0431 | Ent:  4.848
+Step    430,080 | Eps:  47784 | R:    0.219 | Len:   8.0 | PG:  -0.0180 | VF:   0.1038 | Ent:  4.797
+Step    440,320 | Eps:  48920 | R:    0.077 | Len:   8.0 | PG:  -0.0211 | VF:   0.0692 | Ent:  4.872
+Step    450,560 | Eps:  50056 | R:    0.201 | Len:   8.0 | PG:  -0.0249 | VF:   0.0823 | Ent:  4.938
+Step    460,800 | Eps:  51200 | R:    0.080 | Len:   8.0 | PG:  -0.0248 | VF:   0.0584 | Ent:  4.756
+Step    471,040 | Eps:  52336 | R:    0.189 | Len:   8.0 | PG:  -0.0239 | VF:   0.0797 | Ent:  4.671
+Step    481,280 | Eps:  53472 | R:    0.174 | Len:   8.0 | PG:  -0.0267 | VF:   0.0862 | Ent:  4.750
+Step    491,520 | Eps:  54608 | R:    0.195 | Len:   8.0 | PG:  -0.0190 | VF:   0.0662 | Ent:  4.483
+  ** Milestone checkpoint saved: 500,000 steps
+Step    501,760 | Eps:  55752 | R:    0.016 | Len:   8.0 | PG:  -0.0239 | VF:   0.0663 | Ent:  4.840
+Step    512,000 | Eps:  56888 | R:    0.012 | Len:   8.0 | PG:  -0.0227 | VF:   0.0651 | Ent:  4.971
+Step    522,240 | Eps:  58024 | R:    0.098 | Len:   8.0 | PG:  -0.0182 | VF:   0.0738 | Ent:  4.722
+Step    532,480 | Eps:  59160 | R:    0.107 | Len:   8.0 | PG:  -0.0228 | VF:   0.0617 | Ent:  4.624
+Step    542,720 | Eps:  60296 | R:    0.135 | Len:   8.0 | PG:  -0.0185 | VF:   0.0758 | Ent:  4.866
+Step    552,960 | Eps:  61440 | R:    0.177 | Len:   8.0 | PG:  -0.0204 | VF:   0.0943 | Ent:  4.735
+Step    563,200 | Eps:  62576 | R:    0.124 | Len:   8.0 | PG:  -0.0244 | VF:   0.0739 | Ent:  4.573
+Step    573,440 | Eps:  63712 | R:    0.166 | Len:   8.0 | PG:  -0.0177 | VF:   0.1374 | Ent:  4.933
+Step    583,680 | Eps:  64848 | R:    0.002 | Len:   8.0 | PG:  -0.0221 | VF:   0.0481 | Ent:  4.709
+Step    593,920 | Eps:  65992 | R:    0.244 | Len:   8.0 | PG:  -0.0200 | VF:   0.0912 | Ent:  4.582
+Step    604,160 | Eps:  67128 | R:    0.277 | Len:   8.0 | PG:  -0.0189 | VF:   0.1170 | Ent:  4.733
+Step    614,400 | Eps:  68264 | R:    0.091 | Len:   8.0 | PG:  -0.0227 | VF:   0.0819 | Ent:  4.558
+Step    624,640 | Eps:  69400 | R:    0.333 | Len:   8.0 | PG:  -0.0192 | VF:   0.1327 | Ent:  4.602
+Step    634,880 | Eps:  70536 | R:    0.189 | Len:   8.0 | PG:  -0.0219 | VF:   0.0693 | Ent:  4.756
+Step    645,120 | Eps:  71680 | R:    0.109 | Len:   8.0 | PG:  -0.0165 | VF:   0.0723 | Ent:  4.424
+Step    655,360 | Eps:  72816 | R:    0.184 | Len:   8.0 | PG:  -0.0217 | VF:   0.0787 | Ent:  4.467
+Step    665,600 | Eps:  73952 | R:    0.203 | Len:   8.0 | PG:  -0.0159 | VF:   0.0748 | Ent:  4.777
+Step    675,840 | Eps:  75088 | R:    0.134 | Len:   8.0 | PG:  -0.0240 | VF:   0.0703 | Ent:  4.693
+Step    686,080 | Eps:  76232 | R:    0.185 | Len:   8.0 | PG:  -0.0125 | VF:   0.0945 | Ent:  4.493
+Step    696,320 | Eps:  77368 | R:    0.083 | Len:   8.0 | PG:  -0.0142 | VF:   0.0702 | Ent:  5.024
+Step    706,560 | Eps:  78504 | R:    0.151 | Len:   8.0 | PG:  -0.0200 | VF:   0.0778 | Ent:  4.650
+Step    716,800 | Eps:  79640 | R:    0.071 | Len:   8.0 | PG:  -0.0155 | VF:   0.0585 | Ent:  4.679
+Step    727,040 | Eps:  80776 | R:    0.233 | Len:   8.0 | PG:  -0.0223 | VF:   0.0786 | Ent:  4.484
+Step    737,280 | Eps:  81920 | R:    0.297 | Len:   8.0 | PG:  -0.0235 | VF:   0.1151 | Ent:  4.615
+Step    747,520 | Eps:  83056 | R:    0.270 | Len:   8.0 | PG:  -0.0208 | VF:   0.0848 | Ent:  4.637
+Step    757,760 | Eps:  84192 | R:    0.125 | Len:   8.0 | PG:  -0.0231 | VF:   0.0644 | Ent:  4.264
+Step    768,000 | Eps:  85328 | R:    0.277 | Len:   8.0 | PG:  -0.0124 | VF:   0.1014 | Ent:  4.518
+Step    778,240 | Eps:  86472 | R:    0.279 | Len:   8.0 | PG:  -0.0191 | VF:   0.0979 | Ent:  4.790
+Step    788,480 | Eps:  87608 | R:    0.094 | Len:   8.0 | PG:  -0.0194 | VF:   0.0888 | Ent:  4.646
+Step    798,720 | Eps:  88744 | R:    0.083 | Len:   8.0 | PG:  -0.0189 | VF:   0.0716 | Ent:  4.401
+Step    808,960 | Eps:  89880 | R:    0.277 | Len:   8.0 | PG:  -0.0180 | VF:   0.0978 | Ent:  4.578
+Step    819,200 | Eps:  91016 | R:    0.351 | Len:   8.0 | PG:  -0.0172 | VF:   0.1086 | Ent:  4.261
+Step    829,440 | Eps:  92160 | R:    0.143 | Len:   8.0 | PG:  -0.0226 | VF:   0.0869 | Ent:  4.362
+Step    839,680 | Eps:  93296 | R:    0.217 | Len:   8.0 | PG:  -0.0201 | VF:   0.0833 | Ent:  4.880
+Step    849,920 | Eps:  94432 | R:    0.130 | Len:   8.0 | PG:  -0.0216 | VF:   0.0751 | Ent:  5.063
+Step    860,160 | Eps:  95568 | R:    0.118 | Len:   8.0 | PG:  -0.0209 | VF:   0.0718 | Ent:  5.170
+Step    870,400 | Eps:  96712 | R:    0.281 | Len:   8.0 | PG:  -0.0231 | VF:   0.0943 | Ent:  5.006
+Step    880,640 | Eps:  97848 | R:    0.230 | Len:   8.0 | PG:  -0.0143 | VF:   0.1100 | Ent:  4.765
+Step    890,880 | Eps:  98984 | R:    0.258 | Len:   8.0 | PG:  -0.0188 | VF:   0.0676 | Ent:  4.806
+Step    901,120 | Eps: 100120 | R:    0.172 | Len:   8.0 | PG:  -0.0168 | VF:   0.0667 | Ent:  4.539
+Step    911,360 | Eps: 101256 | R:    0.176 | Len:   8.0 | PG:  -0.0221 | VF:   0.0729 | Ent:  4.655
+Step    921,600 | Eps: 102400 | R:    0.269 | Len:   8.0 | PG:  -0.0166 | VF:   0.1061 | Ent:  4.920
+Step    931,840 | Eps: 103536 | R:    0.167 | Len:   8.0 | PG:  -0.0207 | VF:   0.0942 | Ent:  4.681
+Step    942,080 | Eps: 104672 | R:    0.248 | Len:   8.0 | PG:  -0.0194 | VF:   0.0919 | Ent:  4.690
+Step    952,320 | Eps: 105808 | R:    0.181 | Len:   8.0 | PG:  -0.0273 | VF:   0.0498 | Ent:  5.137
+Step    962,560 | Eps: 106952 | R:    0.276 | Len:   8.0 | PG:  -0.0170 | VF:   0.1005 | Ent:  4.862
+Step    972,800 | Eps: 108088 | R:    0.129 | Len:   8.0 | PG:  -0.0180 | VF:   0.0662 | Ent:  4.801
+Step    983,040 | Eps: 109224 | R:    0.157 | Len:   8.0 | PG:  -0.0209 | VF:   0.0886 | Ent:  4.733
+Step    993,280 | Eps: 110360 | R:    0.265 | Len:   8.0 | PG:  -0.0198 | VF:   0.0773 | Ent:  4.577
+  ** Milestone checkpoint saved: 1,000,000 steps
+Step  1,003,520 | Eps: 111496 | R:    0.162 | Len:   8.0 | PG:  -0.0184 | VF:   0.0976 | Ent:  4.921
+Step  1,013,760 | Eps: 112640 | R:    0.180 | Len:   8.0 | PG:  -0.0240 | VF:   0.0671 | Ent:  4.762
+Step  1,024,000 | Eps: 113776 | R:    0.240 | Len:   8.0 | PG:  -0.0257 | VF:   0.0760 | Ent:  4.873
+Step  1,034,240 | Eps: 114912 | R:    0.228 | Len:   8.0 | PG:  -0.0215 | VF:   0.1014 | Ent:  5.193
+Step  1,044,480 | Eps: 116048 | R:    0.107 | Len:   8.0 | PG:  -0.0195 | VF:   0.0735 | Ent:  5.089
+Step  1,054,720 | Eps: 117192 | R:    0.141 | Len:   8.0 | PG:  -0.0208 | VF:   0.0710 | Ent:  4.889
+Step  1,064,960 | Eps: 118328 | R:    0.160 | Len:   8.0 | PG:  -0.0136 | VF:   0.0893 | Ent:  4.761
+Step  1,075,200 | Eps: 119464 | R:    0.225 | Len:   8.0 | PG:  -0.0218 | VF:   0.1324 | Ent:  4.577
+Step  1,085,440 | Eps: 120600 | R:    0.161 | Len:   8.0 | PG:  -0.0240 | VF:   0.0736 | Ent:  4.636
+Step  1,095,680 | Eps: 121736 | R:    0.239 | Len:   8.0 | PG:  -0.0216 | VF:   0.1061 | Ent:  4.464
+Step  1,105,920 | Eps: 122880 | R:    0.217 | Len:   8.0 | PG:  -0.0196 | VF:   0.1077 | Ent:  4.520
+Step  1,116,160 | Eps: 124016 | R:    0.299 | Len:   8.0 | PG:  -0.0196 | VF:   0.1015 | Ent:  4.289
+Step  1,126,400 | Eps: 125152 | R:    0.260 | Len:   8.0 | PG:  -0.0153 | VF:   0.0768 | Ent:  4.607
+Step  1,136,640 | Eps: 126288 | R:    0.237 | Len:   8.0 | PG:  -0.0209 | VF:   0.0750 | Ent:  4.577
+Step  1,146,880 | Eps: 127432 | R:    0.266 | Len:   8.0 | PG:  -0.0155 | VF:   0.0841 | Ent:  4.574
+Step  1,157,120 | Eps: 128568 | R:    0.254 | Len:   8.0 | PG:  -0.0184 | VF:   0.0904 | Ent:  4.669
+Step  1,167,360 | Eps: 129704 | R:    0.288 | Len:   8.0 | PG:  -0.0136 | VF:   0.0767 | Ent:  4.818
+Step  1,177,600 | Eps: 130840 | R:    0.381 | Len:   8.0 | PG:  -0.0197 | VF:   0.1117 | Ent:  5.112
+Step  1,187,840 | Eps: 131976 | R:    0.089 | Len:   8.0 | PG:  -0.0161 | VF:   0.0727 | Ent:  5.153
+Step  1,198,080 | Eps: 133120 | R:    0.395 | Len:   8.0 | PG:  -0.0217 | VF:   0.0907 | Ent:  4.622
+Step  1,208,320 | Eps: 134256 | R:    0.224 | Len:   8.0 | PG:  -0.0179 | VF:   0.1082 | Ent:  4.878
+Step  1,218,560 | Eps: 135392 | R:    0.295 | Len:   8.0 | PG:  -0.0256 | VF:   0.0758 | Ent:  4.752
+Step  1,228,800 | Eps: 136528 | R:    0.221 | Len:   8.0 | PG:  -0.0228 | VF:   0.0793 | Ent:  4.991
+Step  1,239,040 | Eps: 137672 | R:    0.372 | Len:   8.0 | PG:  -0.0220 | VF:   0.0800 | Ent:  4.688
+Step  1,249,280 | Eps: 138808 | R:    0.448 | Len:   8.0 | PG:  -0.0133 | VF:   0.1089 | Ent:  4.187
+Step  1,259,520 | Eps: 139944 | R:    0.308 | Len:   8.0 | PG:  -0.0201 | VF:   0.0825 | Ent:  4.334
+Step  1,269,760 | Eps: 141080 | R:    0.375 | Len:   8.0 | PG:  -0.0191 | VF:   0.1217 | Ent:  4.248
+Step  1,280,000 | Eps: 142216 | R:    0.275 | Len:   8.0 | PG:  -0.0187 | VF:   0.0951 | Ent:  4.717
+Step  1,290,240 | Eps: 143360 | R:    0.290 | Len:   8.0 | PG:  -0.0138 | VF:   0.1181 | Ent:  4.935
+Step  1,300,480 | Eps: 144496 | R:    0.343 | Len:   8.0 | PG:  -0.0191 | VF:   0.0981 | Ent:  4.744
+Step  1,310,720 | Eps: 145632 | R:    0.164 | Len:   8.0 | PG:  -0.0114 | VF:   0.0827 | Ent:  4.446
+Step  1,320,960 | Eps: 146768 | R:    0.189 | Len:   8.0 | PG:  -0.0207 | VF:   0.1184 | Ent:  4.742
+Step  1,331,200 | Eps: 147912 | R:    0.435 | Len:   8.0 | PG:  -0.0181 | VF:   0.1095 | Ent:  4.535
+Step  1,341,440 | Eps: 149048 | R:    0.471 | Len:   8.0 | PG:  -0.0158 | VF:   0.1111 | Ent:  4.313
+Step  1,351,680 | Eps: 150184 | R:    0.313 | Len:   8.0 | PG:  -0.0219 | VF:   0.1302 | Ent:  4.608
+Step  1,361,920 | Eps: 151320 | R:    0.266 | Len:   8.0 | PG:  -0.0154 | VF:   0.0857 | Ent:  4.841
+Step  1,372,160 | Eps: 152456 | R:    0.177 | Len:   8.0 | PG:  -0.0219 | VF:   0.0871 | Ent:  4.512
+Step  1,382,400 | Eps: 153600 | R:    0.339 | Len:   8.0 | PG:  -0.0165 | VF:   0.0948 | Ent:  5.062
+Step  1,392,640 | Eps: 154736 | R:    0.247 | Len:   8.0 | PG:  -0.0242 | VF:   0.0876 | Ent:  4.962
+Step  1,402,880 | Eps: 155872 | R:    0.262 | Len:   8.0 | PG:  -0.0128 | VF:   0.0873 | Ent:  4.821
+Step  1,413,120 | Eps: 157008 | R:    0.280 | Len:   8.0 | PG:  -0.0200 | VF:   0.0945 | Ent:  4.898
+Step  1,423,360 | Eps: 158152 | R:    0.223 | Len:   8.0 | PG:  -0.0281 | VF:   0.0785 | Ent:  4.988
+Step  1,433,600 | Eps: 159288 | R:    0.416 | Len:   8.0 | PG:  -0.0180 | VF:   0.1003 | Ent:  5.009
+Step  1,443,840 | Eps: 160424 | R:    0.132 | Len:   8.0 | PG:  -0.0203 | VF:   0.0701 | Ent:  4.758
+Step  1,454,080 | Eps: 161560 | R:    0.194 | Len:   8.0 | PG:  -0.0155 | VF:   0.0708 | Ent:  4.617
+Step  1,464,320 | Eps: 162696 | R:    0.407 | Len:   8.0 | PG:  -0.0136 | VF:   0.0987 | Ent:  4.403
+Step  1,474,560 | Eps: 163840 | R:    0.303 | Len:   8.0 | PG:  -0.0206 | VF:   0.0884 | Ent:  4.455
+Step  1,484,800 | Eps: 164976 | R:    0.302 | Len:   8.0 | PG:  -0.0219 | VF:   0.1113 | Ent:  4.552
+Step  1,495,040 | Eps: 166112 | R:    0.376 | Len:   8.0 | PG:  -0.0247 | VF:   0.1158 | Ent:  4.760
+Step  1,505,280 | Eps: 167248 | R:    0.245 | Len:   8.0 | PG:  -0.0190 | VF:   0.0802 | Ent:  4.883
+Step  1,515,520 | Eps: 168392 | R:    0.391 | Len:   8.0 | PG:  -0.0190 | VF:   0.0963 | Ent:  4.721
+Step  1,525,760 | Eps: 169528 | R:    0.298 | Len:   8.0 | PG:  -0.0181 | VF:   0.0833 | Ent:  4.679
+Step  1,536,000 | Eps: 170664 | R:    0.277 | Len:   8.0 | PG:  -0.0227 | VF:   0.0758 | Ent:  4.800
+Step  1,546,240 | Eps: 171800 | R:    0.235 | Len:   8.0 | PG:  -0.0156 | VF:   0.0774 | Ent:  4.458
+Step  1,556,480 | Eps: 172936 | R:    0.368 | Len:   8.0 | PG:  -0.0203 | VF:   0.0931 | Ent:  4.555
+Step  1,566,720 | Eps: 174080 | R:    0.348 | Len:   8.0 | PG:  -0.0242 | VF:   0.0898 | Ent:  4.769
+Step  1,576,960 | Eps: 175216 | R:    0.316 | Len:   8.0 | PG:  -0.0156 | VF:   0.0870 | Ent:  4.712
+Step  1,587,200 | Eps: 176352 | R:    0.315 | Len:   8.0 | PG:  -0.0200 | VF:   0.0994 | Ent:  4.637
+Step  1,597,440 | Eps: 177488 | R:    0.346 | Len:   8.0 | PG:  -0.0196 | VF:   0.0809 | Ent:  4.735
+Step  1,607,680 | Eps: 178632 | R:    0.334 | Len:   8.0 | PG:  -0.0101 | VF:   0.0899 | Ent:  4.659
+Step  1,617,920 | Eps: 179768 | R:    0.257 | Len:   8.0 | PG:  -0.0148 | VF:   0.0964 | Ent:  4.440
+Step  1,628,160 | Eps: 180904 | R:    0.278 | Len:   8.0 | PG:  -0.0178 | VF:   0.0810 | Ent:  4.466
+Step  1,638,400 | Eps: 182040 | R:    0.344 | Len:   8.0 | PG:  -0.0186 | VF:   0.0957 | Ent:  4.528
+Step  1,648,640 | Eps: 183176 | R:    0.487 | Len:   8.0 | PG:  -0.0193 | VF:   0.1182 | Ent:  4.614
+Step  1,658,880 | Eps: 184320 | R:    0.440 | Len:   8.0 | PG:  -0.0214 | VF:   0.1126 | Ent:  4.425
+Step  1,669,120 | Eps: 185456 | R:    0.331 | Len:   8.0 | PG:  -0.0212 | VF:   0.0897 | Ent:  4.520
+Step  1,679,360 | Eps: 186592 | R:    0.445 | Len:   8.0 | PG:  -0.0190 | VF:   0.0919 | Ent:  4.702
+Step  1,689,600 | Eps: 187728 | R:    0.352 | Len:   8.0 | PG:  -0.0245 | VF:   0.0782 | Ent:  4.844
+Step  1,699,840 | Eps: 188872 | R:    0.442 | Len:   8.0 | PG:  -0.0195 | VF:   0.0809 | Ent:  4.883
+Step  1,710,080 | Eps: 190008 | R:    0.392 | Len:   8.0 | PG:  -0.0209 | VF:   0.0869 | Ent:  4.628
+Step  1,720,320 | Eps: 191144 | R:    0.346 | Len:   8.0 | PG:  -0.0206 | VF:   0.0891 | Ent:  4.548
+Step  1,730,560 | Eps: 192280 | R:    0.254 | Len:   8.0 | PG:  -0.0206 | VF:   0.0751 | Ent:  4.630
+Step  1,740,800 | Eps: 193416 | R:    0.265 | Len:   8.0 | PG:  -0.0227 | VF:   0.0749 | Ent:  4.645
+Step  1,751,040 | Eps: 194560 | R:    0.326 | Len:   8.0 | PG:  -0.0151 | VF:   0.0934 | Ent:  4.760
+Step  1,761,280 | Eps: 195696 | R:    0.233 | Len:   8.0 | PG:  -0.0188 | VF:   0.0715 | Ent:  4.793
+Step  1,771,520 | Eps: 196832 | R:    0.537 | Len:   8.0 | PG:  -0.0155 | VF:   0.1402 | Ent:  4.848
+Step  1,781,760 | Eps: 197968 | R:    0.329 | Len:   8.0 | PG:  -0.0228 | VF:   0.0778 | Ent:  4.288
+Step  1,792,000 | Eps: 199112 | R:    0.337 | Len:   8.0 | PG:  -0.0262 | VF:   0.0820 | Ent:  4.440
+Step  1,802,240 | Eps: 200248 | R:    0.242 | Len:   8.0 | PG:  -0.0177 | VF:   0.0902 | Ent:  4.505
+Step  1,812,480 | Eps: 201384 | R:    0.326 | Len:   8.0 | PG:  -0.0164 | VF:   0.0931 | Ent:  4.573
+Step  1,822,720 | Eps: 202520 | R:    0.368 | Len:   8.0 | PG:  -0.0162 | VF:   0.0717 | Ent:  4.598
+Step  1,832,960 | Eps: 203656 | R:    0.347 | Len:   8.0 | PG:  -0.0146 | VF:   0.0949 | Ent:  4.366
+Step  1,843,200 | Eps: 204800 | R:    0.345 | Len:   8.0 | PG:  -0.0197 | VF:   0.0862 | Ent:  4.730
+Step  1,853,440 | Eps: 205936 | R:    0.530 | Len:   8.0 | PG:  -0.0195 | VF:   0.1232 | Ent:  4.762
+Step  1,863,680 | Eps: 207072 | R:    0.389 | Len:   8.0 | PG:  -0.0173 | VF:   0.0794 | Ent:  4.643
+Step  1,873,920 | Eps: 208208 | R:    0.388 | Len:   8.0 | PG:  -0.0208 | VF:   0.1117 | Ent:  4.916
+Step  1,884,160 | Eps: 209352 | R:    0.359 | Len:   8.0 | PG:  -0.0134 | VF:   0.1052 | Ent:  4.861
+Step  1,894,400 | Eps: 210488 | R:    0.441 | Len:   8.0 | PG:  -0.0170 | VF:   0.1072 | Ent:  4.714
+Step  1,904,640 | Eps: 211624 | R:    0.330 | Len:   8.0 | PG:  -0.0195 | VF:   0.1193 | Ent:  4.623
+Step  1,914,880 | Eps: 212760 | R:    0.440 | Len:   8.0 | PG:  -0.0206 | VF:   0.1148 | Ent:  4.862
+Step  1,925,120 | Eps: 213896 | R:    0.327 | Len:   8.0 | PG:  -0.0199 | VF:   0.1035 | Ent:  4.482
+Step  1,935,360 | Eps: 215040 | R:    0.286 | Len:   8.0 | PG:  -0.0150 | VF:   0.0979 | Ent:  4.637
+Step  1,945,600 | Eps: 216176 | R:    0.362 | Len:   8.0 | PG:  -0.0204 | VF:   0.1068 | Ent:  4.662
+Step  1,955,840 | Eps: 217312 | R:    0.437 | Len:   8.0 | PG:  -0.0187 | VF:   0.1122 | Ent:  4.517
+Step  1,966,080 | Eps: 218448 | R:    0.354 | Len:   8.0 | PG:  -0.0155 | VF:   0.1073 | Ent:  4.499
+Step  1,976,320 | Eps: 219592 | R:    0.383 | Len:   8.0 | PG:  -0.0171 | VF:   0.0986 | Ent:  4.692
+Step  1,986,560 | Eps: 220728 | R:    0.287 | Len:   8.0 | PG:  -0.0205 | VF:   0.0861 | Ent:  4.531
+Step  1,996,800 | Eps: 221864 | R:    0.452 | Len:   8.0 | PG:  -0.0214 | VF:   0.0962 | Ent:  4.656
+  ** Milestone checkpoint saved: 2,000,000 steps
+
+Training complete: 2,000,896 steps, 222320 episodes

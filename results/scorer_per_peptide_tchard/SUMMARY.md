@@ -2,36 +2,47 @@
 
 **Date**: 2026-04-25  
 **Dataset**: tc-hard, 323 peptides with ≥20 positive and ≥20 negative samples  
-**Scorers**: NetTCR-2.0, ERGO
+**Scorers**: NetTCR-2.0, ERGO, tFold V3.4
 
 ---
 
 ## Executive Summary
 
-Evaluated NetTCR and ERGO on 323 peptides from tc-hard dataset to understand per-peptide prediction accuracy. **Key finding: NetTCR shows moderate performance with high variance across peptides (mean AUC=0.582), while ERGO is barely better than random (mean AUC=0.526).**
+Evaluated NetTCR, ERGO, and tFold V3.4 on peptides from tc-hard dataset to understand per-peptide prediction accuracy. **Key finding: tFold V3.4 significantly outperforms both NetTCR and ERGO, achieving mean AUC=0.800 on 37 overlapping peptides (vs NetTCR 0.601, ERGO 0.541). NetTCR shows moderate performance with high variance (mean AUC=0.582 on 323 peptides), while ERGO is barely better than random (mean AUC=0.526).**
 
 ---
 
 ## Overall Performance
 
-### NetTCR-2.0
+### NetTCR-2.0 (323 peptides)
 - **Mean AUC**: 0.582 ± 0.128
 - **Median AUC**: 0.584
 - **Range**: [0.082, 0.964]
 - **AUC > 0.7**: 46/323 peptides (14.2%)
 - **AUC > 0.8**: 12/323 peptides (3.7%)
 
-### ERGO
+### ERGO (323 peptides)
 - **Mean AUC**: 0.526 ± 0.085
 - **Median AUC**: 0.520
 - **Range**: [0.136, 0.908]
 - **AUC > 0.7**: 10/323 peptides (3.1%)
 - **AUC > 0.8**: 3/323 peptides (0.9%)
 
-### Comparison
-- **NetTCR outperforms ERGO** on 245/323 peptides (75.9%)
-- **Correlation**: NetTCR vs ERGO per-peptide AUC (see plot)
-- **NetTCR has higher variance**: Some peptides have excellent prediction (AUC > 0.9), others fail completely (AUC < 0.3)
+### tFold V3.4 (37 peptides with pre-extracted features)
+- **Mean AUC**: 0.800 ± 0.110
+- **Median AUC**: 0.809
+- **Range**: [0.540, 0.952]
+- **AUC > 0.7**: 32/37 peptides (86.5%)
+- **AUC > 0.8**: 22/37 peptides (59.5%)
+- **AUC > 0.9**: 6/37 peptides (16.2%)
+
+### Comparison on 37 Overlapping Peptides
+- **NetTCR mean AUC**: 0.601 (on same 37 peptides)
+- **ERGO mean AUC**: 0.541 (on same 37 peptides)
+- **tFold mean AUC**: 0.800
+- **tFold outperforms NetTCR**: 32/37 peptides (86.5%)
+- **tFold outperforms ERGO**: 36/37 peptides (97.3%)
+- **Correlation**: tFold shows much stronger discriminative power across all peptides
 
 ---
 
@@ -147,26 +158,36 @@ The overall AUC matches the mean per-peptide AUC, confirming consistency.
 
 ## Implications for RL Training
 
-### 1. Peptide Selection Matters
+### 1. tFold is the Best Scorer for RL Training
 
-For RL training, **choose peptides where NetTCR performs well** (AUC > 0.7):
-- GLCTLVAML (AUC=0.872) ✅
-- YVLDHLIVV (AUC=0.867) ✅
-- EAAGIGILTV (AUC=0.842) ✅
+tFold V3.4 achieves **mean AUC=0.800** — far superior to NetTCR (0.601) and ERGO (0.541) on overlapping peptides. **Use tFold as the primary reward signal** where pre-extracted features are available.
 
-**Avoid peptides where NetTCR fails** (AUC < 0.5):
-- NLVPMVATV (AUC=0.369) ❌
-- GIVEQCCTSICSLYQ (AUC=0.082) ❌
+### 2. Peptide Selection Matters
 
-### 2. Multi-Component Reward is Critical
+For RL training, **choose peptides where tFold performs well** (AUC > 0.8):
+- GILGFVFTL (AUC=0.952) ✅
+- ELAGIGILTV (AUC=0.947) ✅
+- GLCTLVAML (AUC=0.934) ✅
+- LLWNGPMAV (AUC=0.912) ✅
+- YLQPRTFLL (AUC=0.870) ✅ (NetTCR only 0.394!)
 
-Since NetTCR is unreliable on many peptides, the multi-component reward (affinity + decoy + naturalness + diversity) is essential to prevent learning from bad signals.
+### 3. Multi-Component Reward is Critical
 
-### 3. Validation Strategy
+Since even tFold is not perfect (some peptides still have AUC < 0.7), the multi-component reward (affinity + decoy + naturalness + diversity) is essential to prevent learning from bad signals.
 
-- Use NetTCR for RL training on selected peptides
+### 4. Validation Strategy
+
+- **Use tFold for RL training** on selected peptides with pre-extracted features
+- **Fall back to NetTCR** for peptides without tFold features (but expect lower quality)
 - Validate top candidates with AlphaFold2 or experimental assays
-- Do NOT trust NetTCR predictions blindly
+- Do NOT trust any scorer predictions blindly
+
+### 5. tFold Limitations
+
+- **Requires pre-extracted structure features** from 735M tFold model (~1s per sample)
+- Only 37/323 peptides have pre-extracted features in current dataset
+- Feature extraction requires full TCR sequences (alpha + beta chains) + MHC + peptide
+- Cannot score arbitrary CDR3β-peptide pairs on-the-fly like NetTCR/ERGO
 
 ---
 
@@ -180,13 +201,16 @@ Since NetTCR is unreliable on many peptides, the multi-component reward (affinit
 
 ## Recommendations
 
-1. **For pilot RL training**: Use GLCTLVAML (NetTCR AUC=0.872, good decoy discrimination)
-2. **Avoid**: NLVPMVATV despite being a common target (NetTCR AUC=0.369)
-3. **Future work**: Investigate why NetTCR fails on certain peptides
-4. **TITAN priority**: Test if TITAN has more consistent performance across peptides
+1. **For pilot RL training**: Use GLCTLVAML or ELAGIGILTV (tFold AUC > 0.93, good across all scorers)
+2. **Primary scorer**: tFold V3.4 where features available, NetTCR as fallback
+3. **Avoid**: NLVPMVATV despite being a common target (NetTCR AUC=0.369, no tFold data)
+4. **Future work**: 
+   - Extract tFold features for more peptides from tc-hard
+   - Investigate why NetTCR fails on certain peptides
+   - Build ensemble scorer combining tFold + NetTCR + decoy discrimination
 
 ---
 
 ## Conclusion
 
-NetTCR shows **moderate but highly variable performance** across peptides (mean AUC=0.582, std=0.128). Performance is excellent on some peptides (AUC > 0.9) but fails completely on others (AUC < 0.3). **Peptide selection is critical for RL training success** - choose peptides where NetTCR performs well (AUC > 0.7) to ensure reliable reward signals.
+**tFold V3.4 is the state-of-the-art scorer** with mean AUC=0.800 on 37 peptides, significantly outperforming NetTCR (0.601) and ERGO (0.541). NetTCR shows **moderate but highly variable performance** across 323 peptides (mean AUC=0.582, std=0.128). Performance is excellent on some peptides (AUC > 0.9) but fails completely on others (AUC < 0.3). **Peptide selection is critical for RL training success** — choose peptides where tFold performs well (AUC > 0.8) to ensure reliable reward signals. For peptides without tFold features, use NetTCR but only on peptides with AUC > 0.7.

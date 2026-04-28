@@ -1,0 +1,632 @@
+=== ALSKGVHFV (HLA-A*02:01) ===
+12:14:42 [INFO] run_decoy: Target: ALSKGVHFV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:15:13 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:15:13 [INFO] run_decoy.B: Target: ALSKGVHFV | HLA: HLA-A*02:01 | skip_structural: True
+12:15:13 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:15:13 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:15:13 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:15:13 [INFO] decoy_b.scanner: Decoy B scan: target=ALSKGVHFV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:15:23 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ALSKGVHFV, min_hamming=5, threshold=0.70
+12:15:25 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971520 candidates (same-len 9-mer: 596368, other lengths: 375152)
+12:15:28 [INFO] decoy_b.scanner: Physicochemical screen: 971520 -> 8909 above threshold -> top 50
+12:15:28 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:15:28 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:15:34 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ALSKGVHFV/decoy_b_results.json
+12:15:34 [INFO] run_decoy: All requested strategies completed.
+=== ALSPVIPHI (HLA-A*02:01) ===
+12:15:35 [INFO] run_decoy: Target: ALSPVIPHI | HLA: HLA-A*02:01 | Strategies: ['b']
+12:15:35 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:15:35 [INFO] run_decoy.B: Target: ALSPVIPHI | HLA: HLA-A*02:01 | skip_structural: True
+12:15:35 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:15:35 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:15:35 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:15:35 [INFO] decoy_b.scanner: Decoy B scan: target=ALSPVIPHI, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:15:36 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ALSPVIPHI, min_hamming=5, threshold=0.70
+12:15:39 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971473 candidates (same-len 9-mer: 596321, other lengths: 375152)
+12:15:42 [INFO] decoy_b.scanner: Physicochemical screen: 971473 -> 18609 above threshold -> top 50
+12:15:42 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:15:42 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:15:52 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ALSPVIPHI/decoy_b_results.json
+12:15:52 [INFO] run_decoy: All requested strategies completed.
+=== ALSPVIPLI (HLA-A*02:01) ===
+12:15:52 [INFO] run_decoy: Target: ALSPVIPLI | HLA: HLA-A*02:01 | Strategies: ['b']
+12:15:52 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:15:52 [INFO] run_decoy.B: Target: ALSPVIPLI | HLA: HLA-A*02:01 | skip_structural: True
+12:15:53 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:15:53 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:15:53 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:15:53 [INFO] decoy_b.scanner: Decoy B scan: target=ALSPVIPLI, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:15:54 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ALSPVIPLI, min_hamming=5, threshold=0.70
+12:15:56 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971165 candidates (same-len 9-mer: 596013, other lengths: 375152)
+12:15:59 [INFO] decoy_b.scanner: Physicochemical screen: 971165 -> 18533 above threshold -> top 50
+12:15:59 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:15:59 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:16:15 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ALSPVIPLI/decoy_b_results.json
+12:16:15 [INFO] run_decoy: All requested strategies completed.
+=== ALTPVVVTL (HLA-A*02:01) ===
+12:16:15 [INFO] run_decoy: Target: ALTPVVVTL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:16:16 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:16:16 [INFO] run_decoy.B: Target: ALTPVVVTL | HLA: HLA-A*02:01 | skip_structural: True
+12:16:16 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:16:16 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:16:16 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:16:16 [INFO] decoy_b.scanner: Decoy B scan: target=ALTPVVVTL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:16:17 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ALTPVVVTL, min_hamming=5, threshold=0.70
+12:16:20 [INFO] decoy_b.scanner: After excluding Decoy A territory: 970879 candidates (same-len 9-mer: 595727, other lengths: 375152)
+12:16:23 [INFO] decoy_b.scanner: Physicochemical screen: 970879 -> 7463 above threshold -> top 50
+12:16:23 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:16:23 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:16:33 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ALTPVVVTL/decoy_b_results.json
+12:16:33 [INFO] run_decoy: All requested strategies completed.
+=== ALYGFVPVL (HLA-A*02:01) ===
+12:16:33 [INFO] run_decoy: Target: ALYGFVPVL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:16:33 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:16:33 [INFO] run_decoy.B: Target: ALYGFVPVL | HLA: HLA-A*02:01 | skip_structural: True
+12:16:33 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:16:33 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:16:33 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:16:34 [INFO] decoy_b.scanner: Decoy B scan: target=ALYGFVPVL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:16:35 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ALYGFVPVL, min_hamming=5, threshold=0.70
+12:16:37 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971163 candidates (same-len 9-mer: 596011, other lengths: 375152)
+12:16:40 [INFO] decoy_b.scanner: Physicochemical screen: 971163 -> 4114 above threshold -> top 50
+12:16:40 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:16:40 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:16:51 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ALYGFVPVL/decoy_b_results.json
+12:16:51 [INFO] run_decoy: All requested strategies completed.
+=== AMFWSVPTV (HLA-A*02:01) ===
+12:16:51 [INFO] run_decoy: Target: AMFWSVPTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:16:51 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:16:51 [INFO] run_decoy.B: Target: AMFWSVPTV | HLA: HLA-A*02:01 | skip_structural: True
+12:16:51 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:16:51 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:16:51 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:16:51 [INFO] decoy_b.scanner: Decoy B scan: target=AMFWSVPTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:16:53 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=AMFWSVPTV, min_hamming=5, threshold=0.70
+12:16:55 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971766 candidates (same-len 9-mer: 596614, other lengths: 375152)
+12:16:58 [INFO] decoy_b.scanner: Physicochemical screen: 971766 -> 8016 above threshold -> top 50
+12:16:58 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:16:58 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:17:04 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/AMFWSVPTV/decoy_b_results.json
+12:17:04 [INFO] run_decoy: All requested strategies completed.
+=== AVGSYVYSV (HLA-A*02:01) ===
+12:17:04 [INFO] run_decoy: Target: AVGSYVYSV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:17:04 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:17:04 [INFO] run_decoy.B: Target: AVGSYVYSV | HLA: HLA-A*02:01 | skip_structural: True
+12:17:04 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:17:04 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:17:04 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:17:04 [INFO] decoy_b.scanner: Decoy B scan: target=AVGSYVYSV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:17:06 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=AVGSYVYSV, min_hamming=5, threshold=0.70
+12:17:09 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971560 candidates (same-len 9-mer: 596408, other lengths: 375152)
+12:17:11 [INFO] decoy_b.scanner: Physicochemical screen: 971560 -> 14967 above threshold -> top 50
+12:17:11 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:17:12 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:17:19 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/AVGSYVYSV/decoy_b_results.json
+12:17:19 [INFO] run_decoy: All requested strategies completed.
+=== CINGVCWTV (HLA-A*02:01) ===
+12:17:19 [INFO] run_decoy: Target: CINGVCWTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:17:19 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:17:19 [INFO] run_decoy.B: Target: CINGVCWTV | HLA: HLA-A*02:01 | skip_structural: True
+12:17:20 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:17:20 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:17:20 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:17:20 [INFO] decoy_b.scanner: Decoy B scan: target=CINGVCWTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:17:21 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=CINGVCWTV, min_hamming=5, threshold=0.70
+12:17:24 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971878 candidates (same-len 9-mer: 596726, other lengths: 375152)
+12:17:27 [INFO] decoy_b.scanner: Physicochemical screen: 971878 -> 389 above threshold -> top 50
+12:17:27 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:17:27 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:17:35 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/CINGVCWTV/decoy_b_results.json
+12:17:35 [INFO] run_decoy: All requested strategies completed.
+=== CLNEYHLFL (HLA-A*02:01) ===
+12:17:35 [INFO] run_decoy: Target: CLNEYHLFL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:17:35 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:17:35 [INFO] run_decoy.B: Target: CLNEYHLFL | HLA: HLA-A*02:01 | skip_structural: True
+12:17:36 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:17:36 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:17:36 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:17:36 [INFO] decoy_b.scanner: Decoy B scan: target=CLNEYHLFL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:17:37 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=CLNEYHLFL, min_hamming=5, threshold=0.70
+12:17:40 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971660 candidates (same-len 9-mer: 596508, other lengths: 375152)
+12:17:42 [INFO] decoy_b.scanner: Physicochemical screen: 971660 -> 1079 above threshold -> top 50
+12:17:42 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:17:42 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:17:48 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/CLNEYHLFL/decoy_b_results.json
+12:17:48 [INFO] run_decoy: All requested strategies completed.
+=== CVNGSCFTV (HLA-A*02:01) ===
+12:17:48 [INFO] run_decoy: Target: CVNGSCFTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:17:48 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:17:48 [INFO] run_decoy.B: Target: CVNGSCFTV | HLA: HLA-A*02:01 | skip_structural: True
+12:17:49 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:17:49 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:17:49 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:17:49 [INFO] decoy_b.scanner: Decoy B scan: target=CVNGSCFTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:17:50 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=CVNGSCFTV, min_hamming=5, threshold=0.70
+12:17:52 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971832 candidates (same-len 9-mer: 596680, other lengths: 375152)
+12:17:55 [INFO] decoy_b.scanner: Physicochemical screen: 971832 -> 7906 above threshold -> top 50
+12:17:55 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:17:55 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:18:02 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/CVNGSCFTV/decoy_b_results.json
+12:18:02 [INFO] run_decoy: All requested strategies completed.
+=== EAAGIGILTV (HLA-A*02:01) ===
+12:18:02 [INFO] run_decoy: Target: EAAGIGILTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:18:02 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:18:02 [INFO] run_decoy.B: Target: EAAGIGILTV | HLA: HLA-A*02:01 | skip_structural: True
+12:18:02 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:18:02 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:18:02 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:18:02 [INFO] decoy_b.scanner: Decoy B scan: target=EAAGIGILTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:18:04 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=EAAGIGILTV, min_hamming=5, threshold=0.70
+12:18:05 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971910 candidates (same-len 10-mer: 263362, other lengths: 708548)
+12:18:08 [INFO] decoy_b.scanner: Physicochemical screen: 971910 -> 4728 above threshold -> top 50
+12:18:08 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:18:08 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:18:13 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/EAAGIGILTV/decoy_b_results.json
+12:18:13 [INFO] run_decoy: All requested strategies completed.
+=== ELAGIGILTV (HLA-A*02:01) ===
+12:18:14 [INFO] run_decoy: Target: ELAGIGILTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:18:14 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:18:14 [INFO] run_decoy.B: Target: ELAGIGILTV | HLA: HLA-A*02:01 | skip_structural: True
+12:18:14 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:18:14 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:18:14 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:18:14 [INFO] decoy_b.scanner: Decoy B scan: target=ELAGIGILTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:18:15 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ELAGIGILTV, min_hamming=5, threshold=0.70
+12:18:17 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971868 candidates (same-len 10-mer: 263320, other lengths: 708548)
+12:18:20 [INFO] decoy_b.scanner: Physicochemical screen: 971868 -> 4715 above threshold -> top 50
+12:18:20 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:18:20 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:18:26 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ELAGIGILTV/decoy_b_results.json
+12:18:26 [INFO] run_decoy: All requested strategies completed.
+=== ELAGIGLTV (HLA-A*02:01) ===
+12:18:26 [INFO] run_decoy: Target: ELAGIGLTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:18:26 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:18:26 [INFO] run_decoy.B: Target: ELAGIGLTV | HLA: HLA-A*02:01 | skip_structural: True
+12:18:27 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:18:27 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:18:27 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:18:27 [INFO] decoy_b.scanner: Decoy B scan: target=ELAGIGLTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:18:28 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ELAGIGLTV, min_hamming=5, threshold=0.70
+12:18:31 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971239 candidates (same-len 9-mer: 596087, other lengths: 375152)
+12:18:34 [INFO] decoy_b.scanner: Physicochemical screen: 971239 -> 5427 above threshold -> top 50
+12:18:34 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:18:34 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:18:40 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ELAGIGLTV/decoy_b_results.json
+12:18:40 [INFO] run_decoy: All requested strategies completed.
+=== FIAGLIAIV (HLA-A*02:01) ===
+12:18:40 [INFO] run_decoy: Target: FIAGLIAIV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:18:40 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:18:40 [INFO] run_decoy.B: Target: FIAGLIAIV | HLA: HLA-A*02:01 | skip_structural: True
+12:18:40 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:18:40 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:18:40 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:18:40 [INFO] decoy_b.scanner: Decoy B scan: target=FIAGLIAIV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:18:42 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FIAGLIAIV, min_hamming=5, threshold=0.70
+12:18:44 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971504 candidates (same-len 9-mer: 596352, other lengths: 375152)
+12:18:47 [INFO] decoy_b.scanner: Physicochemical screen: 971504 -> 6543 above threshold -> top 50
+12:18:47 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:18:47 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:18:52 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FIAGLIAIV/decoy_b_results.json
+12:18:52 [INFO] run_decoy: All requested strategies completed.
+=== FLASKIGRLV (HLA-A*02:01) ===
+12:18:52 [INFO] run_decoy: Target: FLASKIGRLV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:18:52 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:18:52 [INFO] run_decoy.B: Target: FLASKIGRLV | HLA: HLA-A*02:01 | skip_structural: True
+12:18:52 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:18:52 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:18:52 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:18:52 [INFO] decoy_b.scanner: Decoy B scan: target=FLASKIGRLV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:18:54 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FLASKIGRLV, min_hamming=5, threshold=0.70
+12:18:55 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971865 candidates (same-len 10-mer: 263317, other lengths: 708548)
+12:18:58 [INFO] decoy_b.scanner: Physicochemical screen: 971865 -> 14048 above threshold -> top 50
+12:18:59 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:18:59 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:19:06 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FLASKIGRLV/decoy_b_results.json
+12:19:06 [INFO] run_decoy: All requested strategies completed.
+=== FLCMKALLL (HLA-A*02:01) ===
+12:19:06 [INFO] run_decoy: Target: FLCMKALLL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:19:07 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:19:07 [INFO] run_decoy.B: Target: FLCMKALLL | HLA: HLA-A*02:01 | skip_structural: True
+12:19:07 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:19:07 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:19:07 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:19:07 [INFO] decoy_b.scanner: Decoy B scan: target=FLCMKALLL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:19:08 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FLCMKALLL, min_hamming=5, threshold=0.70
+12:19:11 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971176 candidates (same-len 9-mer: 596024, other lengths: 375152)
+12:19:14 [INFO] decoy_b.scanner: Physicochemical screen: 971176 -> 765 above threshold -> top 50
+12:19:14 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:19:14 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:19:18 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FLCMKALLL/decoy_b_results.json
+12:19:18 [INFO] run_decoy: All requested strategies completed.
+=== FLYNLLTRV (HLA-A*02:01) ===
+12:19:18 [INFO] run_decoy: Target: FLYNLLTRV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:19:18 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:19:18 [INFO] run_decoy.B: Target: FLYNLLTRV | HLA: HLA-A*02:01 | skip_structural: True
+12:19:18 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:19:18 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:19:18 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:19:18 [INFO] decoy_b.scanner: Decoy B scan: target=FLYNLLTRV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:19:20 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FLYNLLTRV, min_hamming=5, threshold=0.70
+12:19:22 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971207 candidates (same-len 9-mer: 596055, other lengths: 375152)
+12:19:25 [INFO] decoy_b.scanner: Physicochemical screen: 971207 -> 5972 above threshold -> top 50
+12:19:25 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:19:25 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:19:28 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FLYNLLTRV/decoy_b_results.json
+12:19:28 [INFO] run_decoy: All requested strategies completed.
+=== FLYNPLTRV (HLA-A*02:01) ===
+12:19:28 [INFO] run_decoy: Target: FLYNPLTRV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:19:29 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:19:29 [INFO] run_decoy.B: Target: FLYNPLTRV | HLA: HLA-A*02:01 | skip_structural: True
+12:19:29 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:19:29 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:19:29 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:19:29 [INFO] decoy_b.scanner: Decoy B scan: target=FLYNPLTRV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:19:30 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FLYNPLTRV, min_hamming=5, threshold=0.70
+12:19:33 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971529 candidates (same-len 9-mer: 596377, other lengths: 375152)
+12:19:36 [INFO] decoy_b.scanner: Physicochemical screen: 971529 -> 4282 above threshold -> top 50
+12:19:36 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:19:36 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:19:44 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FLYNPLTRV/decoy_b_results.json
+12:19:44 [INFO] run_decoy: All requested strategies completed.
+=== FMLYLLTLM (HLA-A*02:01) ===
+12:19:44 [INFO] run_decoy: Target: FMLYLLTLM | HLA: HLA-A*02:01 | Strategies: ['b']
+12:19:45 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:19:45 [INFO] run_decoy.B: Target: FMLYLLTLM | HLA: HLA-A*02:01 | skip_structural: True
+12:19:45 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:19:45 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:19:45 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:19:45 [INFO] decoy_b.scanner: Decoy B scan: target=FMLYLLTLM, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:19:46 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FMLYLLTLM, min_hamming=5, threshold=0.70
+12:19:49 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971650 candidates (same-len 9-mer: 596498, other lengths: 375152)
+12:19:51 [INFO] decoy_b.scanner: Physicochemical screen: 971650 -> 8309 above threshold -> top 50
+12:19:52 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:19:52 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:19:59 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FMLYLLTLM/decoy_b_results.json
+12:19:59 [INFO] run_decoy: All requested strategies completed.
+=== FVDGVPFVV (HLA-A*02:01) ===
+12:19:59 [INFO] run_decoy: Target: FVDGVPFVV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:19:59 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:19:59 [INFO] run_decoy.B: Target: FVDGVPFVV | HLA: HLA-A*02:01 | skip_structural: True
+12:19:59 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:19:59 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:19:59 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:19:59 [INFO] decoy_b.scanner: Decoy B scan: target=FVDGVPFVV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:20:01 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=FVDGVPFVV, min_hamming=5, threshold=0.70
+12:20:03 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971616 candidates (same-len 9-mer: 596464, other lengths: 375152)
+12:20:06 [INFO] decoy_b.scanner: Physicochemical screen: 971616 -> 10677 above threshold -> top 50
+12:20:06 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:20:06 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:20:14 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/FVDGVPFVV/decoy_b_results.json
+12:20:14 [INFO] run_decoy: All requested strategies completed.
+=== IILVAVPHV (HLA-A*02:01) ===
+12:20:14 [INFO] run_decoy: Target: IILVAVPHV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:20:14 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:20:14 [INFO] run_decoy.B: Target: IILVAVPHV | HLA: HLA-A*02:01 | skip_structural: True
+12:20:14 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:20:14 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:20:14 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:20:14 [INFO] decoy_b.scanner: Decoy B scan: target=IILVAVPHV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:20:16 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=IILVAVPHV, min_hamming=5, threshold=0.70
+12:20:19 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971608 candidates (same-len 9-mer: 596456, other lengths: 375152)
+12:20:21 [INFO] decoy_b.scanner: Physicochemical screen: 971608 -> 8198 above threshold -> top 50
+12:20:21 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:20:22 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:20:26 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/IILVAVPHV/decoy_b_results.json
+12:20:26 [INFO] run_decoy: All requested strategies completed.
+=== ILGLPTQTV (HLA-A*02:01) ===
+12:20:26 [INFO] run_decoy: Target: ILGLPTQTV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:20:26 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:20:26 [INFO] run_decoy.B: Target: ILGLPTQTV | HLA: HLA-A*02:01 | skip_structural: True
+12:20:26 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:20:26 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:20:26 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:20:26 [INFO] decoy_b.scanner: Decoy B scan: target=ILGLPTQTV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:20:28 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILGLPTQTV, min_hamming=5, threshold=0.70
+12:20:31 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971469 candidates (same-len 9-mer: 596317, other lengths: 375152)
+12:20:33 [INFO] decoy_b.scanner: Physicochemical screen: 971469 -> 4362 above threshold -> top 50
+12:20:33 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:20:34 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:20:39 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILGLPTQTV/decoy_b_results.json
+12:20:39 [INFO] run_decoy: All requested strategies completed.
+=== ILHCANFNV (HLA-A*02:01) ===
+12:20:39 [INFO] run_decoy: Target: ILHCANFNV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:20:39 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:20:39 [INFO] run_decoy.B: Target: ILHCANFNV | HLA: HLA-A*02:01 | skip_structural: True
+12:20:39 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:20:39 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:20:39 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:20:39 [INFO] decoy_b.scanner: Decoy B scan: target=ILHCANFNV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:20:41 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILHCANFNV, min_hamming=5, threshold=0.70
+12:20:43 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971791 candidates (same-len 9-mer: 596639, other lengths: 375152)
+12:20:47 [INFO] decoy_b.scanner: Physicochemical screen: 971791 -> 275 above threshold -> top 50
+12:20:47 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:20:47 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:20:52 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILHCANFNV/decoy_b_results.json
+12:20:52 [INFO] run_decoy: All requested strategies completed.
+=== ILKEPVHGV (HLA-A*02:01) ===
+12:20:52 [INFO] run_decoy: Target: ILKEPVHGV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:20:55 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:20:55 [INFO] run_decoy.B: Target: ILKEPVHGV | HLA: HLA-A*02:01 | skip_structural: True
+12:20:55 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:20:55 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:20:55 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:20:55 [INFO] decoy_b.scanner: Decoy B scan: target=ILKEPVHGV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:20:56 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILKEPVHGV, min_hamming=5, threshold=0.70
+12:20:59 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971574 candidates (same-len 9-mer: 596422, other lengths: 375152)
+12:21:02 [INFO] decoy_b.scanner: Physicochemical screen: 971574 -> 661 above threshold -> top 50
+12:21:02 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:21:02 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:21:08 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILKEPVHGV/decoy_b_results.json
+12:21:08 [INFO] run_decoy: All requested strategies completed.
+=== ILNAMIAKI (HLA-A*02:01) ===
+12:21:08 [INFO] run_decoy: Target: ILNAMIAKI | HLA: HLA-A*02:01 | Strategies: ['b']
+12:21:08 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:21:08 [INFO] run_decoy.B: Target: ILNAMIAKI | HLA: HLA-A*02:01 | skip_structural: True
+12:21:08 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:21:08 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:21:08 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:21:08 [INFO] decoy_b.scanner: Decoy B scan: target=ILNAMIAKI, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:21:10 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILNAMIAKI, min_hamming=5, threshold=0.70
+12:21:13 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971715 candidates (same-len 9-mer: 596563, other lengths: 375152)
+12:21:15 [INFO] decoy_b.scanner: Physicochemical screen: 971715 -> 1823 above threshold -> top 50
+12:21:15 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:21:15 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:21:22 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILNAMIAKI/decoy_b_results.json
+12:21:22 [INFO] run_decoy: All requested strategies completed.
+=== ILNVDIFTL (HLA-A*02:01) ===
+12:21:22 [INFO] run_decoy: Target: ILNVDIFTL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:21:23 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:21:23 [INFO] run_decoy.B: Target: ILNVDIFTL | HLA: HLA-A*02:01 | skip_structural: True
+12:21:23 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:21:23 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:21:23 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:21:23 [INFO] decoy_b.scanner: Decoy B scan: target=ILNVDIFTL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:21:24 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILNVDIFTL, min_hamming=5, threshold=0.70
+12:21:27 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971446 candidates (same-len 9-mer: 596294, other lengths: 375152)
+12:21:29 [INFO] decoy_b.scanner: Physicochemical screen: 971446 -> 8376 above threshold -> top 50
+12:21:29 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:21:29 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:21:35 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILNVDIFTL/decoy_b_results.json
+12:21:35 [INFO] run_decoy: All requested strategies completed.
+=== ILTGLNYEA (HLA-A*02:01) ===
+12:21:35 [INFO] run_decoy: Target: ILTGLNYEA | HLA: HLA-A*02:01 | Strategies: ['b']
+12:21:36 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:21:36 [INFO] run_decoy.B: Target: ILTGLNYEA | HLA: HLA-A*02:01 | skip_structural: True
+12:21:36 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:21:36 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:21:36 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:21:36 [INFO] decoy_b.scanner: Decoy B scan: target=ILTGLNYEA, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:21:37 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILTGLNYEA, min_hamming=5, threshold=0.70
+12:21:40 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971571 candidates (same-len 9-mer: 596419, other lengths: 375152)
+12:21:42 [INFO] decoy_b.scanner: Physicochemical screen: 971571 -> 3893 above threshold -> top 50
+12:21:42 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:21:42 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:21:50 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILTGLNYEA/decoy_b_results.json
+12:21:50 [INFO] run_decoy: All requested strategies completed.
+=== ILTGLNYEV (HLA-A*02:01) ===
+12:21:50 [INFO] run_decoy: Target: ILTGLNYEV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:21:50 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:21:50 [INFO] run_decoy.B: Target: ILTGLNYEV | HLA: HLA-A*02:01 | skip_structural: True
+12:21:50 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:21:50 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:21:50 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:21:50 [INFO] decoy_b.scanner: Decoy B scan: target=ILTGLNYEV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:21:52 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ILTGLNYEV, min_hamming=5, threshold=0.70
+12:21:54 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971475 candidates (same-len 9-mer: 596323, other lengths: 375152)
+12:21:57 [INFO] decoy_b.scanner: Physicochemical screen: 971475 -> 3867 above threshold -> top 50
+12:21:57 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:21:57 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:22:02 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ILTGLNYEV/decoy_b_results.json
+12:22:02 [INFO] run_decoy: All requested strategies completed.
+=== IMDQVPFSV (HLA-A*02:01) ===
+12:22:04 [INFO] run_decoy: Target: IMDQVPFSV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:22:07 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:22:07 [INFO] run_decoy.B: Target: IMDQVPFSV | HLA: HLA-A*02:01 | skip_structural: True
+12:22:07 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:22:07 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:22:07 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:22:07 [INFO] decoy_b.scanner: Decoy B scan: target=IMDQVPFSV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:22:09 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=IMDQVPFSV, min_hamming=5, threshold=0.70
+12:22:11 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971757 candidates (same-len 9-mer: 596605, other lengths: 375152)
+12:22:14 [INFO] decoy_b.scanner: Physicochemical screen: 971757 -> 19405 above threshold -> top 50
+12:22:14 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:22:14 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:22:18 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/IMDQVPFSV/decoy_b_results.json
+12:22:18 [INFO] run_decoy: All requested strategies completed.
+=== IMNDMPIYM (HLA-A*02:01) ===
+12:22:19 [INFO] run_decoy: Target: IMNDMPIYM | HLA: HLA-A*02:01 | Strategies: ['b']
+12:22:20 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:22:20 [INFO] run_decoy.B: Target: IMNDMPIYM | HLA: HLA-A*02:01 | skip_structural: True
+12:22:20 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:22:20 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:22:20 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:22:20 [INFO] decoy_b.scanner: Decoy B scan: target=IMNDMPIYM, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:22:21 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=IMNDMPIYM, min_hamming=5, threshold=0.70
+12:22:24 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971902 candidates (same-len 9-mer: 596750, other lengths: 375152)
+12:22:27 [INFO] decoy_b.scanner: Physicochemical screen: 971902 -> 10458 above threshold -> top 50
+12:22:27 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:22:27 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:22:33 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/IMNDMPIYM/decoy_b_results.json
+12:22:33 [INFO] run_decoy: All requested strategies completed.
+=== ITDQVPFSV (HLA-A*02:01) ===
+12:22:33 [INFO] run_decoy: Target: ITDQVPFSV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:22:33 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:22:33 [INFO] run_decoy.B: Target: ITDQVPFSV | HLA: HLA-A*02:01 | skip_structural: True
+12:22:33 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:22:33 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:22:33 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:22:33 [INFO] decoy_b.scanner: Decoy B scan: target=ITDQVPFSV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:22:35 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=ITDQVPFSV, min_hamming=5, threshold=0.70
+12:22:37 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971716 candidates (same-len 9-mer: 596564, other lengths: 375152)
+12:22:40 [INFO] decoy_b.scanner: Physicochemical screen: 971716 -> 19398 above threshold -> top 50
+12:22:40 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:22:40 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:22:45 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/ITDQVPFSV/decoy_b_results.json
+12:22:45 [INFO] run_decoy: All requested strategies completed.
+=== KLFIRQEEV (HLA-A*02:01) ===
+12:22:45 [INFO] run_decoy: Target: KLFIRQEEV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:22:48 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:22:48 [INFO] run_decoy.B: Target: KLFIRQEEV | HLA: HLA-A*02:01 | skip_structural: True
+12:22:48 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:22:48 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:22:48 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:22:48 [INFO] decoy_b.scanner: Decoy B scan: target=KLFIRQEEV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:22:50 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLFIRQEEV, min_hamming=5, threshold=0.70
+12:22:52 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971583 candidates (same-len 9-mer: 596431, other lengths: 375152)
+12:22:55 [INFO] decoy_b.scanner: Physicochemical screen: 971583 -> 2403 above threshold -> top 50
+12:22:55 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:22:55 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:22:59 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLFIRQEEV/decoy_b_results.json
+12:22:59 [INFO] run_decoy: All requested strategies completed.
+=== KLMNIQQKL (HLA-A*02:01) ===
+12:22:59 [INFO] run_decoy: Target: KLMNIQQKL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:22:59 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:22:59 [INFO] run_decoy.B: Target: KLMNIQQKL | HLA: HLA-A*02:01 | skip_structural: True
+12:23:00 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:23:00 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:23:00 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:23:00 [INFO] decoy_b.scanner: Decoy B scan: target=KLMNIQQKL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:23:01 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLMNIQQKL, min_hamming=5, threshold=0.70
+12:23:04 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971488 candidates (same-len 9-mer: 596336, other lengths: 375152)
+12:23:06 [INFO] decoy_b.scanner: Physicochemical screen: 971488 -> 6828 above threshold -> top 50
+12:23:06 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:23:06 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:23:12 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLMNIQQKL/decoy_b_results.json
+12:23:12 [INFO] run_decoy: All requested strategies completed.
+=== KLPDDFTGCV (HLA-A*02:01) ===
+12:23:12 [INFO] run_decoy: Target: KLPDDFTGCV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:23:12 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:23:12 [INFO] run_decoy.B: Target: KLPDDFTGCV | HLA: HLA-A*02:01 | skip_structural: True
+12:23:12 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:23:12 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:23:12 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:23:12 [INFO] decoy_b.scanner: Decoy B scan: target=KLPDDFTGCV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:23:14 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLPDDFTGCV, min_hamming=5, threshold=0.70
+12:23:15 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971899 candidates (same-len 10-mer: 263351, other lengths: 708548)
+12:23:18 [INFO] decoy_b.scanner: Physicochemical screen: 971899 -> 20655 above threshold -> top 50
+12:23:18 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:23:18 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:23:24 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLPDDFTGCV/decoy_b_results.json
+12:23:24 [INFO] run_decoy: All requested strategies completed.
+=== KLSALGINAV (HLA-A*02:01) ===
+12:23:24 [INFO] run_decoy: Target: KLSALGINAV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:23:24 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:23:24 [INFO] run_decoy.B: Target: KLSALGINAV | HLA: HLA-A*02:01 | skip_structural: True
+12:23:24 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:23:24 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:23:24 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:23:24 [INFO] decoy_b.scanner: Decoy B scan: target=KLSALGINAV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:23:26 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLSALGINAV, min_hamming=5, threshold=0.70
+12:23:28 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971843 candidates (same-len 10-mer: 263295, other lengths: 708548)
+12:23:30 [INFO] decoy_b.scanner: Physicochemical screen: 971843 -> 14750 above threshold -> top 50
+12:23:30 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:23:31 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:23:34 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLSALGINAV/decoy_b_results.json
+12:23:34 [INFO] run_decoy: All requested strategies completed.
+=== KLVALGINAV (HLA-A*02:01) ===
+12:23:37 [INFO] run_decoy: Target: KLVALGINAV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:23:37 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:23:37 [INFO] run_decoy.B: Target: KLVALGINAV | HLA: HLA-A*02:01 | skip_structural: True
+12:23:37 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:23:37 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:23:37 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:23:38 [INFO] decoy_b.scanner: Decoy B scan: target=KLVALGINAV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:23:39 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLVALGINAV, min_hamming=5, threshold=0.70
+12:23:41 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971837 candidates (same-len 10-mer: 263289, other lengths: 708548)
+12:23:43 [INFO] decoy_b.scanner: Physicochemical screen: 971837 -> 4791 above threshold -> top 50
+12:23:43 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:23:43 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:23:46 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLVALGINAV/decoy_b_results.json
+12:23:46 [INFO] run_decoy: All requested strategies completed.
+=== KLWAQCVQL (HLA-A*02:01) ===
+12:23:48 [INFO] run_decoy: Target: KLWAQCVQL | HLA: HLA-A*02:01 | Strategies: ['b']
+12:23:48 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:23:48 [INFO] run_decoy.B: Target: KLWAQCVQL | HLA: HLA-A*02:01 | skip_structural: True
+12:23:48 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:23:48 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:23:48 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:23:48 [INFO] decoy_b.scanner: Decoy B scan: target=KLWAQCVQL, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:23:50 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLWAQCVQL, min_hamming=5, threshold=0.70
+12:23:52 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971612 candidates (same-len 9-mer: 596460, other lengths: 375152)
+12:23:55 [INFO] decoy_b.scanner: Physicochemical screen: 971612 -> 1502 above threshold -> top 50
+12:23:55 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:23:55 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:24:00 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLWAQCVQL/decoy_b_results.json
+12:24:00 [INFO] run_decoy: All requested strategies completed.
+=== KLWASPLHV (HLA-A*02:01) ===
+12:24:00 [INFO] run_decoy: Target: KLWASPLHV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:24:00 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:24:00 [INFO] run_decoy.B: Target: KLWASPLHV | HLA: HLA-A*02:01 | skip_structural: True
+12:24:00 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:24:00 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:24:00 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:24:00 [INFO] decoy_b.scanner: Decoy B scan: target=KLWASPLHV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:24:02 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KLWASPLHV, min_hamming=5, threshold=0.70
+12:24:04 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971563 candidates (same-len 9-mer: 596411, other lengths: 375152)
+12:24:07 [INFO] decoy_b.scanner: Physicochemical screen: 971563 -> 8229 above threshold -> top 50
+12:24:07 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:24:07 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:24:13 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KLWASPLHV/decoy_b_results.json
+12:24:13 [INFO] run_decoy: All requested strategies completed.
+=== KMVAVFYNT (HLA-A*02:01) ===
+12:24:13 [INFO] run_decoy: Target: KMVAVFYNT | HLA: HLA-A*02:01 | Strategies: ['b']
+12:24:13 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:24:13 [INFO] run_decoy.B: Target: KMVAVFYNT | HLA: HLA-A*02:01 | skip_structural: True
+12:24:13 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:24:13 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:24:13 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:24:13 [INFO] decoy_b.scanner: Decoy B scan: target=KMVAVFYNT, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:24:15 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KMVAVFYNT, min_hamming=5, threshold=0.70
+12:24:17 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971826 candidates (same-len 9-mer: 596674, other lengths: 375152)
+12:24:20 [INFO] decoy_b.scanner: Physicochemical screen: 971826 -> 3559 above threshold -> top 50
+12:24:20 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:24:20 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:24:24 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KMVAVFYNT/decoy_b_results.json
+12:24:24 [INFO] run_decoy: All requested strategies completed.
+=== KMVAVFYTT (HLA-A*02:01) ===
+12:24:25 [INFO] run_decoy: Target: KMVAVFYTT | HLA: HLA-A*02:01 | Strategies: ['b']
+12:24:25 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:24:25 [INFO] run_decoy.B: Target: KMVAVFYTT | HLA: HLA-A*02:01 | skip_structural: True
+12:24:25 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:24:25 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:24:25 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:24:25 [INFO] decoy_b.scanner: Decoy B scan: target=KMVAVFYTT, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:24:26 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KMVAVFYTT, min_hamming=5, threshold=0.70
+12:24:29 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971773 candidates (same-len 9-mer: 596621, other lengths: 375152)
+12:24:31 [INFO] decoy_b.scanner: Physicochemical screen: 971773 -> 3544 above threshold -> top 50
+12:24:31 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:24:31 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:24:37 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KMVAVFYTT/decoy_b_results.json
+12:24:37 [INFO] run_decoy: All requested strategies completed.
+=== KTWGQYWQV (HLA-A*02:01) ===
+12:24:37 [INFO] run_decoy: Target: KTWGQYWQV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:24:37 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:24:37 [INFO] run_decoy.B: Target: KTWGQYWQV | HLA: HLA-A*02:01 | skip_structural: True
+12:24:37 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:24:37 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:24:37 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:24:37 [INFO] decoy_b.scanner: Decoy B scan: target=KTWGQYWQV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:24:38 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=KTWGQYWQV, min_hamming=5, threshold=0.70
+12:24:41 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971870 candidates (same-len 9-mer: 596718, other lengths: 375152)
+12:24:44 [INFO] decoy_b.scanner: Physicochemical screen: 971870 -> 1400 above threshold -> top 50
+12:24:44 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:24:44 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:24:46 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/KTWGQYWQV/decoy_b_results.json
+12:24:46 [INFO] run_decoy: All requested strategies completed.
+=== LLAMTVPNV (HLA-A*02:01) ===
+12:24:46 [INFO] run_decoy: Target: LLAMTVPNV | HLA: HLA-A*02:01 | Strategies: ['b']
+12:24:47 [INFO] run_decoy.B: === Decoy B: Structural Similarity Scan ===
+12:24:47 [INFO] run_decoy.B: Target: LLAMTVPNV | HLA: HLA-A*02:01 | skip_structural: True
+12:24:47 [INFO] numexpr.utils: Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+12:24:47 [INFO] numexpr.utils: Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:24:47 [INFO] numexpr.utils: NumExpr defaulting to 16 threads.
+12:24:47 [INFO] decoy_b.scanner: Decoy B scan: target=LLAMTVPNV, HLA=HLA-A*02:01, structural=False, af3=True, boltz=True, mpnn=False
+12:24:48 [INFO] decoy_b.scanner: Decoy B physicochemical screen: target=LLAMTVPNV, min_hamming=5, threshold=0.70
+12:24:51 [INFO] decoy_b.scanner: After excluding Decoy A territory: 971401 candidates (same-len 9-mer: 596249, other lengths: 375152)
+12:24:53 [INFO] decoy_b.scanner: Physicochemical screen: 971401 -> 3660 above threshold -> top 50
+12:24:53 [INFO] decoy_b.scanner: Stage 1 complete: 50 candidates
+12:24:53 [INFO] decoy_b.scanner: Decoy B complete: 50 hits (physchem-only: 50, with structure: 0, cross-validated: 0, MPNN Tier1: 0, MPNN Tier2: 0)
+12:25:00 [INFO] run_decoy.B: Decoy B: 50 hits -> /share/liuyutian/pMHC_decoy_library/data/decoy_b/LLAMTVPNV/decoy_b_results.json
+12:25:00 [INFO] run_decoy: All requested strategies completed.
+DONE
+

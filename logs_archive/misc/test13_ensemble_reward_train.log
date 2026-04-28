@@ -1,0 +1,34 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test13_ensemble_reward
+  reward_mode=v1_ergo_only, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  ERGO loaded
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776231103.557150 2540669 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1776231105.507789 2540669 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+NetTCR: Loaded weights from /share/liuyutian/tcrppo_v2/data/nettcr_model.weights.h5
+  NetTCR scorer loaded (weights: /share/liuyutian/tcrppo_v2/data/nettcr_model.weights.h5)
+  NetTCR loaded
+  Ensemble scorer: ['AffinityERGOScorer', 'AffinityNetTCRScorer'], weights=['0.50', '0.50']
+  ESM-2 loaded (dim=1280)
+  pMHC loader: 163 targets
+  TCR pool: 7280430 seqs, L0 targets=256/163
+  VecEnv: 8 envs, obs_dim=2562
+  Policy: 2,008,852 parameters
+  Saved experiment.json to output/test13_ensemble_reward/experiment.json
+Step     10,240 | Eps:   1391 | R:    1.160 | Len:   8.7 | PG:  -0.0272 | VF:   0.1138 | Ent:  5.243
+Step     20,480 | Eps:   2551 | R:    1.414 | Len:   8.9 | PG:  -0.0228 | VF:   0.1569 | Ent:  5.067
+Step     30,720 | Eps:   3699 | R:    1.502 | Len:   8.8 | PG:  -0.0230 | VF:   0.1693 | Ent:  4.880
+Step     40,960 | Eps:   4845 | R:    1.351 | Len:   8.9 | PG:  -0.0279 | VF:   0.1307 | Ent:  5.060
+Step     51,200 | Eps:   5993 | R:    1.371 | Len:   8.9 | PG:  -0.0250 | VF:   0.1450 | Ent:  5.036
+Step     61,440 | Eps:   7135 | R:    1.372 | Len:   8.9 | PG:  -0.0227 | VF:   0.1204 | Ent:  5.046
+Step     71,680 | Eps:   8284 | R:    1.458 | Len:   8.9 | PG:  -0.0268 | VF:   0.1458 | Ent:  5.113
+Step     81,920 | Eps:   9427 | R:    1.490 | Len:   9.0 | PG:  -0.0250 | VF:   0.1156 | Ent:  4.989
+Step     92,160 | Eps:  10573 | R:    1.548 | Len:   9.0 | PG:  -0.0261 | VF:   0.1324 | Ent:  4.832
+Step    102,400 | Eps:  11713 | R:    1.434 | Len:   9.0 | PG:  -0.0250 | VF:   0.1126 | Ent:  4.840
+Step    112,640 | Eps:  12857 | R:    1.387 | Len:   8.9 | PG:  -0.0259 | VF:   0.1022 | Ent:  4.840
+Step    122,880 | Eps:  14000 | R:    1.559 | Len:   9.0 | PG:  -0.0228 | VF:   0.1460 | Ent:  5.042
+Step    133,120 | Eps:  15142 | R:    1.525 | Len:   8.9 | PG:  -0.0254 | VF:   0.1262 | Ent:  5.157
+Step    143,360 | Eps:  16287 | R:    1.429 | Len:   8.9 | PG:  -0.0231 | VF:   0.1092 | Ent:  5.185

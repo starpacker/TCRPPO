@@ -1,0 +1,166 @@
+Evaluating checkpoint: output/test1_two_phase_p2/checkpoints/final.pt
+Targets: ['GILGFVFTL', 'NLVPMVATV', 'GLCTLVAML', 'LLWNGPMAV', 'YLQPRTFLL', 'FLYALALLL', 'SLYNTVATL', 'KLGGALQAK', 'AVFDRKSDAK', 'IVTDFSVIK', 'SPRWYFYYL', 'RLRAEAQVK']
+N TCRs per target: 50
+N decoys per TCR: 50
+Loading ERGO scorer...
+Loading ESM cache...
+Loading pMHC loader...
+Loading TCR pool...
+Loading decoy scorer...
+Loading policy...
+
+============================================================
+Target: GILGFVFTL
+============================================================
+  Generated 50 TCRs in 21.9s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 2.318
+  AUROC: 0.5208
+  Target score: 0.2118 +/- 0.2978
+  Decoy score: 0.1319 +/- 0.1532
+  Eval time: 14.0s
+
+============================================================
+Target: NLVPMVATV
+============================================================
+  Generated 50 TCRs in 20.5s
+  Unique TCRs: 50 / 50
+  Mean steps: 8.0, Mean reward: 1.400
+  AUROC: 0.6228
+  Target score: 0.2279 +/- 0.2505
+  Decoy score: 0.1162 +/- 0.1235
+  Eval time: 5.8s
+
+============================================================
+Target: GLCTLVAML
+============================================================
+  Generated 50 TCRs in 24.6s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 0.636
+  AUROC: 0.4648
+  Target score: 0.1163 +/- 0.1684
+  Decoy score: 0.1147 +/- 0.1326
+  Eval time: 5.0s
+
+============================================================
+Target: LLWNGPMAV
+============================================================
+  Generated 50 TCRs in 19.9s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 1.496
+  AUROC: 0.6055
+  Target score: 0.1882 +/- 0.1406
+  Decoy score: 0.1418 +/- 0.1338
+  Eval time: 5.9s
+
+============================================================
+Target: YLQPRTFLL
+============================================================
+  Generated 50 TCRs in 26.1s
+  Unique TCRs: 50 / 50
+  Mean steps: 8.0, Mean reward: 1.404
+  AUROC: 0.5007
+  Target score: 0.1503 +/- 0.1806
+  Decoy score: 0.1352 +/- 0.1481
+  Eval time: 2.1s
+
+============================================================
+Target: FLYALALLL
+============================================================
+  Generated 50 TCRs in 12.7s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.8, Mean reward: 0.721
+  AUROC: 0.3528
+  Target score: 0.0668 +/- 0.0654
+  Decoy score: 0.1335 +/- 0.1265
+  Eval time: 2.8s
+
+============================================================
+Target: SLYNTVATL
+============================================================
+  Generated 50 TCRs in 21.9s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 1.304
+  AUROC: 0.5112
+  Target score: 0.1641 +/- 0.2054
+  Decoy score: 0.1230 +/- 0.1345
+  Eval time: 3.7s
+
+============================================================
+Target: KLGGALQAK
+============================================================
+  Generated 50 TCRs in 17.9s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 1.502
+  AUROC: 0.5959
+  Target score: 0.1997 +/- 0.1377
+  Decoy score: 0.1640 +/- 0.1516
+  Eval time: 3.8s
+
+============================================================
+Target: AVFDRKSDAK
+============================================================
+  Generated 50 TCRs in 23.5s
+  Unique TCRs: 50 / 50
+  Mean steps: 8.0, Mean reward: 2.244
+  AUROC: 0.6683
+  Target score: 0.2721 +/- 0.1803
+  Decoy score: 0.1738 +/- 0.1681
+  Eval time: 5.8s
+
+============================================================
+Target: IVTDFSVIK
+============================================================
+  Generated 50 TCRs in 23.5s
+  Unique TCRs: 50 / 50
+  Mean steps: 8.0, Mean reward: 3.179
+  AUROC: 0.8068
+  Target score: 0.4576 +/- 0.2249
+  Decoy score: 0.1940 +/- 0.1929
+  Eval time: 3.8s
+
+============================================================
+Target: SPRWYFYYL
+============================================================
+  Generated 50 TCRs in 20.2s
+  Unique TCRs: 50 / 50
+  Mean steps: 8.0, Mean reward: 0.654
+  AUROC: 0.4685
+  Target score: 0.1346 +/- 0.1712
+  Decoy score: 0.1176 +/- 0.1419
+  Eval time: 4.4s
+
+============================================================
+Target: RLRAEAQVK
+============================================================
+  Generated 50 TCRs in 21.9s
+  Unique TCRs: 50 / 50
+  Mean steps: 7.9, Mean reward: 1.472
+  AUROC: 0.5209
+  Target score: 0.1725 +/- 0.1363
+  Decoy score: 0.1712 +/- 0.1526
+  Eval time: 7.9s
+
+============================================================
+SUMMARY
+============================================================
+Target             AUROC  Target Score  Decoy Score  Unique
+------------------------------------------------------------
+GILGFVFTL         0.5208        0.2118       0.1319      50
+NLVPMVATV         0.6228        0.2279       0.1162      50
+GLCTLVAML         0.4648        0.1163       0.1147      50
+LLWNGPMAV         0.6055        0.1882       0.1418      50
+YLQPRTFLL         0.5007        0.1503       0.1352      50
+FLYALALLL         0.3528        0.0668       0.1335      50
+SLYNTVATL         0.5112        0.1641       0.1230      50
+KLGGALQAK         0.5959        0.1997       0.1640      50
+AVFDRKSDAK        0.6683        0.2721       0.1738      50
+IVTDFSVIK         0.8068        0.4576       0.1940      50
+SPRWYFYYL         0.4685        0.1346       0.1176      50
+RLRAEAQVK         0.5209        0.1725       0.1712      50
+
+Mean AUROC: 0.5532
+v1 baseline: 0.4538
+Delta: +0.0994
+
+Results saved to results/eval/eval_results.json

@@ -27,6 +27,8 @@ class RewardManager:
         use_delta_reward: bool = True,
         reward_mode: str = "v2_full",
         n_contrast_decoys: int = 4,
+        convex_alpha: float = 3.0,
+        contrastive_agg: str = "mean",
     ):
         self.affinity_scorer = affinity_scorer
         self.decoy_scorer = decoy_scorer
@@ -42,6 +44,8 @@ class RewardManager:
         self.use_delta_reward = use_delta_reward
         self.reward_mode = reward_mode
         self.n_contrast_decoys = n_contrast_decoys
+        self.convex_alpha = convex_alpha
+        self.contrastive_agg = contrastive_agg  # "mean" or "max"
 
     def compute_reward(
         self,
@@ -99,6 +103,10 @@ class RewardManager:
         # Compute total reward — ALL modes use raw scores, NO z-norm
         if self.reward_mode == "v1_ergo_only":
             total = aff_score
+        elif self.reward_mode == "v1_ergo_convex":
+            # Convex reward: ERGO^alpha — amplifies gradient at high scores
+            # alpha=3: 0.5→0.125, 0.7→0.343, 0.8→0.512, 0.9→0.729, 0.95→0.857
+            total = aff_score ** self.convex_alpha
         elif self.reward_mode == "v1_ergo_squared":
             total = aff_score ** 2
         elif self.reward_mode == "v1_ergo_delta":
@@ -125,10 +133,9 @@ class RewardManager:
                         - self.weights["naturalness"] * nat_score
                         - self.weights["diversity"] * div_score)
         elif self.reward_mode == "contrastive_ergo":
-            # Contrastive: reward = ERGO(target) - mean(ERGO(decoys))
-            # Requires decoy_scorer to sample decoys
+            # Contrastive: reward = ERGO(target) - agg(ERGO(decoys))
+            # agg = "mean" (original) or "max" (worst-case specificity)
             if self.decoy_scorer is not None:
-                # Sample decoys using decoy_scorer's sampler
                 decoy_peptides = self.decoy_scorer.sample_decoys(target, k=self.n_contrast_decoys)
                 if not decoy_peptides:
                     total = aff_score  # No decoys available, fallback
@@ -140,9 +147,17 @@ class RewardManager:
                         )
                     else:
                         decoy_scores = [self.affinity_scorer.score(tcr, d)[0] for d in decoy_peptides]
-                    mean_decoy_score = np.mean(decoy_scores)
-                    total = aff_score - mean_decoy_score
-                    components["decoy_mean"] = mean_decoy_score
+                    if self.contrastive_agg == "max":
+                        agg_decoy_score = float(np.max(decoy_scores))
+                    else:
+                        agg_decoy_score = float(np.mean(decoy_scores))
+                    # Apply convex transformation if alpha != 1
+                    if self.convex_alpha != 1.0 and self.convex_alpha > 0:
+                        total = aff_score ** self.convex_alpha - agg_decoy_score ** self.convex_alpha
+                    else:
+                        total = aff_score - agg_decoy_score
+                    components["decoy_mean"] = float(np.mean(decoy_scores))
+                    components["decoy_max"] = float(np.max(decoy_scores))
                     components["contrast_margin"] = total
             else:
                 total = aff_score  # Fallback if no decoy_scorer
@@ -216,6 +231,8 @@ class RewardManager:
             # Total reward — NO z-norm, all raw
             if self.reward_mode == "v1_ergo_only":
                 total = aff_score
+            elif self.reward_mode == "v1_ergo_convex":
+                total = aff_score ** self.convex_alpha
             elif self.reward_mode == "v1_ergo_squared":
                 total = aff_score ** 2
             elif self.reward_mode == "v1_ergo_delta":
@@ -244,6 +261,9 @@ class RewardManager:
                     decoy_peptides = self.decoy_scorer.sample_decoys(targets[i], k=self.n_contrast_decoys)
                     if not decoy_peptides:
                         total = aff_score
+                        components["decoy_mean"] = 0.0
+                        components["decoy_max"] = 0.0
+                        components["contrast_margin"] = aff_score
                     else:
                         if hasattr(self.affinity_scorer, 'score_batch_fast'):
                             decoy_scores = self.affinity_scorer.score_batch_fast(
@@ -251,10 +271,14 @@ class RewardManager:
                             )
                         else:
                             decoy_scores = [self.affinity_scorer.score(tcrs[i], d)[0] for d in decoy_peptides]
-                        mean_decoy_score = np.mean(decoy_scores)
-                        total = aff_score - mean_decoy_score
-                    components["decoy_mean"] = mean_decoy_score
-                    components["contrast_margin"] = total
+                        if self.contrastive_agg == "max":
+                            agg_decoy_score = float(np.max(decoy_scores))
+                        else:
+                            agg_decoy_score = float(np.mean(decoy_scores))
+                        total = aff_score - agg_decoy_score
+                        components["decoy_mean"] = float(np.mean(decoy_scores))
+                        components["decoy_max"] = float(np.max(decoy_scores))
+                        components["contrast_margin"] = total
                 else:
                     total = aff_score
             else:

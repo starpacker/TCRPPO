@@ -1,6 +1,11 @@
 """Generate TCRs using trained policy and evaluate specificity.
 
-Supports multi-scorer evaluation: ERGO, TCBind, NetTCR, tFold.
+Supports multi-scorer evaluation: tFold (primary), ERGO, TCBind, NetTCR.
+
+tFold V3.4 is the primary evaluation scorer due to superior accuracy:
+  - Mean AUC=0.800 on tc-hard (vs NetTCR 0.601, ERGO 0.541)
+  - Structure-aware: 735M tFold features + 1.57M cross-attention classifier
+  - See evaluation/EVALUATION_METHODOLOGY.md for full justification
 
 Usage:
     python tcrppo_v2/test_tcrs.py \
@@ -8,7 +13,7 @@ Usage:
         --config configs/default.yaml \
         --n_tcrs 20 \
         --n_decoys 50 \
-        --scorers ergo,tcbind,nettcr,tfold \
+        --scorers tfold,ergo,nettcr \
         --output_dir results/v2_full_run1
 """
 
@@ -120,65 +125,154 @@ def evaluate_specificity_multi(
 ) -> Dict[str, Dict]:
     """Evaluate specificity using multiple scorers.
 
-    For each scorer independently: score TCRs against target and decoys, compute AUROC.
+    Correct AUROC: for each TCR individually, compute AUROC where
+    positive = target score, negatives = decoy scores. Then average
+    across all TCRs. Also computes per-tier AUROC breakdown.
     """
     if not tcrs:
         return {name: {"auroc": 0.0, "mean_target_score": 0.0, "mean_decoy_score": 0.0}
                 for name in scorers}
 
-    # Sample decoys once (shared across all scorers)
-    decoy_peps = decoy_scorer.sample_decoys(target_peptide, k=n_decoys)
+    # Sample decoys grouped by tier for per-tier AUROC (exclude C per user request)
+    decoys_by_tier = decoy_scorer.sample_decoys_by_tier(
+        target_peptide, k_per_tier=max(10, n_decoys // 3)
+    )
+    # Flatten all decoy peptides for overall scoring
+    all_decoy_peps = []
+    decoy_tier_labels = []  # parallel array: tier label per decoy
+    for tier, peps in sorted(decoys_by_tier.items()):
+        all_decoy_peps.extend(peps)
+        decoy_tier_labels.extend([tier] * len(peps))
+
+    if not all_decoy_peps:
+        # Fallback to old sampling if per-tier failed
+        all_decoy_peps = decoy_scorer.sample_decoys(target_peptide, k=n_decoys)
+        decoy_tier_labels = ["?"] * len(all_decoy_peps)
 
     results = {}
     for scorer_name, scorer in scorers.items():
-        # Score against target
+        # Score all TCRs against target peptide
         target_scores = _score_tcrs_with_scorer(scorer, tcrs, target_peptide, scorer_name)
 
-        # Score against decoys
-        all_decoy_scores = []
-        if decoy_peps:
-            for tcr in tcrs:
-                decoy_scores = _score_tcrs_with_scorer(
-                    scorer, [tcr] * len(decoy_peps), decoy_peps[0], scorer_name
-                )
-                # Actually score each decoy peptide individually
-                tcr_batch = [tcr] * len(decoy_peps)
-                if hasattr(scorer, 'score_batch_fast'):
-                    decoy_scores = scorer.score_batch_fast(tcr_batch, decoy_peps)
-                elif hasattr(scorer, 'score_batch'):
-                    decoy_scores, _ = scorer.score_batch(tcr_batch, decoy_peps)
-                else:
-                    decoy_scores = []
-                    for dp in decoy_peps:
-                        s, _ = scorer.score(tcr, dp)
-                        decoy_scores.append(s)
-                all_decoy_scores.extend(decoy_scores)
+        # Score all TCRs against all decoy peptides
+        # Build flat batches: for each TCR, score against all decoys
+        per_tcr_decoy_scores = []  # list of lists: [n_tcrs][n_decoys]
+        for tcr in tcrs:
+            tcr_batch = [tcr] * len(all_decoy_peps)
+            if hasattr(scorer, 'score_batch_fast'):
+                d_scores = scorer.score_batch_fast(tcr_batch, all_decoy_peps)
+            elif hasattr(scorer, 'score_batch'):
+                d_scores, _ = scorer.score_batch(tcr_batch, all_decoy_peps)
+            else:
+                d_scores = []
+                for dp in all_decoy_peps:
+                    s, _ = scorer.score(tcr, dp)
+                    d_scores.append(s)
+            per_tcr_decoy_scores.append(d_scores)
 
-        n_pos = len(target_scores)
-        n_neg = len(all_decoy_scores)
+        n_tcrs_scored = len(target_scores)
+        n_decoys_total = len(all_decoy_peps)
 
-        if n_pos == 0 or n_neg == 0:
+        if n_tcrs_scored == 0 or n_decoys_total == 0:
             results[scorer_name] = {
-                "auroc": 0.5, "mean_target_score": 0.0, "mean_decoy_score": 0.0
+                "auroc": 0.5, "mean_target_score": 0.0, "mean_decoy_score": 0.0,
             }
             continue
 
-        labels = np.array([1] * n_pos + [0] * n_neg)
-        scores_arr = np.array(target_scores + all_decoy_scores)
+        # --- Per-TCR AUROC (correct method) ---
+        per_tcr_aurocs = []
+        for i in range(n_tcrs_scored):
+            pos = np.array([target_scores[i]])
+            neg = np.array(per_tcr_decoy_scores[i])
+            if len(neg) == 0:
+                continue
+            labels = np.array([1] + [0] * len(neg))
+            scores_arr = np.concatenate([pos, neg])
+            try:
+                a = roc_auc_score(labels, scores_arr)
+            except ValueError:
+                a = 0.5
+            per_tcr_aurocs.append(a)
 
-        try:
-            auroc = roc_auc_score(labels, scores_arr)
-        except ValueError:
-            auroc = 0.5
+        mean_auroc = float(np.mean(per_tcr_aurocs)) if per_tcr_aurocs else 0.5
+
+        # --- Per-tier AUROC ---
+        tier_aurocs = {}
+        unique_tiers = sorted(set(decoy_tier_labels))
+        for tier in unique_tiers:
+            tier_indices = [j for j, t in enumerate(decoy_tier_labels) if t == tier]
+            if not tier_indices:
+                continue
+            tier_per_tcr = []
+            for i in range(n_tcrs_scored):
+                pos = np.array([target_scores[i]])
+                neg = np.array([per_tcr_decoy_scores[i][j] for j in tier_indices])
+                if len(neg) == 0:
+                    continue
+                labels = np.array([1] + [0] * len(neg))
+                scores_arr = np.concatenate([pos, neg])
+                try:
+                    a = roc_auc_score(labels, scores_arr)
+                except ValueError:
+                    a = 0.5
+                tier_per_tcr.append(a)
+            if tier_per_tcr:
+                tier_aurocs[tier] = float(np.mean(tier_per_tcr))
+
+        all_decoy_flat = [s for ds in per_tcr_decoy_scores for s in ds]
+
+        # --- Ranking metrics (rank TCRs by target binding score, descending) ---
+        target_arr = np.array(target_scores)
+        auroc_arr = np.array(per_tcr_aurocs)
+        ranked_idx = np.argsort(target_arr)[::-1]
+        ranked_target = target_arr[ranked_idx]
+        ranked_auroc = auroc_arr[ranked_idx]
+
+        n = len(ranked_target)
+        top1_target = float(ranked_target[0]) if n >= 1 else 0.0
+        top3_target = float(np.mean(ranked_target[:min(3, n)])) if n >= 1 else 0.0
+        top5_target = float(np.mean(ranked_target[:min(5, n)])) if n >= 1 else 0.0
+        top1_auroc = float(ranked_auroc[0]) if n >= 1 else 0.5
+        top3_auroc = float(np.mean(ranked_auroc[:min(3, n)])) if n >= 1 else 0.5
+        top5_auroc = float(np.mean(ranked_auroc[:min(5, n)])) if n >= 1 else 0.5
+        hit_rate_07 = float(np.mean(target_arr > 0.7)) if n >= 1 else 0.0
+        top1_composite = float(ranked_target[0] * ranked_auroc[0]) if n >= 1 else 0.0
+        k5 = min(5, n)
+        top5_composite = float(np.mean(ranked_target[:k5] * ranked_auroc[:k5])) if n >= 1 else 0.0
+
+        # Store per-TCR details for JSON (TCR sequence, target score, AUROC)
+        per_tcr_details = []
+        for i in range(n):
+            idx = ranked_idx[i]
+            per_tcr_details.append({
+                "tcr": tcrs[idx],
+                "target_score": float(target_arr[idx]),
+                "auroc": float(auroc_arr[idx]),
+                "composite": float(target_arr[idx] * auroc_arr[idx]),
+                "rank": i + 1,
+            })
 
         results[scorer_name] = {
-            "auroc": float(auroc),
+            "auroc": mean_auroc,
             "mean_target_score": float(np.mean(target_scores)),
-            "mean_decoy_score": float(np.mean(all_decoy_scores)),
+            "mean_decoy_score": float(np.mean(all_decoy_flat)) if all_decoy_flat else 0.0,
             "std_target_score": float(np.std(target_scores)),
-            "std_decoy_score": float(np.std(all_decoy_scores)),
-            "n_tcrs": n_pos,
-            "n_decoys_per_tcr": n_decoys,
+            "std_decoy_score": float(np.std(all_decoy_flat)) if all_decoy_flat else 0.0,
+            "n_tcrs": n_tcrs_scored,
+            "n_decoys_per_tcr": n_decoys_total,
+            "per_tier_auroc": tier_aurocs,
+            # Ranking metrics
+            "top1_target": top1_target,
+            "top3_target": top3_target,
+            "top5_target": top5_target,
+            "top1_auroc": top1_auroc,
+            "top3_auroc": top3_auroc,
+            "top5_auroc": top5_auroc,
+            "hit_rate_07": hit_rate_07,
+            "top1_composite": top1_composite,
+            "top5_composite": top5_composite,
+            # Per-TCR ranked details
+            "per_tcr_ranked": per_tcr_details,
         }
 
     return results
@@ -243,8 +337,8 @@ def main():
     parser.add_argument("--output_dir", default="results/eval", help="Output directory")
     parser.add_argument("--device", default="cuda", help="Device")
     parser.add_argument("--targets", nargs="+", default=None, help="Specific targets to evaluate")
-    parser.add_argument("--scorers", default="ergo,tcbind,nettcr,tfold",
-                        help="Comma-separated scorers: ergo,tcbind,nettcr,tfold")
+    parser.add_argument("--scorers", default="tfold,ergo,nettcr",
+                        help="Comma-separated scorers (default: tfold,ergo,nettcr). tFold is primary (AUC=0.800)")
     args = parser.parse_args()
 
     import yaml
@@ -320,8 +414,8 @@ def main():
         affinity_scorer=decoy_affinity,
         rng=np.random.default_rng(config.get("seed", 42)),
     )
-    # Unlock all tiers for evaluation
-    decoy_scorer.set_unlocked_tiers(["A", "B", "D", "C"])
+    # Unlock tiers A/B/D for evaluation (exclude C per design choice)
+    decoy_scorer.set_unlocked_tiers(["A", "B", "D"])
 
     # Minimal reward manager (just for env compatibility)
     reward_manager = RewardManager(
@@ -383,9 +477,19 @@ def main():
 
         # Print per-scorer results
         for scorer_name, sr in spec_results.items():
+            tier_str = ""
+            if "per_tier_auroc" in sr and sr["per_tier_auroc"]:
+                tier_parts = [f"{t}:{v:.3f}" for t, v in sorted(sr["per_tier_auroc"].items())]
+                tier_str = f"  [{', '.join(tier_parts)}]"
             print(f"  [{scorer_name:>7}] AUROC: {sr['auroc']:.4f}  "
                   f"Target: {sr['mean_target_score']:.4f}  "
-                  f"Decoy: {sr['mean_decoy_score']:.4f}")
+                  f"Decoy: {sr['mean_decoy_score']:.4f}{tier_str}")
+            # Ranking metrics line
+            hit_pct = sr.get('hit_rate_07', 0) * 100
+            print(f"  {' ':>9} Top1: {sr.get('top1_target', 0):.3f} (AUROC {sr.get('top1_auroc', 0):.3f})  "
+                  f"Top5: {sr.get('top5_target', 0):.3f} (AUROC {sr.get('top5_auroc', 0):.3f})  "
+                  f"Hit@0.7: {hit_pct:.0f}%  "
+                  f"Comp: {sr.get('top1_composite', 0):.3f}")
             aurocs_per_scorer[scorer_name].append(sr["auroc"])
         print(f"  Eval time: {eval_time:.1f}s")
 
@@ -398,9 +502,17 @@ def main():
         }
 
     # Summary table
-    print(f"\n{'='*60}")
-    print("SUMMARY")
-    print(f"{'='*60}")
+    print(f"\n{'='*70}")
+    print("SUMMARY — Overall AUROC")
+    print(f"{'='*70}")
+
+    # Collect all tier names that appeared
+    all_tiers = set()
+    for peptide in targets:
+        for sn in scorers:
+            tier_data = all_results[peptide]["specificity"][sn].get("per_tier_auroc", {})
+            all_tiers.update(tier_data.keys())
+    tier_list = sorted(all_tiers)
 
     # Header
     scorer_list = list(scorers.keys())
@@ -436,6 +548,81 @@ def main():
         delta = mean_aurocs[sn] - 0.4538
         print(f"  {sn}: {mean_aurocs[sn]:.4f} (delta: {delta:+.4f})")
 
+    # Per-tier AUROC breakdown
+    if tier_list:
+        print(f"\n{'='*70}")
+        print("PER-TIER AUROC BREAKDOWN")
+        print(f"{'='*70}")
+        for sn in scorer_list:
+            print(f"\n  Scorer: {sn}")
+            tier_header = f"  {'Target':<15}"
+            for tier in tier_list:
+                tier_header += f" Tier{tier:>2}"
+            print(tier_header)
+            print(f"  {'-'*(15 + 7 * len(tier_list))}")
+
+            tier_auroc_lists = {t: [] for t in tier_list}
+            for peptide in targets:
+                tier_data = all_results[peptide]["specificity"][sn].get("per_tier_auroc", {})
+                line = f"  {peptide:<15}"
+                for tier in tier_list:
+                    val = tier_data.get(tier, float("nan"))
+                    if np.isnan(val):
+                        line += f" {'N/A':>6}"
+                    else:
+                        line += f" {val:>6.3f}"
+                        tier_auroc_lists[tier].append(val)
+                print(line)
+
+            # Tier means
+            print(f"  {'-'*(15 + 7 * len(tier_list))}")
+            mean_tier_line = f"  {'Mean':<15}"
+            for tier in tier_list:
+                vals = tier_auroc_lists[tier]
+                if vals:
+                    mean_tier_line += f" {np.mean(vals):>6.3f}"
+                else:
+                    mean_tier_line += f" {'N/A':>6}"
+            print(mean_tier_line)
+
+    # Ranking metrics summary
+    print(f"\n{'='*70}")
+    print("RANKING METRICS — Top-K Binding + Specificity")
+    print(f"{'='*70}")
+    ranking_agg = {}  # scorer -> {metric_name -> [values across targets]}
+    for sn in scorer_list:
+        ranking_agg[sn] = {
+            "top1_target": [], "top1_auroc": [],
+            "top5_target": [], "top5_auroc": [],
+            "hit_rate_07": [], "top1_composite": [],
+        }
+        print(f"\n  Scorer: {sn}")
+        print(f"  {'Target':<15} Top1_Bind Top1_AUC Top5_Bind Top5_AUC Hit@0.7 Composite")
+        print(f"  {'-'*79}")
+        for peptide in targets:
+            sr = all_results[peptide]["specificity"].get(sn, {})
+            t1b = sr.get("top1_target", 0)
+            t1a = sr.get("top1_auroc", 0)
+            t5b = sr.get("top5_target", 0)
+            t5a = sr.get("top5_auroc", 0)
+            hr  = sr.get("hit_rate_07", 0)
+            comp = sr.get("top1_composite", 0)
+            print(f"  {peptide:<15} {t1b:>9.3f} {t1a:>8.3f} {t5b:>9.3f} {t5a:>8.3f} {hr:>7.1%} {comp:>9.3f}")
+            ranking_agg[sn]["top1_target"].append(t1b)
+            ranking_agg[sn]["top1_auroc"].append(t1a)
+            ranking_agg[sn]["top5_target"].append(t5b)
+            ranking_agg[sn]["top5_auroc"].append(t5a)
+            ranking_agg[sn]["hit_rate_07"].append(hr)
+            ranking_agg[sn]["top1_composite"].append(comp)
+        print(f"  {'-'*79}")
+        print(f"  {'Mean':<15} "
+              f"{np.mean(ranking_agg[sn]['top1_target']):>9.3f} "
+              f"{np.mean(ranking_agg[sn]['top1_auroc']):>8.3f} "
+              f"{np.mean(ranking_agg[sn]['top5_target']):>9.3f} "
+              f"{np.mean(ranking_agg[sn]['top5_auroc']):>8.3f} "
+              f"{np.mean(ranking_agg[sn]['hit_rate_07']):>7.1%} "
+              f"{np.mean(ranking_agg[sn]['top1_composite']):>9.3f}")
+
     # Save results
     save_results = {}
     for peptide, r in all_results.items():
@@ -447,8 +634,22 @@ def main():
             "generated_tcrs": [t["final_tcr"] for t in r["trajectories"]],
         }
 
+    # Build ranking summary across targets
+    ranking_summary = {}
+    for sn in scorer_list:
+        ra = ranking_agg[sn]
+        ranking_summary[sn] = {
+            "mean_top1_target": float(np.mean(ra["top1_target"])),
+            "mean_top5_target": float(np.mean(ra["top5_target"])),
+            "mean_top1_auroc": float(np.mean(ra["top1_auroc"])),
+            "mean_top5_auroc": float(np.mean(ra["top5_auroc"])),
+            "mean_top1_composite": float(np.mean(ra["top1_composite"])),
+            "mean_hit_rate": float(np.mean(ra["hit_rate_07"])),
+        }
+
     save_results["_summary"] = {
         "mean_auroc": mean_aurocs,
+        "ranking": ranking_summary,
         "v1_baseline": 0.4538,
         "checkpoint": args.checkpoint,
         "n_tcrs": args.n_tcrs,

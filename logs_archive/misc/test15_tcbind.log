@@ -1,0 +1,8 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test15_tcbind
+  reward_mode=v1_ergo_only, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  TCBind loaded (runs/binding_classifier_v2/best_model.pt)
+  ESM-2 loaded (dim=1280, disk_cache=4885 seqs)
+  pMHC loader: 163 targets
