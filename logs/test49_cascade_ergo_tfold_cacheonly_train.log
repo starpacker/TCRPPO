@@ -1,0 +1,27 @@
+
+Starting training for 3,500,000 timesteps...
+Setting up PPO trainer: test49_cascade_ergo_tfold_cacheonly
+  reward_mode=contrastive_ergo, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  Filtered targets: 12 peptides from data/mcpas_12_targets.txt
+  ERGO loaded (primary)
+  tFold V3.4 loaded (secondary, cache=39677 entries)
+  Cascade scorer (ERGO → tFold if score > 0.5)
+  ESM-2 loaded (dim=1280, disk_cache=15500057 seqs)
+  pMHC loader: 12 targets
+  TCR pool: 7266860 seqs, L0 targets=256/12, L1 targets=12/12
+  Decoy scorer loaded (K=8)
+  VecEnv: 8 envs, obs_dim=2562, ban_stop=True
+  pMHC warmup: 12 targets cached in 0.5s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test49_cascade_ergo_tfold_cacheonly/experiment.json
+Resuming from checkpoint: output/test41_from_test33_1m_16decoys/checkpoints/final.pt
+  Resumed at step 2,500,608
+  Changing reward mode to: contrastive_ergo
+Step  2,510,848 | Eps:   1136 | R:    0.862 | Len:   8.0 | PG:  -0.0196 | VF:   0.0914 | Ent:  2.893 | Cascade: 9.2% tFold
+Step  2,521,088 | Eps:   2272 | R:    0.798 | Len:   8.0 | PG:  -0.0070 | VF:   0.0815 | Ent:  3.233 | Cascade: 8.9% tFold
+Step  2,531,328 | Eps:   3408 | R:    0.796 | Len:   8.0 | PG:  -0.0147 | VF:   0.0900 | Ent:  3.601 | Cascade: 8.7% tFold
+Step  2,541,568 | Eps:   4552 | R:    0.825 | Len:   8.0 | PG:  -0.0171 | VF:   0.0766 | Ent:  3.464 | Cascade: 8.5% tFold
+Step  2,551,808 | Eps:   5688 | R:    0.856 | Len:   8.0 | PG:  -0.0142 | VF:   0.0896 | Ent:  3.836 | Cascade: 8.5% tFold
+Step  2,562,048 | Eps:   6824 | R:    0.857 | Len:   8.0 | PG:  -0.0200 | VF:   0.0951 | Ent:  3.875 | Cascade: 8.3% tFold
+Step  2,572,288 | Eps:   7960 | R:    0.816 | Len:   8.0 | PG:  -0.0191 | VF:   0.0958 | Ent:  3.948 | Cascade: 8.2% tFold

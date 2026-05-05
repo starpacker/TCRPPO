@@ -1,0 +1,16 @@
+============================================================
+tFold Cache Warmup (Parallel)
+============================================================
+Peptides: ['KLWASPLHV', 'FPRPWLHGL', 'KAFSPEVIPMF', 'HSKKKCDEL']
+TCRs per peptide: 50000
+Total TCRs: 200000
+GPUs: [0, 1, 3, 4]
+Cache: /share/liuyutian/tcrppo_v2/data/tfold_feature_cache.db
+
+Loading seed TCRs from TCRdb...
+Traceback (most recent call last):
+  File "/share/liuyutian/tcrppo_v2/scripts/warmup_tfold_parallel.py", line 167, in <module>
+    main()
+  File "/share/liuyutian/tcrppo_v2/scripts/warmup_tfold_parallel.py", line 130, in main
+    if pep in tcr_pool.l0_data:
+AttributeError: 'TCRPool' object has no attribute 'l0_data'

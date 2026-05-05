@@ -573,7 +573,98 @@ Each `output/<run_name>/experiment.json` must contain:
 
 ---
 
-## 6. V1 Baseline Reference (READ-ONLY)
+## 6. Scorer Selection and Hybrid Training (CRITICAL)
+
+### 6.1 Peptide-Scorer Mapping (MANDATORY)
+
+**⚠️ CRITICAL REQUIREMENT**: All RL training MUST use peptides within the scorer's reliable range.
+
+**`PEPTIDE_SCORER_MAPPING.md`** (project root) is the **authoritative source** for which scorer to use on which peptide. This document contains:
+- **77 trainable peptides** (AUC ≥ 0.7) across all scorers
+- **Per-peptide AUC measurements** for ERGO, NetTCR, and tFold
+- **Optimal scorer assignment** for each peptide
+
+**Key principle**: Training on peptides where the scorer is unreliable produces noisy/reversed reward signals that harm learning.
+
+**Evidence**: SAC test3 trained on 7 ERGO peptides achieved only 0.4127 AUROC because 3/7 peptides had **reversed reward signals** (ERGO scored decoys higher than targets). Filtering to 4 positive-aligned peptides improved AUROC to 0.5933.
+
+**MANDATORY RULE**: Before launching ANY experiment:
+1. Read `PEPTIDE_SCORER_MAPPING.md`
+2. Filter target peptides to those with AUC ≥ 0.7 for your chosen scorer
+3. Verify no reward-AUROC misalignment (target_score > decoy_score)
+4. Document peptide selection rationale in experiment design doc
+
+**Consequences of violation**: Training on unreliable peptides wastes GPU time and produces models that learn incorrect behavior (binding decoys instead of targets).
+
+### 6.2 ERGO Reward-AUROC Misalignment (Case Study)
+
+ERGO has **reward-AUROC misalignment** on some peptides: it gives higher scores to decoy peptides than to target peptides.
+
+**Evidence from SAC test3 @ 1M steps**:
+
+| Peptide | ERGO AUC | Actual AUROC | Target Score | Decoy Score | Gap | Status |
+|---------|----------|--------------|--------------|-------------|-----|--------|
+| KLWASPLHV | 0.823 | 0.5656 | 0.1375 | 0.1103 | +0.027 | ✅ Aligned |
+| FPRPWLHGL | 0.762 | 0.6124 | 0.2001 | 0.1502 | +0.050 | ✅ Aligned |
+| KAFSPEVIPMF | 0.739 | 0.5912 | 0.2367 | 0.1907 | +0.046 | ✅ Aligned |
+| HSKKKCDEL | 0.763 | 0.6040 | 0.2079 | 0.1273 | +0.081 | ✅ Aligned |
+| RFYKTLRAEQASQ | 0.908 | 0.1244 | 0.0166 | 0.0355 | **-0.019** | ❌ Reversed |
+| DRFYKTLRAEQASQEV | 0.786 | 0.2952 | 0.0141 | 0.0241 | **-0.010** | ❌ Reversed |
+| FRCPRRFCF | 0.714 | 0.0960 | 0.0359 | 0.0958 | **-0.060** | ❌ Reversed |
+
+**Key findings**:
+- **4 positive-aligned peptides**: Mean AUROC 0.5933 (correct learning)
+- **3 reversed peptides**: Mean AUROC 0.1719 (learned to bind decoys)
+- **Overall mean**: 0.4127 (worse than random, dragged down by reversed peptides)
+
+**Root cause**: ERGO's mapping AUC (discrimination on existing VDJdb/IEDB data) does NOT predict RL AUROC (discrimination on RL-generated novel TCRs). RL generates TCRs outside ERGO's training distribution where its scoring becomes unreliable.
+
+**Conclusion**: Only train on the 4 peptides with positive reward-AUROC alignment. The 3 reversed peptides teach the model to bind decoys instead of targets.
+
+**See**: `results/sac_test3_1m_ergo_7targets/ANALYSIS.md` for detailed analysis.
+
+### 6.3 Hybrid tFold-ERGO Training (Recommended)
+
+**Problem**: ERGO is fast (~10ms) but has alignment issues. tFold is accurate but slow (~1s on cache miss).
+
+**Solution**: Mix both scorers during training:
+- 90% episodes: ERGO reward (fast)
+- 10% episodes: tFold reward (accurate, corrects ERGO's errors)
+- SAC's replay buffer naturally mixes both reward sources
+
+**Implementation**:
+
+1. **Pre-warm tFold cache** (one-time, ~15-30 min):
+   ```bash
+   python scripts/warmup_tfold_cache.py \
+       --targets KLWASPLHV,FPRPWLHGL,KAFSPEVIPMF,HSKKKCDEL \
+       --n_tcrs_per_target 200
+   ```
+
+2. **Launch hybrid training** (SAC):
+   ```bash
+   python scripts/train_sac.py \
+       --use_tfold_hybrid \
+       --tfold_ratio 0.1 \
+       --affinity_scorer ergo
+   ```
+
+3. **For PPO**: Use alternating phases (ERGO warm-start → tFold fine-tune) or `TFoldCascadeScorer` (ERGO with uncertainty-based tFold fallback).
+
+**See `docs/TFOLD_HYBRID_TRAINING.md` for full guide.**
+
+### 6.4 tFold Feature Cache
+
+- **Location**: `/share/liuyutian/tcrppo_v2/data/tfold_feature_cache.db`
+- **Size**: ~4.4GB, 8K+ entries (as of 2026-04-28)
+- **Cache hit**: <1ms (V3.4 classifier only, 1.57M params)
+- **Cache miss**: ~1s (subprocess call to tFold feature extractor, 735M params)
+- **Warmup script**: `scripts/warmup_tfold_cache.py`
+- **Used by**: Both SAC and PPO (shared cache)
+
+---
+
+## 7. V1 Baseline Reference (READ-ONLY)
 
 The v1 codebase at `/share/liuyutian/TCRPPO/` is your reference for:
 - ERGO model loading patterns (`code/ERGO/`, `code/reward.py`)
@@ -603,30 +694,37 @@ The v1 codebase at `/share/liuyutian/TCRPPO/` is your reference for:
 
 Your v2 model must beat this across the board.
 
+**Note**: v1 used ERGO on all 163 peptides without filtering. Many had unreliable scores, contributing to poor specificity.
+
 ---
 
-## 7. Session Startup Checklist
+## 8. Session Startup Checklist
 
 Every time you start or resume a session in this directory:
 
 1. Read this `CLAUDE.md` completely
 2. Read `progress_v2.md` to find where you left off
 3. Read `docs/2026-04-09-tcrppo-v2-design.md` if you need architecture details
-4. Activate conda env: `conda activate tcrppo_v2`
-5. Check GPU availability: `nvidia-smi`
-6. Run existing tests to confirm nothing is broken: `pytest -v`
-7. Continue from the last incomplete phase
+4. **Read `PEPTIDE_SCORER_MAPPING.md` (project root) BEFORE selecting target peptides** — this is MANDATORY
+5. Read `docs/TFOLD_HYBRID_TRAINING.md` for hybrid training strategy
+6. Activate conda env: `conda activate tcrppo_v2`
+7. Check GPU availability: `nvidia-smi`
+8. Run existing tests to confirm nothing is broken: `pytest -v`
+9. Continue from the last incomplete phase
 
 ---
 
-## 8. File Layout (Target State After All Phases)
+## 9. File Layout (Target State After All Phases)
 
 ```
 tcrppo_v2/
   CLAUDE.md                    # This file
+  PEPTIDE_SCORER_MAPPING.md    # MANDATORY: Per-peptide scorer reliability (READ FIRST)
   progress_v2.md               # Phase-by-phase progress log
   docs/
     2026-04-09-tcrppo-v2-design.md  # Design specification
+    TFOLD_HYBRID_TRAINING.md        # Hybrid tFold-ERGO training guide
+    all_experiments_tracker.md      # Complete experiment history
   configs/
     default.yaml             # All hyperparameters
   ref/                           # V1 reference files (NOT imported at runtime)

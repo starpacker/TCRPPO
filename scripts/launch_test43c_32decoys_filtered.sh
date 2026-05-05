@@ -14,7 +14,7 @@ CUDA_VISIBLE_DEVICES=1 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --affinity_scorer ergo \
     --encoder esm2 \
     --reward_mode contrastive_ergo \
-    --total_timesteps 2000000 \
+    --total_timesteps 4500000 \
     --n_envs 8 \
     --learning_rate 1e-4 \
     --ban_stop \

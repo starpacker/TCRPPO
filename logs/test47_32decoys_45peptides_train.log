@@ -1,0 +1,20 @@
+
+Starting training for 1,000,000 timesteps...
+Setting up PPO trainer: test47_32decoys_45peptides
+  reward_mode=contrastive_ergo, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  Filtered targets: 45 peptides from data/45_filtered_peptides.txt
+  ERGO loaded
+  ESM-2 loaded (dim=1280, disk_cache=15493263 seqs)
+  pMHC loader: 45 targets
+  TCR pool: 7266860 seqs, L0 targets=256/45, L1 targets=12/45
+  Decoy scorer loaded (K=8)
+  VecEnv: 8 envs, obs_dim=2562, ban_stop=True
+  pMHC warmup: 45 targets cached in 2.5s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test47_32decoys_45peptides/experiment.json
+Resuming from checkpoint: output/test41_from_test33_1m_16decoys/checkpoints/final.pt
+  Resumed at step 2,500,608
+  Changing reward mode to: contrastive_ergo
+
+Training complete: 2,500,608 steps, 0 episodes

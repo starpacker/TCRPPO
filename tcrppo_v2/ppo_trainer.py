@@ -395,6 +395,76 @@ class PPOTrainer:
                 ergo_device=self.device,
             )
             print(f"  ERGO+tFold cascade initialized (threshold={self.config.get('cascade_threshold', 0.15)})")
+        elif affinity_model == "hybrid":
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
+            from tcrppo_v2.scorers.hybrid_scorer import HybridScorer
+
+            # Initialize ERGO (primary, fast)
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            ergo_scorer = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=self.device,
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+            )
+            print("  ERGO loaded (primary)")
+
+            # Initialize tFold (secondary, accurate)
+            tfold_scorer = AffinityTFoldScorer(
+                device=self.device,
+                gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
+                cache_only=self.config.get("tfold_cache_only", False),
+                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
+            )
+            print(f"  tFold V3.4 loaded (secondary, cache={tfold_scorer.cache_stats['cache_size']} entries)")
+
+            # Wrap with hybrid scorer
+            tfold_ratio = self.config.get("hybrid_tfold_ratio", 0.1)
+            affinity_scorer = HybridScorer(
+                primary_scorer=ergo_scorer,
+                secondary_scorer=tfold_scorer,
+                secondary_ratio=tfold_ratio,
+                seed=self.config.get("seed", 42),
+            )
+            print(f"  Hybrid scorer (ERGO {1-tfold_ratio:.0%} + tFold {tfold_ratio:.0%})")
+        elif affinity_model == "cascade":
+            from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
+            from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
+            from tcrppo_v2.scorers.cascade_scorer import CascadeScorer
+
+            # Initialize ERGO (primary, fast)
+            model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
+            ergo_scorer = AffinityERGOScorer(
+                model_file=model_file,
+                ae_file=ERGO_AE_FILE,
+                device=self.device,
+                mc_samples=self.config.get("affinity_mc_samples", 10),
+            )
+            print("  ERGO loaded (primary)")
+
+            # Initialize tFold (secondary, accurate)
+            tfold_scorer = AffinityTFoldScorer(
+                device=self.device,
+                gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
+                cache_only=self.config.get("tfold_cache_only", False),
+                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
+            )
+            print(f"  tFold V3.4 loaded (secondary, cache={tfold_scorer.cache_stats['cache_size']} entries)")
+
+            # Wrap with cascade scorer
+            cascade_threshold = self.config.get("cascade_threshold", 0.3)
+            tfold_weight = self.config.get("cascade_tfold_weight", 0.7)
+            ergo_weight = self.config.get("cascade_ergo_weight", 0.3)
+
+            affinity_scorer = CascadeScorer(
+                primary_scorer=ergo_scorer,
+                secondary_scorer=tfold_scorer,
+                threshold=cascade_threshold,
+                tfold_weight=tfold_weight,
+                ergo_weight=ergo_weight,
+            )
+            print(f"  Cascade scorer (ERGO → tFold if score > {cascade_threshold})")
         else:  # default: ergo
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
@@ -514,6 +584,9 @@ class PPOTrainer:
             n_contrast_decoys=self.config.get("n_contrast_decoys", 4),
             convex_alpha=self.config.get("convex_alpha", 3.0),
             contrastive_agg=self.config.get("contrastive_agg", "mean"),
+            ood_threshold=self.config.get("ood_threshold", 0.15),
+            ood_penalty_weight=self.config.get("ood_penalty_weight", 1.0),
+            ood_penalty_mode=self.config.get("ood_penalty_mode", "soft"),
         )
 
         # VecEnv
@@ -875,6 +948,36 @@ class PPOTrainer:
                 recent = episode_rewards[-100:]
                 mean_r = np.mean(recent)
                 mean_l = np.mean(episode_lengths[-100:])
+
+                # Get OOD stats if in OOD penalty mode
+                ood_stats_str = ""
+                if self.reward_mode == "v1_ergo_ood_penalty":
+                    ood_stats = self.reward_manager.get_ood_stats()
+                    ood_rate = ood_stats["ood_trigger_rate"]
+                    ood_stats_str = f" | OOD: {ood_rate:>5.1%}"
+
+                # Get tFold cache stats if using tFold scorer
+                cache_stats_str = ""
+                if hasattr(self.reward_manager.affinity_scorer, 'cache_stats'):
+                    cs = self.reward_manager.affinity_scorer.cache_stats
+                    total_cache = cs['cache_hits'] + cs['cache_misses']
+                    if total_cache > 0:
+                        hit_rate = cs['cache_hits'] / total_cache
+                        cache_stats_str = f" | Cache: {hit_rate:.0%}({cs['cache_size']})"
+
+                # Get hybrid scorer stats if using hybrid scorer
+                hybrid_stats_str = ""
+                if hasattr(self.reward_manager.affinity_scorer, 'get_stats'):
+                    hs = self.reward_manager.affinity_scorer.get_stats()
+                    if hs['total_calls'] > 0:
+                        # Check if it's hybrid or cascade
+                        if 'secondary_ratio_actual' in hs:
+                            # Hybrid scorer
+                            hybrid_stats_str = f" | Hybrid: {hs['secondary_ratio_actual']:.1%} tFold"
+                        elif 'cascade_ratio' in hs:
+                            # Cascade scorer
+                            hybrid_stats_str = f" | Cascade: {hs['cascade_ratio']:.1%} tFold"
+
                 print(
                     f"Step {global_step:>10,} | "
                     f"Eps: {len(episode_rewards):>6} | "
@@ -883,6 +986,9 @@ class PPOTrainer:
                     f"PG: {avg_pg:>8.4f} | "
                     f"VF: {avg_vf:>8.4f} | "
                     f"Ent: {avg_ent:>6.3f}"
+                    f"{ood_stats_str}"
+                    f"{cache_stats_str}"
+                    f"{hybrid_stats_str}"
                 )
 
                 if self.logger:
@@ -891,6 +997,22 @@ class PPOTrainer:
                     self.logger.add_scalar("train/pg_loss", avg_pg, global_step)
                     self.logger.add_scalar("train/vf_loss", avg_vf, global_step)
                     self.logger.add_scalar("train/entropy", avg_ent, global_step)
+
+                    # Log OOD stats
+                    if self.reward_mode == "v1_ergo_ood_penalty":
+                        ood_stats = self.reward_manager.get_ood_stats()
+                        self.logger.add_scalar("train/ood_trigger_rate", ood_stats["ood_trigger_rate"], global_step)
+                        self.logger.add_scalar("train/ood_triggered", ood_stats["ood_triggered"], global_step)
+                        # Reset counters after logging
+                        self.reward_manager.reset_ood_stats()
+
+                    # Log tFold cache stats
+                    if hasattr(self.reward_manager.affinity_scorer, 'cache_stats'):
+                        cache_stats = self.reward_manager.affinity_scorer.cache_stats
+                        if cache_stats['cache_hits'] + cache_stats['cache_misses'] > 0:
+                            hit_rate = cache_stats['cache_hits'] / (cache_stats['cache_hits'] + cache_stats['cache_misses'])
+                            self.logger.add_scalar("train/tfold_cache_hit_rate", hit_rate, global_step)
+                            self.logger.add_scalar("train/tfold_cache_size", cache_stats['cache_size'], global_step)
 
             # Checkpointing
             if next_milestone_idx < len(self.milestones) and global_step >= self.milestones[next_milestone_idx]:
@@ -1132,10 +1254,13 @@ def main():
     parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
     parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
     parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
-    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, tfold_cascade, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
+    parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, tfold_cascade, hybrid, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
     parser.add_argument("--tfold_cache_only", action="store_true", help="tFold: skip server extraction for cache misses")
     parser.add_argument("--tfold_cache_miss_score", type=float, default=None, help="tFold: score for cache misses (default 0.5)")
     parser.add_argument("--cascade_threshold", type=float, default=None, help="ERGO uncertainty threshold for tFold cascade (default 0.15)")
+    parser.add_argument("--cascade_tfold_weight", type=float, default=None, help="Cascade scorer: tFold weight in combination (default 0.7)")
+    parser.add_argument("--cascade_ergo_weight", type=float, default=None, help="Cascade scorer: ERGO weight in combination (default 0.3)")
+    parser.add_argument("--hybrid_tfold_ratio", type=float, default=None, help="Hybrid scorer: ratio of tFold calls (default 0.1 = 10%)")
     parser.add_argument("--encoder", default=None, choices=["esm2", "lightweight"], help="State encoder: esm2 (default) or lightweight (CPU-friendly BiLSTM)")
     parser.add_argument("--encoder_dim", type=int, default=None, help="Lightweight encoder output dim (default 256)")
     parser.add_argument("--esm_cache_path", type=str, default=None, help="Path to ESM cache DB (default: data/esm_cache.db)")
@@ -1162,6 +1287,11 @@ def main():
     parser.add_argument("--entropy_coef_final", type=float, default=None, help="Final entropy coefficient (enables linear decay)")
     parser.add_argument("--entropy_decay_start", type=int, default=None, help="Step to begin entropy decay (default: 1M)")
     parser.add_argument("--decoy_library_path", type=str, default=None, help="Path to pMHC decoy library (default: /share/liuyutian/pMHC_decoy_library)")
+
+    # OOD penalty (for v1_ergo_ood_penalty mode)
+    parser.add_argument("--ood_threshold", type=float, default=0.15, help="Uncertainty threshold for OOD detection (ERGO MC Dropout std)")
+    parser.add_argument("--ood_penalty_weight", type=float, default=1.0, help="Weight for OOD penalty")
+    parser.add_argument("--ood_penalty_mode", default="soft", choices=["soft", "hard"], help="OOD penalty mode: soft (penalize excess) or hard (penalize full uncertainty)")
 
     # Target peptide filtering
     parser.add_argument("--train_targets", default=None, help="Comma-separated peptides or path to txt file (one peptide per line). Training uses only these; eval still uses all 12 McPAS.")
@@ -1235,6 +1365,12 @@ def main():
         config["elite_score_threshold"] = args.elite_score_threshold
     if args.cascade_threshold is not None:
         config["cascade_threshold"] = args.cascade_threshold
+    if args.cascade_tfold_weight is not None:
+        config["cascade_tfold_weight"] = args.cascade_tfold_weight
+    if args.cascade_ergo_weight is not None:
+        config["cascade_ergo_weight"] = args.cascade_ergo_weight
+    if args.hybrid_tfold_ratio is not None:
+        config["hybrid_tfold_ratio"] = args.hybrid_tfold_ratio
     if args.ban_stop:
         config["ban_stop"] = True
     if args.decoy_library_path is not None:
@@ -1263,6 +1399,14 @@ def main():
         config["train_targets"] = args.train_targets
     if args.reward_schedule is not None:
         config["reward_schedule"] = json.loads(args.reward_schedule)
+
+    # OOD penalty config
+    if args.ood_threshold is not None:
+        config["ood_threshold"] = args.ood_threshold
+    if args.ood_penalty_weight is not None:
+        config["ood_penalty_weight"] = args.ood_penalty_weight
+    if args.ood_penalty_mode:
+        config["ood_penalty_mode"] = args.ood_penalty_mode
 
     config.setdefault("run_name", "v2_run")
 

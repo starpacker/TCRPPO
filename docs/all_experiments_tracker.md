@@ -1,9 +1,17 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-04-25  
+**Last Updated:** 2026-05-05  
 **Current Best:** test41 = **0.6243 AUROC** (two-phase: 1M ERGO warm-start → 1M contrastive with 16 decoys)  
 **Historical Peak:** v1_ergo_only (seed=42) = **0.8075 AUROC** (NOT reproducible — seed=123 got 0.5462)  
 **Target:** Achieve >0.65 AUROC with reproducible, seed-stable configuration
+
+**Active Experiments:**
+- test49_cascade_ergo_tfold_cacheonly: 🔄 TRAINING (GPU 4, PID 3803344) - Cascade scorer (ERGO → tFold cache-only if score > 0.5), 4-6h estimated
+- test47_32decoys_45peptides: 🔄 TRAINING (GPU 4, PID 1017806) - 32 decoys + 45 peptides from test41
+- test41_seed123: 🔄 TRAINING (GPU 5, PID 1017808) - Seed validation (seed=123)
+- test41_seed7: 🔄 TRAINING (GPU 6, PID 1017810) - Seed validation (seed=7)
+- test44_pure_tfold_nocache: 🔄 TRAINING (GPU 2, PID 1257366) - Pure tFold scorer, 29 peptides, extremely slow (0.5% in 30h)
+- test48_hybrid_90ergo_10tfold: ❌ ABORTED (GPU 2) - Hybrid scorer too slow with contrastive reward (first rollout >40min)
 
 ---
 
@@ -116,6 +124,14 @@
 
 | # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
 |---|----------------|--------|-------|-----------|--------|-------|
+| 49 | test49_cascade_ergo_tfold_cacheonly | 🔄 TRAINING | 51K/1M | TBD | Cascade (ERGO → tFold cache-only if score > 0.5), resume from test41, threshold=0.5, cache_miss_score=0.3 | GPU 4, PID 3803344 - First rollout 8min (vs test48's 40min), cascade ratio 8.5-9.2%, estimated 4-6h completion |
+| 48 | test48_hybrid_90ergo_10tfold | ❌ ABORTED | 0/1M | N/A | Hybrid (90% ERGO + 10% tFold), resume from test41 | GPU 2 - ABORTED: first rollout >40min due to contrastive reward amplification (17x scorer calls) |
+| 47 | test47_32decoys_45peptides | 🔄 TRAINING | 0/1M | TBD | Resume from test41, 32 decoys, 45 peptides | GPU 4, PID 1017806 - Target 0.64-0.67 AUROC |
+| 44 | test44_pure_tfold_nocache | 🔄 TRAINING | 10K/2M | TBD | Pure tFold, cache_only=False, 29 peptides, n_envs=4 | GPU 2, PID 1257366 - Extremely slow (0.5% in 30h) |
+| 45 | test45_ergo_ood_penalty | ✅ DONE | 2M | **0.4031** | ERGO + OOD penalty (soft, t=0.15, w=1.0), 4 peptides | **FAILED** - OOD penalty harmed learning, worse than v1 baseline |
+| 46 | test46_ergo_confidence_weighted | ❌ REJECTED | N/A | N/A | ERGO with confidence weighting (reward = score * confidence) | **VALIDATION FAILED** - confidence negatively correlated with specificity (r=-0.71) |
+| 41b | test41_seed123 | 🔄 TRAINING | 0/1M | TBD | test41 config with seed=123 | GPU 5, PID 1017808 - Seed validation |
+| 41c | test41_seed7 | 🔄 TRAINING | 0/1M | TBD | test41 config with seed=7 | GPU 6, PID 1017810 - Seed validation |
 | 42 | test42_nettcr_twophase | 🔄 PLANNED | 0/4.5M | TBD | NetTCR two-phase (replicate test41) | 3 phases: 2M pure → 1.5M contrast(8) → 1M contrast(16) |
 | 37 | test27_nettcr_12steps | 🔄 TRAINING | 276K/2M | TBD | NetTCR-PyTorch, max_steps=12 | Break ERGO train-eval coupling |
 | 38 | test28_ergo_12steps | ❌ BLOCKED | 0/2M | N/A | ERGO, max_steps=12 | Process hung after init |
@@ -128,7 +144,7 @@
 | 32 | test22_tfold_cascade | 🔄 TRAINING | 153K/2M | TBD | tFold cascade (t=0.15) | Cascade filtering |
 | 31 | test21_esm2_breakthrough | 🔄 TRAINING | 501K/2M | TBD | ESM-2, shaped reward | Shaped reward too weak |
 
-**Key Insight:** ERGO remains the most stable scorer. NetTCR/TCBind/tFold alternatives have not yet matched ERGO's performance.
+**Key Insight:** ERGO remains the most stable scorer. test44 tests pure tFold (structure-aware), test48 failed due to contrastive amplification, test49 uses cascade with cache_only mode to solve speed problem.
 
 ### Category 7: Long Training / Hyperparameter Sweeps
 
@@ -323,6 +339,21 @@ All experiment outputs, checkpoints, and evaluation results are stored in:
 
 ---
 
+## SAC Experiments (Off-Policy RL)
+
+SAC experiments are tracked separately in `/share/liuyutian/tcrppo_sac/`. Key experiments:
+
+| # | Experiment Name | Status | Steps | Mean AUROC | Targets | Config | Notes |
+|---|----------------|--------|-------|-----------|---------|--------|-------|
+| test3 | sac_test3_esm2_ergo | 🔄 TRAINING | 1.85M/2M | 0.4127 @ 1M | 7 ERGO | ERGO only, ESM-2, 7 peptides | 4 positive (0.5933) + 3 reversed (0.1719) |
+| test5 | sac_test5_hybrid_tfold_4targets | 🔄 TRAINING | 307K/2M | TBD | 4 positive | Hybrid (90% ERGO, 10% tFold), cache_only | Only positive-aligned peptides |
+
+**Key Finding (test3 @ 1M)**: ERGO has reward-AUROC misalignment on 3/7 peptides where it scores decoys higher than targets, causing reversed learning (AUROC 0.10-0.30). Filtering to 4 positive-aligned peptides improves mean AUROC from 0.4127 to 0.5933.
+
+**test5 Hypothesis**: Hybrid tFold-ERGO training on 4 positive-aligned peptides should exceed 0.63 AUROC by correcting ERGO's scoring errors with tFold's structural accuracy.
+
+---
+
 **Document maintained by:** Claude Code  
-**Last comprehensive update:** 2026-04-25  
-**Next update:** After test27_nettcr_12steps completes
+**Last comprehensive update:** 2026-04-29  
+**Next update:** After test5 (SAC hybrid) and test3 (SAC baseline) complete

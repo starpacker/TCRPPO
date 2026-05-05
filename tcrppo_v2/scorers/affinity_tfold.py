@@ -520,8 +520,16 @@ class AffinityTFoldScorer(BaseScorer):
         if hlas is None:
             hlas = [self.default_hla] * len(cdr3bs)
 
+        # Prepend 'C' to CDR3β sequences if missing (tFold expects conserved Cys)
+        cdr3bs_normalized = []
+        for cdr3b in cdr3bs:
+            if not cdr3b.startswith('C'):
+                cdr3bs_normalized.append('C' + cdr3b)
+            else:
+                cdr3bs_normalized.append(cdr3b)
+
         # Build cache keys
-        keys = [_make_cache_key(c, p, h) for c, p, h in zip(cdr3bs, peptides, hlas)]
+        keys = [_make_cache_key(c, p, h) for c, p, h in zip(cdr3bs_normalized, peptides, hlas)]
 
         # Batch cache lookup
         cached = self._cache.get_batch(keys)
@@ -535,7 +543,7 @@ class AffinityTFoldScorer(BaseScorer):
                 results[i] = cached[key]
             else:
                 need_extract.append((i, {
-                    "cdr3b": cdr3bs[i],
+                    "cdr3b": cdr3bs_normalized[i],
                     "peptide": peptides[i],
                     "hla": hlas[i],
                 }))

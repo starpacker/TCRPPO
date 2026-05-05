@@ -29,6 +29,9 @@ class RewardManager:
         n_contrast_decoys: int = 4,
         convex_alpha: float = 3.0,
         contrastive_agg: str = "mean",
+        ood_threshold: float = 0.15,
+        ood_penalty_weight: float = 1.0,
+        ood_penalty_mode: str = "soft",
     ):
         self.affinity_scorer = affinity_scorer
         self.decoy_scorer = decoy_scorer
@@ -46,6 +49,12 @@ class RewardManager:
         self.n_contrast_decoys = n_contrast_decoys
         self.convex_alpha = convex_alpha
         self.contrastive_agg = contrastive_agg  # "mean" or "max"
+        self.ood_threshold = ood_threshold
+        self.ood_penalty_weight = ood_penalty_weight
+        self.ood_penalty_mode = ood_penalty_mode  # "soft" or "hard"
+        # OOD stats tracking
+        self._ood_triggered = 0
+        self._ood_total = 0
 
     def compute_reward(
         self,
@@ -60,7 +69,41 @@ class RewardManager:
 
         # Affinity
         if self.affinity_scorer is not None and self.reward_mode != "disabled":
-            if hasattr(self.affinity_scorer, 'score_batch_fast'):
+            # For OOD penalty mode, use score_batch to get uncertainty
+            if self.reward_mode == "v1_ergo_ood_penalty":
+                if hasattr(self.affinity_scorer, 'score_batch'):
+                    scores, confidences = self.affinity_scorer.score_batch([tcr], [peptide])
+                    aff_score = scores[0]
+                    confidence = confidences[0]
+                    uncertainty = 1.0 - confidence
+                    components["uncertainty"] = uncertainty
+
+                    # Apply OOD penalty
+                    self._ood_total += 1
+                    if self.ood_penalty_mode == "soft":
+                        # Soft penalty: only penalize the excess beyond threshold
+                        if uncertainty > self.ood_threshold:
+                            penalty = (uncertainty - self.ood_threshold) * self.ood_penalty_weight
+                            aff_score = aff_score - penalty
+                            components["ood_penalty"] = penalty
+                            self._ood_triggered += 1
+                        else:
+                            components["ood_penalty"] = 0.0
+                    else:  # hard
+                        # Hard penalty: penalize full uncertainty
+                        if uncertainty > self.ood_threshold:
+                            penalty = uncertainty * self.ood_penalty_weight
+                            aff_score = aff_score - penalty
+                            components["ood_penalty"] = penalty
+                            self._ood_triggered += 1
+                        else:
+                            components["ood_penalty"] = 0.0
+                else:
+                    # Fallback if scorer doesn't support score_batch
+                    aff_score, _ = self.affinity_scorer.score(tcr, peptide)
+                    components["uncertainty"] = 0.0
+                    components["ood_penalty"] = 0.0
+            elif hasattr(self.affinity_scorer, 'score_batch_fast'):
                 preds = self.affinity_scorer.score_batch_fast([tcr], [peptide])
                 aff_score = preds[0]
             else:
@@ -102,6 +145,9 @@ class RewardManager:
 
         # Compute total reward — ALL modes use raw scores, NO z-norm
         if self.reward_mode == "v1_ergo_only":
+            total = aff_score
+        elif self.reward_mode == "v1_ergo_ood_penalty":
+            # OOD penalty already applied to aff_score above
             total = aff_score
         elif self.reward_mode == "v1_ergo_convex":
             # Convex reward: ERGO^alpha — amplifies gradient at high scores
@@ -183,20 +229,59 @@ class RewardManager:
 
         # Batch affinity scoring
         if self.affinity_scorer is not None and self.reward_mode != "disabled":
-            if hasattr(self.affinity_scorer, 'score_batch_fast'):
+            # For OOD penalty mode, use score_batch to get uncertainty
+            if self.reward_mode == "v1_ergo_ood_penalty":
+                if hasattr(self.affinity_scorer, 'score_batch'):
+                    aff_scores, confidences = self.affinity_scorer.score_batch(tcrs, peptides)
+                    uncertainties = [1.0 - c for c in confidences]
+                else:
+                    # Fallback
+                    aff_scores = []
+                    uncertainties = [0.0] * n
+                    for tcr, pep in zip(tcrs, peptides):
+                        s, _ = self.affinity_scorer.score(tcr, pep)
+                        aff_scores.append(s)
+            elif hasattr(self.affinity_scorer, 'score_batch_fast'):
                 aff_scores = self.affinity_scorer.score_batch_fast(tcrs, peptides)
+                uncertainties = [0.0] * n
             else:
                 aff_scores = []
+                uncertainties = [0.0] * n
                 for tcr, pep in zip(tcrs, peptides):
                     s, _ = self.affinity_scorer.score(tcr, pep)
                     aff_scores.append(s)
         else:
             aff_scores = [0.0] * n
+            uncertainties = [0.0] * n
 
         # Process each sample — always compute all scorers (no frequency gating)
         for i in range(n):
             components = {}
             aff_score = aff_scores[i]
+
+            # Apply OOD penalty if in OOD mode
+            if self.reward_mode == "v1_ergo_ood_penalty":
+                uncertainty = uncertainties[i]
+                components["uncertainty"] = uncertainty
+                self._ood_total += 1
+
+                if self.ood_penalty_mode == "soft":
+                    if uncertainty > self.ood_threshold:
+                        penalty = (uncertainty - self.ood_threshold) * self.ood_penalty_weight
+                        aff_score = aff_score - penalty
+                        components["ood_penalty"] = penalty
+                        self._ood_triggered += 1
+                    else:
+                        components["ood_penalty"] = 0.0
+                else:  # hard
+                    if uncertainty > self.ood_threshold:
+                        penalty = uncertainty * self.ood_penalty_weight
+                        aff_score = aff_score - penalty
+                        components["ood_penalty"] = penalty
+                        self._ood_triggered += 1
+                    else:
+                        components["ood_penalty"] = 0.0
+
             aff_delta = aff_score - initial_affinities[i] if self.use_delta_reward else aff_score
             components["affinity_raw"] = aff_score
             components["affinity_delta"] = aff_delta
@@ -230,6 +315,9 @@ class RewardManager:
 
             # Total reward — NO z-norm, all raw
             if self.reward_mode == "v1_ergo_only":
+                total = aff_score
+            elif self.reward_mode == "v1_ergo_ood_penalty":
+                # OOD penalty already applied to aff_score above
                 total = aff_score
             elif self.reward_mode == "v1_ergo_convex":
                 total = aff_score ** self.convex_alpha
@@ -289,3 +377,18 @@ class RewardManager:
             all_components.append(components)
 
         return all_rewards, all_components
+
+    def get_ood_stats(self) -> Dict[str, float]:
+        """Get OOD penalty statistics."""
+        if self._ood_total == 0:
+            return {"ood_trigger_rate": 0.0, "ood_triggered": 0, "ood_total": 0}
+        return {
+            "ood_trigger_rate": self._ood_triggered / self._ood_total,
+            "ood_triggered": self._ood_triggered,
+            "ood_total": self._ood_total,
+        }
+
+    def reset_ood_stats(self):
+        """Reset OOD statistics counters."""
+        self._ood_triggered = 0
+        self._ood_total = 0

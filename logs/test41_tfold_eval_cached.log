@@ -1,0 +1,421 @@
+Loading tFold scorers...
+tFold scorers loaded successfully
+
+============================================================
+Processing model: test41
+============================================================
+
+Target: GILGFVFTL
+  Evaluating 200 TCRs for GILGFVFTL with tFold (cache-first)...
+    Found 30 decoys (A:15, B:15, D:0)
+    Phase 1: Cache-only scoring for 200 targets...
+      Cache hits: 150/200, misses: 50
+    Phase 2: Scoring 50 cache misses one-by-one...
+      Progress: 10/50 misses
+      Progress: 20/50 misses
+      Progress: 30/50 misses
+      Progress: 40/50 misses
+      Progress: 50/50 misses
+    Phase 3: Scoring decoys (30 per TCR)...
+      Progress: 20/200 TCRs
+      Progress: 40/200 TCRs
+      Progress: 60/200 TCRs
+      Progress: 80/200 TCRs
+      Progress: 100/200 TCRs
+      Progress: 120/200 TCRs
+      Progress: 140/200 TCRs
+      Progress: 160/200 TCRs
+      Progress: 180/200 TCRs
+      Progress: 200/200 TCRs
+  tFold AUROC: 0.3593
+  ERGO AUROC:  0.3886
+  Difference:  -0.0293
+
+Target: NLVPMVATV
+  Evaluating 200 TCRs for NLVPMVATV with tFold (cache-first)...
+    Found 30 decoys (A:15, B:15, D:0)
+    Phase 1: Cache-only scoring for 200 targets...
+      Cache hits: 0/200, misses: 200
+    Phase 2: Scoring 200 cache misses one-by-one...
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSEPTSGRATQYF: Feature extraction failed
+      Progress: 10/200 misses
+tFold extraction error for ASRARFGTRTDTQYF: Feature extraction failed
+tFold extraction error for ASSWPHYYLYTF: Feature extraction failed
+tFold extraction error for ASSYSRTERTEAFF: Feature extraction failed
+tFold extraction error for ASSRNSGRRSDNEQFF: Feature extraction failed
+tFold extraction error for ASSGSGLARQPGELFF: Feature extraction failed
+tFold extraction error for AISGRGFTRTQYF: Feature extraction failed
+      Progress: 20/200 misses
+tFold extraction error for AWSGIGGWRNIPLHF: Feature extraction failed
+tFold extraction error for ASSSVVRSRQPQHF: Feature extraction failed
+tFold extraction error for ASSLMARGRRDTQYF: Feature extraction failed
+tFold extraction error for ASSQVRLGRRGATTDTQYF: Feature extraction failed
+tFold extraction error for ASSAGTRLRNQPQHF: Feature extraction failed
+tFold extraction error for ASSHYGATRAFF: Feature extraction failed
+tFold extraction error for ASIANANTRELFF: Feature extraction failed
+tFold extraction error for ASSRNGRNRPQHF: Feature extraction failed
+tFold extraction error for ASDFPASGYLGEQFF: Feature extraction failed
+      Progress: 30/200 misses
+tFold extraction error for ASSAPVRLRGGADTQYF: Feature extraction failed
+tFold extraction error for ASSSLSQTLPSGNTIYF: Feature extraction failed
+tFold extraction error for RASSPRQYREQYF: Feature extraction failed
+tFold extraction error for ASSNTATGYYEQPF: Feature extraction failed
+tFold extraction error for SRDRNRGTYAFF: Feature extraction failed
+tFold extraction error for ASSNGLGQRLDNEQFF: Feature extraction failed
+tFold extraction error for ASSYPTRAYAFF: Feature extraction failed
+tFold extraction error for ASNNPGPNYGYTF: Feature extraction failed
+      Progress: 40/200 misses
+tFold extraction error for RSARRGTEKKEQYF: Feature extraction failed
+tFold extraction error for ASTNRQRGYQSQHF: Feature extraction failed
+tFold extraction error for ASSLGSKGLRPQHF: Feature extraction failed
+tFold extraction error for ASSLPRELRKTQYF: Feature extraction failed
+tFold extraction error for ASSSPSSIYHEQFF: Feature extraction failed
+tFold extraction error for ASSLRAPWLGYTF: Feature extraction failed
+tFold extraction error for ASSIVGRARNEQFF: Feature extraction failed
+tFold extraction error for ASSEISRRLDINTIYF: Feature extraction failed
+      Progress: 50/200 misses
+tFold extraction error for ASSWNQAGRGELFF: Feature extraction failed
+tFold extraction error for ASNNGGLAYYHEQFF: Feature extraction failed
+tFold extraction error for ASSRGGRLRTGNEQFF: Feature extraction failed
+tFold extraction error for SANNPGLYYEQFF: Feature extraction failed
+      Progress: 60/200 misses
+tFold extraction error for ASTALGNDKGYTF: Feature extraction failed
+tFold extraction error for ASRRPYSGYTDTQYF: Feature extraction failed
+tFold extraction error for ASENPDPGWTIYF: Feature extraction failed
+tFold extraction error for ASSNPLYGYHYNEQFF: Feature extraction failed
+tFold extraction error for ASSQEYRGYHNYGYTF: Feature extraction failed
+tFold extraction error for ASSRPALRLFEQYF: Feature extraction failed
+      Progress: 70/200 misses
+tFold extraction error for ASANWGFYLHTS: Feature extraction failed
+tFold extraction error for ASSPPDFEYKNPIQYF: Feature extraction failed
+tFold extraction error for ASRRPGEIYNEQFF: Feature extraction failed
+tFold extraction error for ASSLRIGKYGNTIYF: Feature extraction failed
+      Progress: 80/200 misses
+tFold extraction error for ATDAGTKNWEQFF: Feature extraction failed
+tFold extraction error for ASRPYYYQYEDYGYTF: Feature extraction failed
+tFold extraction error for ARDLRQFILATNEKLFF: Feature extraction failed
+tFold extraction error for ASETRDRGYNNTGELFF: Feature extraction failed
+tFold extraction error for ASSNPYPLYEQFF: Feature extraction failed
+tFold extraction error for TSTRPGEYYEQFF: Feature extraction failed
+      Progress: 90/200 misses
+tFold extraction error for ASSRNGGGYGNTIYF: Feature extraction failed
+tFold extraction error for ASSPPTKMYTEAFF: Feature extraction failed
+tFold extraction error for ASENPGPIYNEQFF: Feature extraction failed
+tFold extraction error for ASSNWIGPYGLNEQFF: Feature extraction failed
+tFold extraction error for ASSLGISGFGSEQYF: Feature extraction failed
+tFold extraction error for AIRGLTRERNYGYTF: Feature extraction failed
+      Progress: 100/200 misses
+tFold extraction error for ASTPGYANYGELFF: Feature extraction failed
+tFold extraction error for ASREAARNEQFF: Feature extraction failed
+tFold extraction error for ASSEYPTNNYEQYF: Feature extraction failed
+tFold extraction error for SVAGWIRSYTPHF: Feature extraction failed
+tFold extraction error for ASSPPIRTYDTQYF: Feature extraction failed
+      Progress: 110/200 misses
+tFold extraction error for ASSARIRRYVYGYTF: Feature extraction failed
+tFold extraction error for ASSLRRGGLDEQFF: Feature extraction failed
+tFold extraction error for ASSQGTRGRKYNEQYF: Feature extraction failed
+tFold extraction error for ASSKRSGGRQETQYF: Feature extraction failed
+tFold extraction error for ASRRPTDFYEAFF: Feature extraction failed
+tFold extraction error for ASSRWETEYFF: Feature extraction failed
+      Progress: 120/200 misses
+tFold extraction error for ASSKIIDGLEAFF: Feature extraction failed
+tFold extraction error for ASSNRIAVLGRSKFF: Feature extraction failed
+tFold extraction error for AISGPVYNRHHF: Feature extraction failed
+      Progress: 130/200 misses
+tFold extraction error for ASSLARTEYKKNIQYF: Feature extraction failed
+tFold extraction error for ASSYWPYEYRHTQYF: Feature extraction failed
+tFold extraction error for ASSLAYEGYKYPHF: Feature extraction failed
+tFold extraction error for ASSWAGTGVYQETQYF: Feature extraction failed
+tFold extraction error for ASENYDYGYGYEQYF: Feature extraction failed
+      Progress: 140/200 misses
+tFold extraction error for ASAPRIRGFSPLHF: Feature extraction failed
+tFold extraction error for ASERMIANYSPLHF: Feature extraction failed
+tFold extraction error for SADGIPNTLAFF: Feature extraction failed
+tFold extraction error for ASRPPIILSQFF: Feature extraction failed
+tFold extraction error for ASQKPPSYYHYF: Feature extraction failed
+tFold extraction error for ASENPLAGYHNEDFF: Feature extraction failed
+      Progress: 150/200 misses
+tFold extraction error for AISENYRGYNSPLHF: Feature extraction failed
+tFold extraction error for ASEPPGRGYNEQFF: Feature extraction failed
+tFold extraction error for SSPTRGDRDNNAQYF: Feature extraction failed
+tFold extraction error for ASREAGGTFWDEQFF: Feature extraction failed
+tFold extraction error for ASEPYIYQYVETQYF: Feature extraction failed
+tFold extraction error for ATSSIIGSYYHYF: Feature extraction failed
+      Progress: 160/200 misses
+tFold extraction error for ASSQNTRTRHLFF: Feature extraction failed
+tFold extraction error for ASEPYIGEYLEYPF: Feature extraction failed
+tFold extraction error for SSLVQADHHMPVYF: Feature extraction failed
+tFold extraction error for ASSPRGIGNSPLHF: Feature extraction failed
+      Progress: 170/200 misses
+tFold extraction error for ASLSSGHYSELFF: Feature extraction failed
+tFold extraction error for ASSLVRVAYVQETQYF: Feature extraction failed
+tFold extraction error for ATEEGSDNFQHFF: Feature extraction failed
+tFold extraction error for ASWLGITSREQYF: Feature extraction failed
+tFold extraction error for AISDAGARGNTIYF: Feature extraction failed
+tFold extraction error for SNADRGYYQEHFF: Feature extraction failed
+      Progress: 180/200 misses
+tFold extraction error for SVENPGWETHQYF: Feature extraction failed
+tFold extraction error for SRASGITSVYEQFF: Feature extraction failed
+tFold extraction error for ASSPLGTGITGELFF: Feature extraction failed
+tFold extraction error for SSSPRELMYIEAFF: Feature extraction failed
+tFold extraction error for ASRLQLRNTEHFF: Feature extraction failed
+tFold extraction error for SARDLHRYGNTGELFF: Feature extraction failed
+      Progress: 190/200 misses
+tFold extraction error for RASNQIKRWTHTPHF: Feature extraction failed
+tFold extraction error for SSWPVGGNGHLFF: Feature extraction failed
+tFold extraction error for ASSLATRDRNYEQYF: Feature extraction failed
+tFold extraction error for SAARTGGYEDTQYF: Feature extraction failed
+tFold extraction error for AIKGSYSSYNEQFF: Feature extraction failed
+tFold extraction error for ASRLRPGQEPYEQYF: Feature extraction failed
+tFold extraction error for SARSEAASDSYEQYF: Feature extraction failed
+      Progress: 200/200 misses
+tFold extraction error for SARTADTYELF: Feature extraction failed
+    Phase 3: Scoring decoys (30 per TCR)...
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for ASSQNGRRRTGNTIYF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for AISEPGQYLRRPQHF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for SSSINLALLTEAFF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASSFLARQRIDTQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASIKYQGARREQYF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSINGAYRSPLHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLMTGKRPQHF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed
+tFold extraction error for ASSLHQRARGDYGYTF: Feature extraction failed

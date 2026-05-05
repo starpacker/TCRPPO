@@ -14,7 +14,7 @@ CUDA_VISIBLE_DEVICES=3 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --affinity_scorer ergo \
     --encoder esm2 \
     --reward_mode raw_multi_penalty \
-    --total_timesteps 2000000 \
+    --total_timesteps 4500000 \
     --n_envs 8 \
     --learning_rate 1e-4 \
     --ban_stop \
@@ -23,7 +23,7 @@ CUDA_VISIBLE_DEVICES=3 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --resume_change_reward_mode raw_multi_penalty \
     --resume_reset_optimizer \
     --w_naturalness 0.1 --w_decoy 0.02 --w_diversity 0.0 \
-    --reward_schedule '[{"step":0,"mode":"raw_multi_penalty","w_nat":0.1,"w_decoy":0.02,"w_diversity":0.0},{"step":500000,"mode":"contrastive_ergo","n_decoys":16}]' \
+    --reward_schedule '[{"step":2500000,"mode":"raw_multi_penalty","w_nat":0.1,"w_decoy":0.02,"w_diversity":0.0},{"step":3000000,"mode":"contrastive_ergo","n_decoys":16}]' \
     --entropy_coef_final 0.01 \
     --entropy_decay_start 0 \
     > logs/test43b_curriculum_warm_train.log 2>&1 &

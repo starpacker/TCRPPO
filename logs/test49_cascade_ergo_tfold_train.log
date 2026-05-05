@@ -1,0 +1,20 @@
+
+Starting training for 3,500,000 timesteps...
+Setting up PPO trainer: test49_cascade_ergo_tfold
+  reward_mode=contrastive_ergo, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  Filtered targets: 12 peptides from data/mcpas_12_targets.txt
+  ERGO loaded (primary)
+  tFold V3.4 loaded (secondary, cache=39400 entries)
+  Cascade scorer (ERGO → tFold if score > 0.3)
+  ESM-2 loaded (dim=1280, disk_cache=15499838 seqs)
+  pMHC loader: 12 targets
+  TCR pool: 7266860 seqs, L0 targets=256/12, L1 targets=12/12
+  Decoy scorer loaded (K=8)
+  VecEnv: 8 envs, obs_dim=2562, ban_stop=True
+  pMHC warmup: 12 targets cached in 0.5s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test49_cascade_ergo_tfold/experiment.json
+Resuming from checkpoint: output/test41_from_test33_1m_16decoys/checkpoints/final.pt
+  Resumed at step 2,500,608
+  Changing reward mode to: contrastive_ergo

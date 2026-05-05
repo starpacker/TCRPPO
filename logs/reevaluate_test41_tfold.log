@@ -1,0 +1,91 @@
+Loading tFold scorer...
+tFold scorer loaded successfully
+
+============================================================
+Processing model: test41
+============================================================
+
+Target: GILGFVFTL
+  Evaluating 200 TCRs for GILGFVFTL with tFold...
+    WARNING: No decoys found for GILGFVFTL
+  WARNING: tFold evaluation failed, skipping
+
+Target: NLVPMVATV
+  Evaluating 200 TCRs for NLVPMVATV with tFold...
+    WARNING: No decoys found for NLVPMVATV
+  WARNING: tFold evaluation failed, skipping
+
+Target: GLCTLVAML
+  Evaluating 200 TCRs for GLCTLVAML with tFold...
+    WARNING: No decoys found for GLCTLVAML
+  WARNING: tFold evaluation failed, skipping
+
+Target: LLWNGPMAV
+  Evaluating 200 TCRs for LLWNGPMAV with tFold...
+    WARNING: No decoys found for LLWNGPMAV
+  WARNING: tFold evaluation failed, skipping
+
+Target: YLQPRTFLL
+  Evaluating 200 TCRs for YLQPRTFLL with tFold...
+    WARNING: No decoys found for YLQPRTFLL
+  WARNING: tFold evaluation failed, skipping
+
+Target: FLYALALLL
+  Evaluating 200 TCRs for FLYALALLL with tFold...
+    WARNING: No decoys found for FLYALALLL
+  WARNING: tFold evaluation failed, skipping
+
+Target: SLYNTVATL
+  Evaluating 200 TCRs for SLYNTVATL with tFold...
+    WARNING: No decoys found for SLYNTVATL
+  WARNING: tFold evaluation failed, skipping
+
+Target: KLGGALQAK
+  Evaluating 200 TCRs for KLGGALQAK with tFold...
+    WARNING: No decoys found for KLGGALQAK
+  WARNING: tFold evaluation failed, skipping
+
+Target: AVFDRKSDAK
+  Evaluating 200 TCRs for AVFDRKSDAK with tFold...
+    WARNING: No decoys found for AVFDRKSDAK
+  WARNING: tFold evaluation failed, skipping
+
+Target: IVTDFSVIK
+  Evaluating 200 TCRs for IVTDFSVIK with tFold...
+    WARNING: No decoys found for IVTDFSVIK
+  WARNING: tFold evaluation failed, skipping
+
+Target: SPRWYFYYL
+  Evaluating 200 TCRs for SPRWYFYYL with tFold...
+    WARNING: No decoys found for SPRWYFYYL
+  WARNING: tFold evaluation failed, skipping
+
+Target: RLRAEAQVK
+  Evaluating 200 TCRs for RLRAEAQVK with tFold...
+    WARNING: No decoys found for RLRAEAQVK
+  WARNING: tFold evaluation failed, skipping
+
+Target: _summary
+  WARNING: No ERGO results found, skipping
+
+✅ Saved to: results/test41_eval/eval_results_with_tfold.json
+
+============================================================
+Summary for test41:
+============================================================
+Target                 ERGO AUROC  tFold AUROC     Diff
+------------------------------------------------------------
+GILGFVFTL                  0.3886       0.0000  -0.3886
+NLVPMVATV                  0.4884       0.0000  -0.4884
+GLCTLVAML                  0.3538       0.0000  -0.3538
+LLWNGPMAV                  0.8023       0.0000  -0.8023
+YLQPRTFLL                  0.8978       0.0000  -0.8978
+FLYALALLL                  0.4752       0.0000  -0.4752
+SLYNTVATL                  0.6145       0.0000  -0.6145
+KLGGALQAK                  0.6278       0.0000  -0.6278
+AVFDRKSDAK                 0.7334       0.0000  -0.7334
+IVTDFSVIK                  0.9114       0.0000  -0.9114
+SPRWYFYYL                  0.5272       0.0000  -0.5272
+RLRAEAQVK                  0.6714       0.0000  -0.6714
+------------------------------------------------------------
+MEAN                       0.6243       0.0000  -0.6243

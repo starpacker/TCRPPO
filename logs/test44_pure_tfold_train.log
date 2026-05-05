@@ -1,0 +1,19 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test44_pure_tfold_nocache
+  reward_mode=v1_ergo_only, n_envs=4
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  Filtered targets: 29 peptides from data/tfold_good_peptides.txt
+  tFold V3.4 loaded (cache=18990 entries, cache_only=False)
+  ESM-2 loaded (dim=1280, disk_cache=13922319 seqs)
+  pMHC loader: 29 targets
+  TCR pool: 7266860 seqs, L0 targets=256/29, L1 targets=12/29
+  VecEnv: 4 envs, obs_dim=2562, ban_stop=True
+  pMHC warmup: 29 targets cached in 1.2s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test44_pure_tfold_nocache/experiment.json
+Step      5,120 | Eps:    568 | R:    0.929 | Len:   8.0 | PG:  -0.0271 | VF:   0.0711 | Ent:  5.871 | Cache: 3%(23948)
+tFold extraction error for CWGGGSLWF: Feature extraction failed
+Step     10,240 | Eps:   1136 | R:    0.848 | Len:   8.0 | PG:  -0.0221 | VF:   0.0617 | Ent:  5.709 | Cache: 3%(28922)
+Step     15,360 | Eps:   1704 | R:    0.920 | Len:   8.0 | PG:  -0.0213 | VF:   0.0508 | Ent:  5.570 | Cache: 3%(33884)
+Step     20,480 | Eps:   2276 | R:    1.070 | Len:   8.0 | PG:  -0.0178 | VF:   0.0673 | Ent:  5.479 | Cache: 3%(38925)

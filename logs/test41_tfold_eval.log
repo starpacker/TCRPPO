@@ -1,0 +1,12 @@
+Loading tFold scorer...
+tFold scorer loaded successfully
+
+============================================================
+Processing model: test41
+============================================================
+
+Target: GILGFVFTL
+  Evaluating 200 TCRs for GILGFVFTL with tFold (batch_size=50)...
+    Found 30 decoys (A:15, B:15, D:0)
+    Scoring 200 targets in batches of 50...
+      Progress: 100/200 targets

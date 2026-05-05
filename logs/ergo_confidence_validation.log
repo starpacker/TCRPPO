@@ -1,0 +1,72 @@
+======================================================================
+ERGO MC Dropout Confidence Validation
+======================================================================
+
+[1/6] Loading ERGO scorer...
+
+[2/6] Loading TCR pool...
+
+[3/6] Loading pMHC data...
+
+Test peptide: GILGFVFTL
+
+[4/6] Sampling 200 random TCRs...
+Sampled 200 TCRs
+
+[5/6] Computing MC Dropout stats (10 forward passes per TCR)...
+  Processed 100/200 TCRs...
+  Processed 200/200 TCRs...
+
+======================================================================
+MC Dropout std Distribution:
+======================================================================
+Mean std:   0.0671
+Median std: 0.0464
+Std of std: 0.0625
+Min std:    0.0003
+Max std:    0.3569
+5th percentile:  0.0054
+95th percentile: 0.1865
+
+Std range: 0.3566
+
+Saved plot: figures/ergo_mc_dropout_std_distribution.png
+
+[6/6] Computing per-TCR AUROC (specificity)...
+Loaded 1900 decoy peptides from library
+  Processed 50/200 TCRs...
+  Processed 100/200 TCRs...
+  Processed 150/200 TCRs...
+  Processed 200/200 TCRs...
+
+======================================================================
+Per-TCR AUROC Distribution:
+======================================================================
+Mean AUROC:   0.4357
+Median AUROC: 0.3500
+Std AUROC:    0.3208
+Min AUROC:    0.0000
+Max AUROC:    1.0000
+
+======================================================================
+Correlation Analysis:
+======================================================================
+corr(mean_score, AUROC):  +0.7194
+corr(std_score, AUROC):   +0.7072
+corr(confidence, AUROC):  -0.7072
+
+======================================================================
+Interpretation:
+======================================================================
+❌ NEGATIVE correlation: High confidence → Low specificity
+   This is BAD. Confidence-weighted reward will harm performance.
+
+Saved plot: figures/ergo_confidence_auroc_correlation.png
+
+Saved results: results/validation/ergo_confidence_validation.json
+
+======================================================================
+FINAL VERDICT:
+======================================================================
+❌ FAIL: Confidence signal is negatively correlated with specificity
+   Recommendation: Do NOT proceed with test46

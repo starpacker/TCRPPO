@@ -145,9 +145,15 @@ def extract_v34_features(predictor, chains: List[Dict], device: str) -> Optional
         raw = fe.extract_features_from_chains(
             predictor, chains, device=device, chunk_size=16
         )
+        if raw is None:
+            print(f"  DEBUG: raw features is None", flush=True)
+            return None
+        print(f"  DEBUG: raw type={type(raw)}, keys={list(raw.keys()) if isinstance(raw, dict) else 'N/A'}", flush=True)
         structured = fe.extract_structured_features(raw)
         if structured is None:
+            print(f"  DEBUG: structured features is None (raw was not None)", flush=True)
             return None
+        print(f"  DEBUG: structured keys={list(structured.keys())}", flush=True)
 
         MAX_CDR3, MAX_PEP = 25, 20
 
@@ -285,6 +291,11 @@ class TFoldFeatureServer:
                     features_b64.append(None)
                     errors.append("Failed to build chains (HLA resolution failed)")
                     continue
+
+                # Debug: print chain sequences
+                for ch in chains:
+                    if ch["id"] in ["B", "A"]:
+                        print(f"  DEBUG: Chain {ch['id']}: {ch['sequence'][:50]}...", flush=True)
 
                 feats = extract_v34_features(self.predictor, chains, self.device)
                 if feats is None:
