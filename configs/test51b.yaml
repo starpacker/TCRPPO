@@ -1,0 +1,108 @@
+# test51b: Pure tFold with Terminal-Only Reward (Optimized for 4-day completion)
+# Key changes from test51:
+#   - n_decoys: 2 -> 1 (33% fewer tFold calls)
+#   - n_steps: 128 -> 32 (faster rollout)
+#   - n_envs: 8 -> 4 (lower GPU load)
+#   - checkpoint_interval: 200K -> 100K (more frequent saves)
+
+# === PPO ===
+total_timesteps: 2_000_000
+n_envs: 4  # Reduced from 8
+n_steps: 32  # Reduced from 128
+batch_size: 128  # Adjusted to match n_steps * n_envs
+n_epochs: 4
+learning_rate: 3.0e-4
+gamma: 0.90
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.05
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# === Environment ===
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 4
+hla_pseudoseq_len: 34
+
+# === Policy Network ===
+hidden_dim: 512
+
+# === ESM State Encoder ===
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+
+# === Reward Weights ===
+w_affinity: 1.0
+w_decoy: 0.0
+w_naturalness: 0.1
+w_diversity: 0.0
+
+# === Credit Assignment ===
+use_delta_reward: false
+
+# === Affinity Scorer (tFold) ===
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_gpu4.sock"
+
+# === Decoy Scorer ===
+decoy_K: 1  # REDUCED from 2 to 1 (key optimization)
+decoy_tau: 10.0
+decoy_tier_weights:
+  A: 1
+  B: 0  # Only use tier A (hardest negatives)
+  D: 0
+  C: 0
+decoy_unlock_schedule:
+  0: [A]  # Only tier A
+
+# === Naturalness Scorer (ESM Perplexity) ===
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+
+# === Diversity Scorer ===
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# === Curriculum (L0 + L2, no L1) ===
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.5, L1: 0.0, L2: 0.5}
+
+# === Target Sampling ===
+target_sampling: "uniform"
+
+# === Online Eval (DISABLED) ===
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 50
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+# === Checkpointing ===
+checkpoint_interval: 100000  # Every 100K steps (more frequent)
+milestones: [100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000, 1100000, 1200000, 1300000, 1400000, 1500000, 1600000, 1700000, 1800000, 1900000, 2000000]
+
+# === Reward Mode ===
+reward_mode: "contrastive_ergo"
+
+# === Contrastive Reward ===
+n_contrast_decoys: 1  # REDUCED from 2 to 1
+contrastive_agg: "mean"
+
+# === Seed ===
+seed: 42
+
+# === Paths ===
+decoy_library_path: "/share/liuyutian/pMHC_decoy_library"
+tcrdb_path: "/share/liuyutian/TCRPPO/data/tcrdb"
+test_peptides_path: "/share/liuyutian/TCRPPO/data/test_peptides"
+ergo_model_dir: "tcrppo_v2/ERGO/models"
+ergo_ae_file: "tcrppo_v2/ERGO/TCR_Autoencoder/tcr_ae_dim_100.pt"
+output_dir: "output"
+results_dir: "results"
+l1_seeds_dir: "data/l1_seeds"
