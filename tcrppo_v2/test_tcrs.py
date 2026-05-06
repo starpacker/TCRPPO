@@ -316,11 +316,9 @@ def load_scorers(scorer_names: List[str], device: str, config: dict) -> Dict:
             scorers["tfold"] = AffinityTFoldScorer(
                 device=device,
                 gpu_id=gpu_id,
-                cache_only=True,  # eval uses cache only — no slow server calls
-                cache_miss_score=0.5,
             )
             stats = scorers["tfold"].cache_stats
-            print(f"  Loaded tFold scorer (cache_only, {stats['cache_size']} cached entries)")
+            print(f"  Loaded tFold scorer ({stats['cache_size']} cached entries)")
 
         else:
             print(f"  WARNING: Unknown scorer '{name}', skipping")

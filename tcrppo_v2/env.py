@@ -34,6 +34,7 @@ class TCREditEnv:
         min_steps: int = 0,
         min_steps_penalty: float = 0.0,
         ban_stop: bool = False,
+        terminal_reward_only: bool = False,
     ):
         """Initialize environment.
 
@@ -47,6 +48,10 @@ class TCREditEnv:
             max_tcr_len: Max TCR sequence length.
             min_tcr_len: Min TCR sequence length.
             reward_mode: Reward mode string.
+            min_steps: Minimum steps before STOP is allowed.
+            min_steps_penalty: Penalty for early STOP.
+            ban_stop: If True, STOP action is never allowed.
+            terminal_reward_only: If True, only compute reward at episode end.
         """
         self.esm_cache = esm_cache
         self.pmhc_loader = pmhc_loader
@@ -61,6 +66,7 @@ class TCREditEnv:
         self.min_steps = min_steps
         self.min_steps_penalty = min_steps_penalty
         self.ban_stop = ban_stop
+        self.terminal_reward_only = terminal_reward_only
 
         # State dimensions
         self.esm_dim = esm_cache.output_dim  # 1280
@@ -178,12 +184,26 @@ class TCREditEnv:
             self.done = True
 
         # Compute reward
-        reward, components = self.reward_manager.compute_reward(
-            tcr=self.tcr_seq,
-            peptide=self.peptide,
-            initial_affinity=self.initial_affinity,
-            target=self.target,
-        )
+        if self.terminal_reward_only:
+            # Terminal-only: only compute reward at episode end
+            if self.done:
+                reward, components = self.reward_manager.compute_reward(
+                    tcr=self.tcr_seq,
+                    peptide=self.peptide,
+                    initial_affinity=self.initial_affinity,
+                    target=self.target,
+                )
+            else:
+                reward = 0.0
+                components = {}
+        else:
+            # Per-step: compute reward at every step
+            reward, components = self.reward_manager.compute_reward(
+                tcr=self.tcr_seq,
+                peptide=self.peptide,
+                initial_affinity=self.initial_affinity,
+                target=self.target,
+            )
 
         # Min-steps penalty: penalize STOP before min_steps
         if op_type == OP_STOP and self.min_steps > 0 and self.step_count < self.min_steps:
@@ -354,6 +374,7 @@ class VecTCREditEnv:
         min_steps: int = 0,
         min_steps_penalty: float = 0.0,
         ban_stop: bool = False,
+        terminal_reward_only: bool = False,
     ):
         """Create n_envs parallel environments sharing scorers."""
         self.n_envs = n_envs
@@ -369,6 +390,7 @@ class VecTCREditEnv:
                 min_steps=min_steps,
                 min_steps_penalty=min_steps_penalty,
                 ban_stop=ban_stop,
+                terminal_reward_only=terminal_reward_only,
             )
             for _ in range(n_envs)
         ]

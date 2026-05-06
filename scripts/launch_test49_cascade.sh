@@ -8,7 +8,7 @@ cd /share/liuyutian/tcrppo_v2
 
 CUDA_VISIBLE_DEVICES=4 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --config configs/default.yaml \
-    --run_name test49_cascade_ergo_tfold_cacheonly \
+    --run_name test49_cascade_ergo_tfold \
     --seed 42 \
     --resume_from output/test41_from_test33_1m_16decoys/checkpoints/final.pt \
     --resume_change_reward_mode contrastive_ergo \
@@ -19,8 +19,6 @@ CUDA_VISIBLE_DEVICES=4 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --cascade_threshold 0.5 \
     --cascade_tfold_weight 0.7 \
     --cascade_ergo_weight 0.3 \
-    --tfold_cache_only \
-    --tfold_cache_miss_score 0.3 \
     --encoder esm2 \
     --total_timesteps 3500000 \
     --n_envs 8 \
@@ -29,9 +27,9 @@ CUDA_VISIBLE_DEVICES=4 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --max_steps 8 \
     --ban_stop \
     --train_targets data/mcpas_12_targets.txt \
-    > logs/test49_cascade_ergo_tfold_cacheonly_train.log 2>&1 &
+    > logs/test49_cascade_ergo_tfold_train.log 2>&1 &
 
-echo "test49_cascade_ergo_tfold_cacheonly launched on GPU 4"
-echo "Monitor: tail -f logs/test49_cascade_ergo_tfold_cacheonly_train.log"
-echo "Hypothesis: Cascade scoring (ERGO → tFold cache-only if score > 0.5) improves tFold AUROC"
-echo "Key change: cache_only=True, threshold=0.5, cache_miss_score=0.3"
+echo "test49_cascade_ergo_tfold launched on GPU 4"
+echo "Monitor: tail -f logs/test49_cascade_ergo_tfold_train.log"
+echo "Hypothesis: Cascade scoring (ERGO → tFold if score > 0.5) improves tFold AUROC"
+echo "Key change: threshold=0.5"

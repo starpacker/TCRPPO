@@ -346,8 +346,6 @@ class AffinityTFoldScorer(BaseScorer):
         gpu_id: int = 0,
         max_subprocess_batch: int = 32,
         server_socket_path: str = "/tmp/tfold_server.sock",
-        cache_only: bool = False,
-        cache_miss_score: float = 0.5,
     ):
         """Initialize tFold V3.4 scorer.
 
@@ -358,18 +356,12 @@ class AffinityTFoldScorer(BaseScorer):
             gpu_id: GPU ID for the tFold feature extraction subprocess.
             max_subprocess_batch: Max samples per server request.
             server_socket_path: Path to tFold feature server Unix socket.
-            cache_only: If True, never call tFold server; cache misses return None
-                       (scored as cache_miss_score). Useful for fast training.
-            cache_miss_score: Score to return for cache misses in cache_only mode.
-                            Default 0.5 (neutral). Set to 0.0 for pessimistic.
         """
         self.device = device
         self.default_hla = default_hla
         self.gpu_id = gpu_id
         self.max_subprocess_batch = max_subprocess_batch
         self.server_socket_path = server_socket_path
-        self.cache_only = cache_only
-        self.cache_miss_score = cache_miss_score
 
         # Load V3.4 classifier
         self.model = self._load_classifier(device)
@@ -445,7 +437,7 @@ class AffinityTFoldScorer(BaseScorer):
 
         try:
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.settimeout(600)  # 10 min timeout for large batches
+            sock.settimeout(1800)  # 30 min timeout for cold-start structure predictions
             sock.connect(sock_path)
 
             # Send extract request
@@ -500,7 +492,7 @@ class AffinityTFoldScorer(BaseScorer):
             logger.warning(f"tFold server not running at {sock_path}")
             return [None] * len(requests)
         except socket.timeout:
-            logger.error("tFold server request timed out (10 min)")
+            logger.error("tFold server request timed out (30 min)")
             return [None] * len(requests)
         except Exception as e:
             logger.error(f"tFold server communication error: {e}")
@@ -548,25 +540,18 @@ class AffinityTFoldScorer(BaseScorer):
                     "hla": hlas[i],
                 }))
 
-        # Extract missing features via server (or skip in cache_only mode)
+        # Extract missing features via server
         if need_extract:
-            if self.cache_only:
-                logger.debug(
-                    f"tFold cache miss (cache_only): {len(need_extract)}/{len(keys)} skipped"
-                )
-                # Leave results[i] = None for misses; handled by score_batch_fast()
-                all_extracted = []
-            else:
-                logger.info(
-                    f"tFold cache miss: {len(need_extract)}/{len(keys)} need extraction"
-                )
-                # Process in batches
-                all_extracted = []
-                for batch_start in range(0, len(need_extract), self.max_subprocess_batch):
-                    batch = need_extract[batch_start : batch_start + self.max_subprocess_batch]
-                    requests = [item[1] for item in batch]
-                    extracted = self._extract_features_server(requests)
-                    all_extracted.extend(zip(batch, extracted))
+            logger.info(
+                f"tFold cache miss: {len(need_extract)}/{len(keys)} need extraction"
+            )
+            # Process in batches
+            all_extracted = []
+            for batch_start in range(0, len(need_extract), self.max_subprocess_batch):
+                batch = need_extract[batch_start : batch_start + self.max_subprocess_batch]
+                requests = [item[1] for item in batch]
+                extracted = self._extract_features_server(requests)
+                all_extracted.extend(zip(batch, extracted))
 
             # Store extracted features
             to_cache = []
@@ -656,9 +641,8 @@ class AffinityTFoldScorer(BaseScorer):
                 valid_features.append(f)
                 valid_indices.append(i)
 
-        # Failed extractions get a low score (mapped 0.1) to discourage unscoreable sequences.
-        # In cache_only mode, cache misses get cache_miss_score (default 0.5).
-        default_raw = self.cache_miss_score - 1.0 if self.cache_only else -0.9
+        # Failed extractions get a low score to discourage unscoreable sequences.
+        default_raw = -0.9
         scores = [default_raw] * len(tcrs)
         confidences = [0.0] * len(tcrs)
 
@@ -676,15 +660,11 @@ class AffinityTFoldScorer(BaseScorer):
 
         For RL training reward, we map the binding score from [-1, 0] to [0, 1]
         to be consistent with ERGO's output range.
-
-        Cache misses in cache_only mode return self.cache_miss_score (default 0.5).
         """
         scores, _ = self.score_batch(tcrs, peptides)
         # Map from [-1, 0] (raw) to [0, 1] (ERGO-compatible)
         # raw = -sigmoid(gate_logit), so raw is in [-1, 0]
         # mapped = raw + 1 → [0, 1], where 1 = strong binding
-        # For cache misses (cache_only mode): raw = cache_miss_score - 1.0,
-        # so mapped = raw + 1.0 = cache_miss_score. Correct by construction.
         return [s + 1.0 for s in scores]
 
     @property

@@ -291,11 +291,9 @@ class PPOTrainer:
             affinity_scorer = AffinityTFoldScorer(
                 device=self.device,
                 gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
-                cache_only=self.config.get("tfold_cache_only", False),
-                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
+                server_socket_path=self.config.get("tfold_server_socket", "/tmp/tfold_server.sock"),
             )
-            print(f"  tFold V3.4 loaded (cache={affinity_scorer.cache_stats['cache_size']} entries, "
-                  f"cache_only={affinity_scorer.cache_only})")
+            print(f"  tFold V3.4 loaded (cache={affinity_scorer.cache_stats['cache_size']} entries)")
         elif affinity_model == "ensemble":
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
@@ -363,11 +361,8 @@ class PPOTrainer:
             tfold_scorer = AffinityTFoldScorer(
                 device=self.device,
                 gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
-                cache_only=self.config.get("tfold_cache_only", False),
-                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
             )
-            print(f"  tFold V3.4 loaded (cache={tfold_scorer.cache_stats['cache_size']} entries, "
-                  f"cache_only={tfold_scorer.cache_only})")
+            print(f"  tFold V3.4 loaded (cache={tfold_scorer.cache_stats['cache_size']} entries)")
             affinity_scorer = EnsembleAffinityScorer(
                 scorers=[ergo_scorer, tfold_scorer],
                 weights=[0.5, 0.5],
@@ -381,8 +376,6 @@ class PPOTrainer:
             tfold_scorer = AffinityTFoldScorer(
                 device=self.device,
                 gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
-                cache_only=self.config.get("tfold_cache_only", False),
-                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
             )
             print(f"  tFold V3.4 loaded (cache={tfold_scorer.cache_stats['cache_size']} entries)")
 
@@ -414,8 +407,6 @@ class PPOTrainer:
             tfold_scorer = AffinityTFoldScorer(
                 device=self.device,
                 gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
-                cache_only=self.config.get("tfold_cache_only", False),
-                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
             )
             print(f"  tFold V3.4 loaded (secondary, cache={tfold_scorer.cache_stats['cache_size']} entries)")
 
@@ -447,8 +438,6 @@ class PPOTrainer:
             tfold_scorer = AffinityTFoldScorer(
                 device=self.device,
                 gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
-                cache_only=self.config.get("tfold_cache_only", False),
-                cache_miss_score=self.config.get("tfold_cache_miss_score", 0.5),
             )
             print(f"  tFold V3.4 loaded (secondary, cache={tfold_scorer.cache_stats['cache_size']} entries)")
 
@@ -600,8 +589,9 @@ class PPOTrainer:
             min_steps=self.config.get("min_steps", 0),
             min_steps_penalty=self.config.get("min_steps_penalty", 0.0),
             ban_stop=self.config.get("ban_stop", False),
+            terminal_reward_only=self.config.get("terminal_reward_only", False),
         )
-        print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}, ban_stop={self.config.get('ban_stop', False)}")
+        print(f"  VecEnv: {self.n_envs} envs, obs_dim={self.vec_env.obs_dim}, ban_stop={self.config.get('ban_stop', False)}, terminal_reward_only={self.config.get('terminal_reward_only', False)}")
 
         # Warmup: pre-cache all pMHC embeddings so encode_pmhc is 0ms during training
         import time as _time
@@ -621,8 +611,6 @@ class PPOTrainer:
             self.tfold_scorer = AffinityTFoldScorer(
                 device=self.device,
                 gpu_id=gpu_id,
-                cache_only=False,  # full scoring with server
-                cache_miss_score=0.5,
                 cache_path=tfold_cache_path,
             )
             self.elite_buffer = EliteBuffer(
@@ -1255,8 +1243,6 @@ def main():
     parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
     parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
     parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, tfold_cascade, hybrid, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
-    parser.add_argument("--tfold_cache_only", action="store_true", help="tFold: skip server extraction for cache misses")
-    parser.add_argument("--tfold_cache_miss_score", type=float, default=None, help="tFold: score for cache misses (default 0.5)")
     parser.add_argument("--cascade_threshold", type=float, default=None, help="ERGO uncertainty threshold for tFold cascade (default 0.15)")
     parser.add_argument("--cascade_tfold_weight", type=float, default=None, help="Cascade scorer: tFold weight in combination (default 0.7)")
     parser.add_argument("--cascade_ergo_weight", type=float, default=None, help="Cascade scorer: ERGO weight in combination (default 0.3)")
@@ -1274,6 +1260,7 @@ def main():
     parser.add_argument("--elite_score_threshold", type=float, default=None, help="Min ERGO score for elite (default 0.7)")
     parser.add_argument("--max_steps", type=int, default=None, help="Max steps per episode (default 8)")
     parser.add_argument("--ban_stop", action="store_true", help="Ban STOP action — agent must use all max_steps")
+    parser.add_argument("--terminal_reward_only", action="store_true", help="Only compute reward at episode end (for slow scorers like tFold)")
 
     # Curriculum overrides
     parser.add_argument("--curriculum_l0", type=float, default=None, help="L0 curriculum ratio (known binder variants)")
@@ -1339,10 +1326,6 @@ def main():
         config["learning_rate"] = args.learning_rate
     if args.affinity_scorer is not None:
         config["affinity_model"] = args.affinity_scorer
-    if args.tfold_cache_only:
-        config["tfold_cache_only"] = True
-    if args.tfold_cache_miss_score is not None:
-        config["tfold_cache_miss_score"] = args.tfold_cache_miss_score
     if args.encoder is not None:
         config["encoder"] = args.encoder
     if args.encoder_dim is not None:
@@ -1373,6 +1356,8 @@ def main():
         config["hybrid_tfold_ratio"] = args.hybrid_tfold_ratio
     if args.ban_stop:
         config["ban_stop"] = True
+    if args.terminal_reward_only:
+        config["terminal_reward_only"] = True
     if args.decoy_library_path is not None:
         config["decoy_library_path"] = args.decoy_library_path
 

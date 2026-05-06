@@ -1,0 +1,98 @@
+2026-05-06 15:56:48,518 [INFO] Note: detected 176 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+2026-05-06 15:56:48,519 [INFO] Note: NumExpr detected 176 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-05-06 15:56:48,519 [INFO] NumExpr defaulting to 16 threads.
+Loading tFold predictor on cpu...
+/share/liuyutian/tfold/tfold/model/arch/core/module/structure_module.py:88: FutureWarning: `torch.cuda.amp.custom_fwd(args...)` is deprecated. Please use `torch.amp.custom_fwd(args..., device_type='cuda')` instead.
+  @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+2026-05-06 15:56:48,969 [INFO] restoring the pre-trained tFold-PPI-SeqPT model ...
+2026-05-06 15:56:52,598 [INFO] model:
+  arch: PPIModel
+  attention_mode: native
+  embedding_dim: 1280
+  num_heads: 20
+  num_layers: 33
+  token_dropout: true
+  tokenizer: ESM-1b
+  use_crp_embeddings: true
+
+2026-05-06 15:56:58,531 [INFO] restoring the pre-trained tFold-TCR model ...
+model:
+  arch: TfoldTCR
+  attention_mode: native
+  c_s: 192
+  c_z: 128
+  docking:
+    coord_init: tcr
+    ligand_c_s: 192
+    ligand_c_z: 128
+    num_2d_layers: 16
+    num_3d_layers: 8
+    num_3d_recycles: 8
+    num_recycles: 1
+    receptor_c_s: 192
+    receptor_c_z: 128
+  embedding_dim: 1280
+  init_c_s: 1280
+  init_c_z: 660
+  ligand:
+    c_s: 192
+    c_z: 128
+    init_c_s: 1280
+    init_c_z: 660
+    num_2d_layers: 16
+    num_3d_layers: 8
+    num_3d_recycles: 8
+    num_recycles: 1
+    position_embedding_dim: 64
+    tm_enabled: true
+    use_residue_embedding: false
+  num_2d_layers: 16
+  num_3d_layers: 8
+  num_3d_recycles: 8
+  num_heads: 20
+  num_layers: 33
+  num_recycles: 1
+  plm:
+    c_s: 1280
+    c_z: 660
+  position_embedding_dim: 64
+  receptor:
+    c_s: 192
+    c_z: 128
+    init_c_s: 1280
+    init_c_z: 660
+    num_2d_layers: 16
+    num_3d_layers: 8
+    num_3d_recycles: 8
+    num_recycles: 1
+    position_embedding_dim: 64
+    tm_enabled: true
+    use_residue_embedding: false
+  tm_enabled: true
+  token_dropout: true
+  tokenizer: ESM-1b
+  use_crp_embeddings: true
+  use_residue_embedding: true
+
+tFold predictor loaded in 12.7s
+Building HLA lookup from IPD-IMGT/HLA database...
+2026-05-06 15:57:01,872 [INFO] HLA lookup: 43665 entries from /share/liuyutian/TCRdata/tc-hard/reconstructed/hla_db
+HLA lookup built: 43665 entries
+READY
+Server listening on /tmp/tfold_server_gpu4.sock (pid=3525471)
+Client connected
+Extract request: 8 samples
+  DEBUG: Chain B: MGTSLLCWMALCLLGADHADTGVSQNPRHNITKRGQNVTFRCDPISEHNR...
+  DEBUG: Chain A: MAMLLGASVLILWLQPDWVNSQQKNDDQQVKQNSPSLSVQEGRISILNCD...
+  DEBUG: raw type=<class 'dict'>, keys=['raw_sfea', 'ca_coords', 'chains', 'lig_len', 'rec_len', 'L_total', 'mono_cord_lig', 'mono_cord_rec', 'pfea_cdr3b_pep', 'pfea_cdr3a_pep', 'pfea_pep_cdr3b', 'pfea_pep_cdr3a', 'cdr3b_global_range', 'cdr3a_global_range', 'pep_global_range']
+  DEBUG: structured keys=['sfea_cdr3b', 'sfea_cdr3a', 'sfea_pep', 'ca_cdr3b', 'ca_cdr3a', 'ca_pep', 'pfea_cdr3b_pep', 'pfea_cdr3a_pep', 'v33_feat']
+  DEBUG: Chain B: MGTSLLCWMALCLLGADHADTGVSQNPRHNITKRGQNVTFRCDPISEHNR...
+  DEBUG: Chain A: MAMLLGASVLILWLQPDWVNSQQKNDDQQVKQNSPSLSVQEGRISILNCD...
+  DEBUG: raw type=<class 'dict'>, keys=['raw_sfea', 'ca_coords', 'chains', 'lig_len', 'rec_len', 'L_total', 'mono_cord_lig', 'mono_cord_rec', 'pfea_cdr3b_pep', 'pfea_cdr3a_pep', 'pfea_pep_cdr3b', 'pfea_pep_cdr3a', 'cdr3b_global_range', 'cdr3a_global_range', 'pep_global_range']
+  DEBUG: structured keys=['sfea_cdr3b', 'sfea_cdr3a', 'sfea_pep', 'ca_cdr3b', 'ca_cdr3a', 'ca_pep', 'pfea_cdr3b_pep', 'pfea_cdr3a_pep', 'v33_feat']
+  DEBUG: Chain B: MGTSLLCWMALCLLGADHADTGVSQNPRHNITKRGQNVTFRCDPISEHNR...
+  DEBUG: Chain A: MAMLLGASVLILWLQPDWVNSQQKNDDQQVKQNSPSLSVQEGRISILNCD...
+  DEBUG: raw type=<class 'dict'>, keys=['raw_sfea', 'ca_coords', 'chains', 'lig_len', 'rec_len', 'L_total', 'mono_cord_lig', 'mono_cord_rec', 'pfea_cdr3b_pep', 'pfea_cdr3a_pep', 'pfea_pep_cdr3b', 'pfea_pep_cdr3a', 'cdr3b_global_range', 'cdr3a_global_range', 'pep_global_range']
+  DEBUG: structured keys=['sfea_cdr3b', 'sfea_cdr3a', 'sfea_pep', 'ca_cdr3b', 'ca_cdr3a', 'ca_pep', 'pfea_cdr3b_pep', 'pfea_cdr3a_pep', 'v33_feat']
+  DEBUG: Chain B: MGTSLLCWMALCLLGADHADTGVSQNPRHNITKRGQNVTFRCDPISEHNR...
+  DEBUG: Chain A: MAMLLGASVLILWLQPDWVNSQQKNDDQQVKQNSPSLSVQEGRISILNCD...

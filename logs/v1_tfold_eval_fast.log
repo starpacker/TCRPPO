@@ -1,0 +1,25 @@
+Loading v1 TCRs from /share/liuyutian/TCRPPO/evaluation/results/decoy/eval_decoy_ae_mcpas_v2.csv...
+  GILGFVFTL: 50 unique TCRs
+  NLVPMVATV: 50 unique TCRs
+  GLCTLVAML: 49 unique TCRs
+  LLWNGPMAV: 0 unique TCRs
+  YLQPRTFLL: 50 unique TCRs
+  FLYALALLL: 0 unique TCRs
+  SLYNTVATL: 50 unique TCRs
+  KLGGALQAK: 0 unique TCRs
+  AVFDRKSDAK: 0 unique TCRs
+  IVTDFSVIK: 0 unique TCRs
+  SPRWYFYYL: 0 unique TCRs
+  RLRAEAQVK: 0 unique TCRs
+
+Initializing tFold scorers...
+tFold scorers loaded successfully
+
+============================================================
+[GILGFVFTL]
+============================================================
+  Evaluating 50 TCRs for GILGFVFTL with tFold...
+    Using 50 decoys (A:45, B:5, D:0)
+    Phase 1: Cache-only scoring for 50 targets...
+      Cache hits: 50/50, misses: 0
+    Phase 3: Scoring decoys (50 per TCR)...

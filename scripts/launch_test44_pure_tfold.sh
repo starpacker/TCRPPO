@@ -1,7 +1,7 @@
 #!/bin/bash
-# test44: Pure tFold PPO Training (No Cache-Only)
+# test44: Pure tFold PPO Training
 # Hypothesis: tFold's structure-aware scoring provides better specificity than ERGO
-# Key config: tfold scorer, cache_only=False, n_envs=4 (reduced for speed), checkpoint_freq=50K
+# Key config: tfold scorer, n_envs=4 (reduced for speed), checkpoint_freq=50K
 
 PYTHON=/home/liuyutian/server/miniconda3/envs/tcrppo_v2/bin/python
 cd /share/liuyutian/tcrppo_v2

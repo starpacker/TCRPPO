@@ -127,7 +127,7 @@ class RewardManager:
 
         # Naturalness penalty — always computed (no frequency gating)
         if (self.naturalness_scorer is not None
-                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
+                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo")):
             nat_score, _ = self.naturalness_scorer.score(tcr)
             components["naturalness_raw"] = nat_score
         else:
@@ -205,6 +205,9 @@ class RewardManager:
                     components["decoy_mean"] = float(np.mean(decoy_scores))
                     components["decoy_max"] = float(np.max(decoy_scores))
                     components["contrast_margin"] = total
+                # Add naturalness bonus if available
+                if self.naturalness_scorer is not None and self.weights["naturalness"] > 0:
+                    total = total + self.weights["naturalness"] * nat_score
             else:
                 total = aff_score  # Fallback if no decoy_scorer
         else:
@@ -297,7 +300,7 @@ class RewardManager:
 
             # Naturalness — always computed for every sample
             if (self.naturalness_scorer is not None
-                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
+                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo")):
                 nat_score, _ = self.naturalness_scorer.score(tcrs[i])
                 components["naturalness_raw"] = nat_score
             else:
@@ -367,6 +370,9 @@ class RewardManager:
                         components["decoy_mean"] = float(np.mean(decoy_scores))
                         components["decoy_max"] = float(np.max(decoy_scores))
                         components["contrast_margin"] = total
+                    # Add naturalness bonus if available
+                    if self.naturalness_scorer is not None and self.weights["naturalness"] > 0:
+                        total = total + self.weights["naturalness"] * nat_score
                 else:
                     total = aff_score
             else:

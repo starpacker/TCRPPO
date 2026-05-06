@@ -1,0 +1,17 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test50_tfold_cascade_excellent
+  reward_mode=contrastive_ergo, n_envs=8
+  weights: aff=1.0, decoy=0.8, nat=0.5, div=0.2
+  Filtered targets: 20 peptides from data/tfold_excellent_peptides.txt
+  ERGO loaded (primary)
+  tFold V3.4 loaded (secondary, cache=47815 entries)
+  Cascade scorer (ERGO → tFold if score > 0.5)
+  ESM-2 loaded (dim=1280, disk_cache=16346698 seqs)
+  pMHC loader: 20 targets
+  TCR pool: 7266860 seqs, L0 targets=256/20, L1 targets=12/20
+  Decoy scorer loaded (K=8)
+  VecEnv: 8 envs, obs_dim=2562, ban_stop=True
+  pMHC warmup: 20 targets cached in 0.6s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test50_tfold_cascade_excellent/experiment.json

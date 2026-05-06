@@ -16,8 +16,6 @@ CUDA_VISIBLE_DEVICES=2 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --n_envs 8 \
     --affinity_scorer tfold_cascade \
     --cascade_threshold 0.15 \
-    --tfold_cache_only \
-    --tfold_cache_miss_score 0.0 \
     --encoder esm2 \
     --ban_stop \
     --device cuda \

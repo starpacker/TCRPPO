@@ -1,0 +1,15 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test51_tfold_terminal
+  reward_mode=contrastive_ergo, n_envs=8
+  weights: aff=1.0, decoy=0.0, nat=0.1, div=0.0
+  Filtered targets: 20 peptides from data/tfold_excellent_peptides.txt
+  tFold V3.4 loaded (cache=48671 entries)
+  ESM-2 loaded (dim=1280, disk_cache=16346732 seqs)
+  pMHC loader: 20 targets
+  TCR pool: 7266860 seqs, L0 targets=256/20, L1 targets=12/20
+  Decoy scorer loaded (K=2)
+  VecEnv: 8 envs, obs_dim=2562, ban_stop=True, terminal_reward_only=True
+  pMHC warmup: 20 targets cached in 0.6s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test51_tfold_terminal/experiment.json
