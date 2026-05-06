@@ -1,17 +1,18 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-05-05  
+**Last Updated:** 2026-05-06  
 **Current Best:** test41 = **0.6243 AUROC** (two-phase: 1M ERGO warm-start → 1M contrastive with 16 decoys)  
 **Historical Peak:** v1_ergo_only (seed=42) = **0.8075 AUROC** (NOT reproducible — seed=123 got 0.5462)  
 **Target:** Achieve >0.65 AUROC with reproducible, seed-stable configuration
 
 **Active Experiments:**
-- test49_cascade_ergo_tfold_cacheonly: 🔄 TRAINING (GPU 4, PID 3803344) - Cascade scorer (ERGO → tFold cache-only if score > 0.5), 4-6h estimated
-- test47_32decoys_45peptides: 🔄 TRAINING (GPU 4, PID 1017806) - 32 decoys + 45 peptides from test41
-- test41_seed123: 🔄 TRAINING (GPU 5, PID 1017808) - Seed validation (seed=123)
-- test41_seed7: 🔄 TRAINING (GPU 6, PID 1017810) - Seed validation (seed=7)
-- test44_pure_tfold_nocache: 🔄 TRAINING (GPU 2, PID 1257366) - Pure tFold scorer, 29 peptides, extremely slow (0.5% in 30h)
-- test48_hybrid_90ergo_10tfold: ❌ ABORTED (GPU 2) - Hybrid scorer too slow with contrastive reward (first rollout >40min)
+- test51_tfold_terminal: 🔄 TRAINING (GPU 4, PID 3531302) - Pure tFold with terminal-only reward, 20 excellent peptides, 2 decoys, ~12h estimated
+- test49_cascade_ergo_tfold_cacheonly: ⏹️ STOPPED - Cascade scorer (ERGO → tFold cache-only if score > 0.5)
+- test47_32decoys_45peptides: ⏹️ STOPPED - 32 decoys + 45 peptides from test41
+- test41_seed123: ⏹️ STOPPED - Seed validation (seed=123)
+- test41_seed7: ⏹️ STOPPED - Seed validation (seed=7)
+- test44_pure_tfold_nocache: ⏹️ STOPPED - Pure tFold scorer, too slow
+- test48_hybrid_90ergo_10tfold: ❌ ABORTED - Hybrid scorer too slow with contrastive reward
 
 ---
 
