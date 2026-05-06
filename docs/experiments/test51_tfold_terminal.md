@@ -1,10 +1,11 @@
 # test51: Pure tFold with Terminal-Only Reward
 
 **Date**: 2026-05-06
-**Status**: running
+**Status**: failed
 **GPU**: 4
 **Priority**: P0
 **Started**: 2026-05-06 15:57
+**Ended**: 2026-05-06 16:30
 **PID**: 3531302 (training), 3525471 (tFold server)
 
 ## Hypothesis
@@ -192,4 +193,49 @@ Metrics:
 - Config updated to use `tfold_server_socket: "/tmp/tfold_server_gpu4.sock"`
 
 **Current status**: Training waiting for first rollout (8 structure predictions in progress, ~4 min elapsed, expect 8-16 min total)
+
+## Failure Analysis
+
+**Outcome**: ABORTED after 33 minutes — first rollout never completed
+
+**Root cause**: Cold-start structure predictions are too slow and variable:
+- 7 samples completed in 30 minutes (~4.3 min/sample average)
+- 8th sample took >6 minutes and still processing when timeout hit
+- Total time for 8 samples: >33 minutes (vs 8-16 min estimate)
+- 30-minute timeout was still too short
+
+**Why this approach is impractical**:
+1. **First rollout bottleneck**: 8 envs × 1 initial TCR = 8 cold-start predictions = 30-40 min
+2. **Ongoing cold-start penalty**: Every new TCR generated during training requires structure prediction
+3. **Cache warmup is too slow**: At 4-6 min/sample, warming up even 1000 TCRs takes 66-100 hours
+4. **Variable prediction time**: Some samples take 3-4 min, others 6+ min → unpredictable timeouts
+
+**Comparison to test44 (pure tFold, step-wise reward)**:
+- test44: 0.5% progress in 30 hours (also failed due to speed)
+- test51: 0% progress in 33 minutes (failed even faster)
+- Both approaches hit the same fundamental bottleneck: tFold structure prediction is too slow for RL training
+
+**Conclusion**: Pure tFold training (terminal or step-wise) is not viable without pre-warmed cache or faster structure prediction.
+
+## Recommended Next Steps
+
+**Option 1: Pre-warm tFold cache (test52)**
+- Run offline cache warmup for all L0/L1 seed TCRs (~500 TCRs × 20 targets = 10K entries)
+- Estimated warmup time: 10K × 4 min = 666 hours (27 days) — IMPRACTICAL
+- Even with cache, new TCRs generated during training will still hit cold-start penalty
+
+**Option 2: Cascade scorer with terminal reward (test52, RECOMMENDED)**
+- Use ERGO for fast initial screening (10ms/sample)
+- Fall back to tFold only for high-scoring TCRs (ERGO > 0.5)
+- Terminal reward reduces tFold calls from 12/episode to 3/episode
+- Expected: 90% ERGO, 10% tFold → ~10x speedup vs pure tFold
+- Builds on test49 (cascade with step-wise reward) but faster
+
+**Option 3: Hybrid ERGO-tFold training (test53)**
+- 90% episodes use ERGO reward (fast)
+- 10% episodes use tFold reward (accurate, corrects ERGO errors)
+- Requires SAC (off-policy) to mix both reward sources in replay buffer
+- See `docs/TFOLD_HYBRID_TRAINING.md` for details
+
+**Decision**: Proceed with Option 2 (cascade + terminal reward) as test52
 - Alternative: Try tFold with step-wise reward but larger batch size

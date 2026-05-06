@@ -6,7 +6,7 @@
 **Target:** Achieve >0.65 AUROC with reproducible, seed-stable configuration
 
 **Active Experiments:**
-- test51_tfold_terminal: 🔄 TRAINING (GPU 4, PID 3531302) - Pure tFold with terminal-only reward, 20 excellent peptides, 2 decoys, ~12h estimated
+- test51_tfold_terminal: ❌ ABORTED (GPU 4) - Pure tFold too slow, first rollout >33min
 - test49_cascade_ergo_tfold_cacheonly: ⏹️ STOPPED - Cascade scorer (ERGO → tFold cache-only if score > 0.5)
 - test47_32decoys_45peptides: ⏹️ STOPPED - 32 decoys + 45 peptides from test41
 - test41_seed123: ⏹️ STOPPED - Seed validation (seed=123)

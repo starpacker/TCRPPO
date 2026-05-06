@@ -13,3 +13,4 @@ Setting up PPO trainer: test51_tfold_terminal
   pMHC warmup: 20 targets cached in 0.6s
   Policy: 2,006,829 parameters
   Saved experiment.json to output/test51_tfold_terminal/experiment.json
+tFold server request timed out (30 min)
