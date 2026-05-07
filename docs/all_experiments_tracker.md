@@ -1,12 +1,19 @@
 # TCRPPO v2 Complete Experiment Tracker
 
-**Last Updated:** 2026-05-06  
+**Last Updated:** 2026-05-07  
 **Current Best:** test41 = **0.6243 AUROC** (two-phase: 1M ERGO warm-start → 1M contrastive with 16 decoys)  
 **Historical Peak:** v1_ergo_only (seed=42) = **0.8075 AUROC** (NOT reproducible — seed=123 got 0.5462)  
 **Target:** Achieve >0.65 AUROC with reproducible, seed-stable configuration
 
 **Active Experiments:**
-- test51_tfold_terminal: ❌ ABORTED (GPU 4) - Pure tFold too slow, first rollout >33min
+- test51b_tfold_terminal_opt: 🔄 TRAINING (GPU 4, PID 1819767) - Pure tFold terminal-only, 1,036/2M steps, 51.8 steps/min, ETA ~27 days (15-20 days with cache acceleration)
+  - Monitor: `docs/experiments/test51b_MONITOR.md`
+  - Started: 2026-05-07 10:54:29
+  - Speed: 51.8 steps/min (cache hit 4-5%)
+  - Next checkpoint: 100K @ ~2026-05-08 19:00
+
+**Recently Stopped:**
+- test51_tfold_terminal: ⏹️ STOPPED - Pure tFold too slow (14 days projected with n_decoys=2)
 - test49_cascade_ergo_tfold_cacheonly: ⏹️ STOPPED - Cascade scorer (ERGO → tFold cache-only if score > 0.5)
 - test47_32decoys_45peptides: ⏹️ STOPPED - 32 decoys + 45 peptides from test41
 - test41_seed123: ⏹️ STOPPED - Seed validation (seed=123)
@@ -126,6 +133,8 @@
 | # | Experiment Name | Status | Steps | Mean AUROC | Config | Notes |
 |---|----------------|--------|-------|-----------|--------|-------|
 | 49 | test49_cascade_ergo_tfold_cacheonly | 🔄 TRAINING | 51K/1M | TBD | Cascade (ERGO → tFold cache-only if score > 0.5), resume from test41, threshold=0.5, cache_miss_score=0.3 | GPU 4, PID 3803344 - First rollout 8min (vs test48's 40min), cascade ratio 8.5-9.2%, estimated 4-6h completion |
+| 51 | test51_tfold_terminal | ⏹️ STOPPED | 0/2M | N/A | Pure tFold, terminal reward, 2 decoys, max_steps=4, 20 peptides | GPU 4 - STOPPED: 14 days projected, too slow |
+| 51b | test51b_tfold_terminal_opt | 🔄 RUNNING | 0/2M | TBD | Pure tFold, terminal reward, 1 decoy, n_steps=32, n_envs=4, 20 peptides | GPU 4, PID 2474882 - Optimized: 3.5 days target (90% cache hit) |
 | 48 | test48_hybrid_90ergo_10tfold | ❌ ABORTED | 0/1M | N/A | Hybrid (90% ERGO + 10% tFold), resume from test41 | GPU 2 - ABORTED: first rollout >40min due to contrastive reward amplification (17x scorer calls) |
 | 47 | test47_32decoys_45peptides | 🔄 TRAINING | 0/1M | TBD | Resume from test41, 32 decoys, 45 peptides | GPU 4, PID 1017806 - Target 0.64-0.67 AUROC |
 | 44 | test44_pure_tfold_nocache | 🔄 TRAINING | 10K/2M | TBD | Pure tFold, cache_only=False, 29 peptides, n_envs=4 | GPU 2, PID 1257366 - Extremely slow (0.5% in 30h) |
