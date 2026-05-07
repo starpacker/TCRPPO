@@ -19,3 +19,9 @@ runs/
 
 # Claude session state
 .claude/scheduled_tasks.lock
+
+# Exclude large model files
+models/
+*.zip
+*.bin
+*.h5
