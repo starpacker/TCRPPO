@@ -46,7 +46,7 @@ use_delta_reward: false
 
 # === Affinity Scorer (tFold) ===
 affinity_model: "tfold"
-tfold_server_socket: "/tmp/tfold_server_gpu4.sock"
+tfold_server_socket: "/tmp/tfold_server.sock"
 
 # === Decoy Scorer ===
 decoy_K: 1  # REDUCED from 2 to 1 (key optimization)

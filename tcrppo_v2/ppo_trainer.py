@@ -826,6 +826,8 @@ class PPOTrainer:
                     if dones[i] and not was_done[i]:
                         episode_rewards.append(ep_reward_buf[i])
                         episode_lengths.append(ep_length_buf[i])
+                        # Print episode completion immediately
+                        print(f"Episode {len(episode_rewards)} | Step {global_step} | R={ep_reward_buf[i]:.3f} | Len={ep_length_buf[i]}", flush=True)
                         # Submit to elite buffer if tFold correction enabled
                         if self.elite_buffer is not None and ep_last_obs[i] is not None:
                             env_i = self.vec_env.envs[i]
@@ -932,7 +934,7 @@ class PPOTrainer:
                 avg_vf = total_vf_loss / n_batches
                 avg_ent = total_entropy / n_batches
 
-            if n_updates % 10 == 0 and episode_rewards:
+            if n_updates % 1 == 0 and episode_rewards:
                 recent = episode_rewards[-100:]
                 mean_r = np.mean(recent)
                 mean_l = np.mean(episode_lengths[-100:])

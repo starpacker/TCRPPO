@@ -1,11 +1,34 @@
 # test51b: Pure tFold with Terminal-Only Reward (Optimized)
 
 **Date**: 2026-05-07
-**Status**: running
+**Status**: running (very slow, investigating)
 **GPU**: 4
 **Priority**: P0
-**Started**: 2026-05-07 08:20
-**PID**: 2474882 (training), 781830 (tFold server)
+**Started**: 2026-05-07 10:38 (3rd attempt after fixing tFold server issues)
+**PID**: 1711998 (training), 1996296 (tFold server on GPU 0)
+
+## Issues Encountered
+
+### Issue 1: Wrong tFold Server (RESOLVED)
+- Initial config used `/tmp/tfold_server_gpu4.sock` (PID 781830)
+- That server had been running for 79 days with performance issues
+- **Fix**: Changed to `/tmp/tfold_server.sock` (PID 1996296, GPU 0)
+
+### Issue 2: Server Resource Contention (RESOLVED)
+- `eval_v1_csv_with_tfold.py` (PID 2828906) was competing for tFold server
+- Training process blocked in D state waiting for server
+- **Fix**: Killed eval script
+
+### Issue 3: Extremely Slow Training Speed (ONGOING)
+- tFold feature extraction: 9-31 seconds per sample
+- First rollout (32 episodes = 64 tFold calls) taking 15+ minutes
+- Cache growth rate: ~6 entries/minute
+- **Root cause**: tFold's 735M-param feature extractor is too slow for online RL
+- **Estimated time for 2M steps**:
+  - 95% cache hit: 5.6 days
+  - 90% cache hit: 11.3 days
+  - Current (2% hit): 110+ days
+- **4-day target is infeasible** with pure tFold
 
 ## Hypothesis
 

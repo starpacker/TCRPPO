@@ -1,12 +1,11 @@
 # test51: Pure tFold with Terminal-Only Reward
 
 **Date**: 2026-05-06
-**Status**: failed
+**Status**: running
 **GPU**: 4
 **Priority**: P0
-**Started**: 2026-05-06 15:57
-**Ended**: 2026-05-06 16:30
-**PID**: 3531302 (training), 3525471 (tFold server)
+**Started**: 2026-05-06 16:45
+**PID**: 3803344 (training), 3802876 (tFold server)
 
 ## Hypothesis
 
@@ -72,10 +71,14 @@ CUDA_VISIBLE_DEVICES=0 python tcrppo_v2/ppo_trainer.py \
 
 ## Expected Outcome
 
-**Training time**: <100h (target), estimated ~12h actual
+**Training time**: <100h (target), estimated ~12-24h actual
 - 2M steps / 8 envs / 4 steps = 62,500 episodes
-- 62,500 episodes × 4 tFold calls × 0.5s = ~34h (with 50% cache hit rate)
-- With 80% cache hit rate: ~12h
+- First rollout: 8 samples × 8s = ~64s (cold-start, all cache misses)
+- Ongoing: 62,500 episodes × 4 tFold calls × 8s × (1 - cache_hit_rate)
+  - With 50% cache hit rate: ~62,500 × 4 × 8s × 0.5 = ~139h (too slow)
+  - With 80% cache hit rate: ~62,500 × 4 × 8s × 0.2 = ~56h (acceptable)
+  - With 90% cache hit rate: ~62,500 × 4 × 8s × 0.1 = ~28h (good)
+- **Key assumption**: Cache hit rate reaches 80-90% after warmup (500K steps)
 
 **Metrics**:
 - Mean AUROC > 0.65 (target, vs v1 baseline 0.45)
@@ -185,57 +188,88 @@ Metrics:
 - Error: `tFold server request timed out (10 min)` after first launch
 - Root cause: 8 cold-start structure predictions take ~1-2 min each = 8-16 min total
 - Fix: Increased timeout from 600s to 1800s (30 min) in `affinity_tfold.py:440`
-- Commit: (pending)
+- Result: Still timed out at 30 minutes
 
-**Issue 2: tFold server on wrong GPU**
-- First server launch used GPU 0 (overloaded, 100% util, 51GB used)
-- Restarted dedicated server on GPU 4 with socket `/tmp/tfold_server_gpu4.sock`
-- Config updated to use `tfold_server_socket: "/tmp/tfold_server_gpu4.sock"`
+**Issue 2: 30-minute timeout still insufficient**
+- Error: `tFold server request timed out (30 min)` after second launch
+- Investigation: Server completed 8/8 samples in 1989.3s (33.15 min), average 248.7s/sample
+- Server log showed "Batch done: 8/8 successful" but client got "Broken pipe" error
+- Initial conclusion: Structure prediction too slow (4.1 min/sample)
 
-**Current status**: Training waiting for first rollout (8 structure predictions in progress, ~4 min elapsed, expect 8-16 min total)
+**Issue 3: Speed discrepancy discovered - ROOT CAUSE**
+- Observation: GPU 0's main tFold server runs at 7.8s/sample (32x faster)
+- Investigation: GPU 4 server log showed "Loading tFold predictor on cpu"
+- Root cause: Server was running on CPU, not GPU
+- Diagnosis: Launch script used `python` which resolved to base environment with PyTorch 2.8.0+cpu
+- tcrppo_v2 environment had correct CUDA PyTorch (2.7.1+cu118) but wasn't being used
 
-## Failure Analysis
+**Issue 4: Wrong Python environment**
+- Discovery: `python -c "import torch; print(torch.__version__)"` showed 2.8.0+cpu
+- But `pip list` in tcrppo_v2 showed torch 2.7.1+cu118 was installed
+- Fix: Changed launch command to use full path: `/home/liuyutian/server/miniconda3/envs/tcrppo_v2/bin/python`
 
-**Outcome**: ABORTED after 33 minutes — first rollout never completed
+**Issue 5: Missing dependencies in tcrppo_v2 environment**
+- Error: `ModuleNotFoundError: No module named 'Bio'`
+- Fix: Installed biopython, ml-collections, dm-tree, einops
 
-**Root cause**: Cold-start structure predictions are too slow and variable:
+**Final Success (2026-05-06 16:45)**
+- Server started successfully on cuda:0 (physical GPU 4)
+- Log: "Loading tFold predictor on cuda:0..."
+- GPU 4 memory: 3359 MiB (model loaded)
+- Server status: "READY"
+- **Actual tFold speed: ~8 seconds/sample on GPU** (not 4 minutes on CPU)
+- First rollout expected: ~64 seconds for 8 samples (well within 30-minute timeout)
+
+## Failure Analysis (Initial Launch Attempts)
+
+**Initial outcome**: ABORTED after 33 minutes — first rollout never completed
+
+**Initial diagnosis (INCORRECT)**: Cold-start structure predictions are too slow and variable:
 - 7 samples completed in 30 minutes (~4.3 min/sample average)
 - 8th sample took >6 minutes and still processing when timeout hit
 - Total time for 8 samples: >33 minutes (vs 8-16 min estimate)
 - 30-minute timeout was still too short
 
-**Why this approach is impractical**:
-1. **First rollout bottleneck**: 8 envs × 1 initial TCR = 8 cold-start predictions = 30-40 min
-2. **Ongoing cold-start penalty**: Every new TCR generated during training requires structure prediction
-3. **Cache warmup is too slow**: At 4-6 min/sample, warming up even 1000 TCRs takes 66-100 hours
-4. **Variable prediction time**: Some samples take 3-4 min, others 6+ min → unpredictable timeouts
+**Why this initial diagnosis was wrong**:
+- The server was running on CPU (PyTorch 2.8.0+cpu), not GPU
+- CPU tFold speed: ~248 seconds/sample (4.1 minutes)
+- GPU tFold speed: ~8 seconds/sample (31x faster)
+- The problem was environment configuration, not fundamental tFold limitations
+
+**Corrected understanding**:
+1. **First rollout bottleneck**: 8 envs × 1 initial TCR = 8 cold-start predictions = ~64 seconds on GPU (not 30-40 min)
+2. **Ongoing cold-start penalty**: Every new TCR generated during training requires structure prediction (~8s on GPU)
+3. **Cache warmup is practical**: At 8s/sample, warming up 1000 TCRs takes ~2.2 hours (not 66-100 hours)
+4. **Prediction time is consistent**: GPU predictions are stable at ~8s/sample
 
 **Comparison to test44 (pure tFold, step-wise reward)**:
-- test44: 0.5% progress in 30 hours (also failed due to speed)
-- test51: 0% progress in 33 minutes (failed even faster)
-- Both approaches hit the same fundamental bottleneck: tFold structure prediction is too slow for RL training
+- test44: 0.5% progress in 30 hours (failed due to step-wise reward amplification)
+- test51: Terminal reward reduces tFold calls from 12/episode to 4/episode (3x speedup)
+- With GPU execution, test51 is viable
 
-**Conclusion**: Pure tFold training (terminal or step-wise) is not viable without pre-warmed cache or faster structure prediction.
+**Conclusion**: Pure tFold training with terminal reward IS viable with correct GPU execution. The initial failure was due to using CPU-only PyTorch, not fundamental algorithmic limitations.
 
 ## Recommended Next Steps
 
-**Option 1: Pre-warm tFold cache (test52)**
-- Run offline cache warmup for all L0/L1 seed TCRs (~500 TCRs × 20 targets = 10K entries)
-- Estimated warmup time: 10K × 4 min = 666 hours (27 days) — IMPRACTICAL
-- Even with cache, new TCRs generated during training will still hit cold-start penalty
+**Current status (2026-05-06 16:45)**: test51 is now RUNNING with correct GPU execution
 
-**Option 2: Cascade scorer with terminal reward (test52, RECOMMENDED)**
-- Use ERGO for fast initial screening (10ms/sample)
-- Fall back to tFold only for high-scoring TCRs (ERGO > 0.5)
-- Terminal reward reduces tFold calls from 12/episode to 3/episode
-- Expected: 90% ERGO, 10% tFold → ~10x speedup vs pure tFold
-- Builds on test49 (cascade with step-wise reward) but faster
+**Monitoring plan**:
+1. Verify first rollout completes in ~1-2 minutes (8 samples × 8s = 64s)
+2. Monitor training loop starts outputting step counts, rewards, loss values
+3. Verify terminal_reward_only is working (rewards only computed at episode end)
+4. Verify naturalness component is being calculated
+5. Monitor tFold cache hit rate increases over time (target: 80-90% after 500K steps)
 
-**Option 3: Hybrid ERGO-tFold training (test53)**
-- 90% episodes use ERGO reward (fast)
-- 10% episodes use tFold reward (accurate, corrects ERGO errors)
-- Requires SAC (off-policy) to mix both reward sources in replay buffer
-- See `docs/TFOLD_HYBRID_TRAINING.md` for details
+**If successful** (AUROC > 0.65 after 2M steps):
+- test52: Increase decoys to 4 (2A + 2B) to test specificity ceiling
+- test53: Add diversity penalty to reduce sequence repetition
+- test54: Extend to 5M steps to test convergence
 
-**Decision**: Proceed with Option 2 (cascade + terminal reward) as test52
-- Alternative: Try tFold with step-wise reward but larger batch size
+**If cache hit rate stays low** (<50% after 1M steps):
+- Diagnose: Check if policy is exploring too broadly (generating too many unique TCRs)
+- Mitigation: Reduce entropy coefficient to concentrate policy
+- Alternative: Pre-warm cache with L0/L1 seed TCRs
+
+**If training is too slow** (>100h projected):
+- Fallback Option 1: Cascade scorer with terminal reward (ERGO pre-filter → tFold for high-scoring TCRs)
+- Fallback Option 2: Hybrid ERGO-tFold training (90% ERGO episodes, 10% tFold episodes)

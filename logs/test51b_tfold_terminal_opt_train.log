@@ -1,0 +1,143 @@
+
+Starting training for 2,000,000 timesteps...
+Setting up PPO trainer: test51b_tfold_terminal_opt
+  reward_mode=contrastive_ergo, n_envs=4
+  weights: aff=1.0, decoy=0.0, nat=0.1, div=0.0
+  Filtered targets: 20 peptides from data/tfold_excellent_peptides.txt
+  tFold V3.4 loaded (cache=62431 entries)
+  ESM-2 loaded (dim=1280, disk_cache=16349198 seqs)
+  pMHC loader: 20 targets
+  TCR pool: 7266860 seqs, L0 targets=256/20, L1 targets=12/20
+  Decoy scorer loaded (K=1)
+  VecEnv: 4 envs, obs_dim=2562, ban_stop=True, terminal_reward_only=True
+  pMHC warmup: 20 targets cached in 0.8s
+  Policy: 2,006,829 parameters
+  Saved experiment.json to output/test51b_tfold_terminal_opt/experiment.json
+Episode 1 | Step 28 | R=0.085 | Len=8
+Episode 2 | Step 28 | R=-0.096 | Len=8
+Episode 3 | Step 28 | R=0.026 | Len=8
+Episode 4 | Step 28 | R=0.086 | Len=8
+Episode 5 | Step 64 | R=-0.171 | Len=8
+Episode 6 | Step 64 | R=-0.003 | Len=8
+Episode 7 | Step 64 | R=-0.372 | Len=8
+Episode 8 | Step 64 | R=1.110 | Len=8
+Episode 9 | Step 100 | R=-0.178 | Len=8
+Episode 10 | Step 100 | R=0.064 | Len=8
+Episode 11 | Step 100 | R=0.346 | Len=8
+Episode 12 | Step 100 | R=0.996 | Len=8
+Step        128 | Eps:     12 | R:    0.158 | Len:   8.0 | PG:  -0.0589 | VF:   0.1236 | Ent:  5.683 | Cache: 10%(62639)
+Episode 13 | Step 136 | R=-0.081 | Len=8
+Episode 14 | Step 136 | R=-0.027 | Len=8
+Episode 15 | Step 136 | R=-0.078 | Len=8
+Episode 16 | Step 136 | R=0.178 | Len=8
+Episode 17 | Step 172 | R=-0.123 | Len=8
+Episode 18 | Step 172 | R=0.686 | Len=8
+Episode 19 | Step 172 | R=1.176 | Len=8
+Episode 20 | Step 172 | R=0.089 | Len=8
+Episode 21 | Step 208 | R=-0.071 | Len=8
+Episode 22 | Step 208 | R=-0.089 | Len=8
+Episode 23 | Step 208 | R=0.089 | Len=8
+Episode 24 | Step 208 | R=-0.017 | Len=8
+Episode 25 | Step 244 | R=0.031 | Len=8
+Episode 26 | Step 244 | R=0.007 | Len=8
+Episode 27 | Step 244 | R=-0.044 | Len=8
+Episode 28 | Step 244 | R=-0.030 | Len=8
+Step        256 | Eps:     28 | R:    0.128 | Len:   8.0 | PG:  -0.0519 | VF:   0.0478 | Ent:  5.406 | Cache: 7%(62857)
+Episode 29 | Step 280 | R=0.441 | Len=8
+Episode 30 | Step 280 | R=0.208 | Len=8
+Episode 31 | Step 280 | R=0.229 | Len=8
+Episode 32 | Step 280 | R=-0.018 | Len=8
+Episode 33 | Step 316 | R=-0.170 | Len=8
+Episode 34 | Step 316 | R=-0.084 | Len=8
+Episode 35 | Step 316 | R=0.513 | Len=8
+Episode 36 | Step 316 | R=0.150 | Len=8
+Episode 37 | Step 352 | R=0.012 | Len=8
+Episode 38 | Step 352 | R=-0.023 | Len=8
+Episode 39 | Step 352 | R=0.121 | Len=8
+Episode 40 | Step 352 | R=-0.032 | Len=8
+Step        384 | Eps:     40 | R:    0.123 | Len:   8.0 | PG:  -0.0525 | VF:   0.0153 | Ent:  5.571 | Cache: 6%(63077)
+Episode 41 | Step 388 | R=0.692 | Len=8
+Episode 42 | Step 388 | R=-0.220 | Len=8
+Episode 43 | Step 388 | R=0.466 | Len=8
+Episode 44 | Step 388 | R=-0.175 | Len=8
+Episode 45 | Step 424 | R=-0.039 | Len=8
+Episode 46 | Step 424 | R=0.174 | Len=8
+Episode 47 | Step 424 | R=0.302 | Len=8
+Episode 48 | Step 424 | R=0.003 | Len=8
+Episode 49 | Step 460 | R=0.211 | Len=8
+Episode 50 | Step 460 | R=-0.149 | Len=8
+Episode 51 | Step 460 | R=0.002 | Len=8
+Episode 52 | Step 460 | R=-0.008 | Len=8
+Episode 53 | Step 496 | R=0.100 | Len=8
+Episode 54 | Step 496 | R=-0.038 | Len=8
+Episode 55 | Step 496 | R=-0.675 | Len=8
+Episode 56 | Step 496 | R=0.055 | Len=8
+Step        512 | Eps:     56 | R:    0.101 | Len:   8.0 | PG:  -0.0384 | VF:   0.0137 | Ent:  5.534 | Cache: 6%(63294)
+Episode 57 | Step 532 | R=0.536 | Len=8
+Episode 58 | Step 532 | R=0.292 | Len=8
+Episode 59 | Step 532 | R=-0.037 | Len=8
+Episode 60 | Step 532 | R=0.017 | Len=8
+Episode 61 | Step 568 | R=0.126 | Len=8
+Episode 62 | Step 568 | R=0.336 | Len=8
+Episode 63 | Step 568 | R=-0.027 | Len=8
+Episode 64 | Step 568 | R=0.761 | Len=8
+Episode 65 | Step 604 | R=-0.093 | Len=8
+Episode 66 | Step 604 | R=0.406 | Len=8
+Episode 67 | Step 604 | R=-0.043 | Len=8
+Episode 68 | Step 604 | R=0.044 | Len=8
+Step        640 | Eps:     68 | R:    0.117 | Len:   8.0 | PG:  -0.0380 | VF:   0.0113 | Ent:  5.268 | Cache: 6%(63516)
+Episode 69 | Step 640 | R=0.078 | Len=8
+Episode 70 | Step 640 | R=-0.181 | Len=8
+Episode 71 | Step 640 | R=0.084 | Len=8
+Episode 72 | Step 640 | R=0.090 | Len=8
+Episode 73 | Step 676 | R=-0.319 | Len=8
+Episode 74 | Step 676 | R=-0.147 | Len=8
+Episode 75 | Step 676 | R=-0.302 | Len=8
+Episode 76 | Step 676 | R=-0.168 | Len=8
+Episode 77 | Step 712 | R=0.557 | Len=8
+Episode 78 | Step 712 | R=-0.119 | Len=8
+Episode 79 | Step 712 | R=-0.077 | Len=8
+Episode 80 | Step 712 | R=-0.133 | Len=8
+Episode 81 | Step 748 | R=-0.052 | Len=8
+Episode 82 | Step 748 | R=0.064 | Len=8
+Episode 83 | Step 748 | R=-0.066 | Len=8
+Episode 84 | Step 748 | R=0.134 | Len=8
+Step        768 | Eps:     84 | R:    0.088 | Len:   8.0 | PG:  -0.0363 | VF:   0.0116 | Ent:  5.780 | Cache: 5%(63743)
+Episode 85 | Step 784 | R=-0.094 | Len=8
+Episode 86 | Step 784 | R=-0.192 | Len=8
+Episode 87 | Step 784 | R=0.262 | Len=8
+Episode 88 | Step 784 | R=0.065 | Len=8
+Episode 89 | Step 820 | R=-0.583 | Len=8
+Episode 90 | Step 820 | R=-0.181 | Len=8
+Episode 91 | Step 820 | R=0.019 | Len=8
+Episode 92 | Step 820 | R=-0.094 | Len=8
+Episode 93 | Step 856 | R=0.214 | Len=8
+Episode 94 | Step 856 | R=-0.161 | Len=8
+Episode 95 | Step 856 | R=0.005 | Len=8
+Episode 96 | Step 856 | R=-0.116 | Len=8
+Episode 97 | Step 892 | R=-0.126 | Len=8
+Episode 98 | Step 892 | R=-0.107 | Len=8
+Episode 99 | Step 892 | R=0.119 | Len=8
+Episode 100 | Step 892 | R=-0.008 | Len=8
+Step        896 | Eps:    100 | R:    0.064 | Len:   8.0 | PG:  -0.0277 | VF:   0.0171 | Ent:  5.478 | Cache: 5%(63982)
+Episode 101 | Step 928 | R=-0.075 | Len=8
+Episode 102 | Step 928 | R=-0.195 | Len=8
+Episode 103 | Step 928 | R=0.021 | Len=8
+Episode 104 | Step 928 | R=-0.006 | Len=8
+Episode 105 | Step 964 | R=-0.008 | Len=8
+Episode 106 | Step 964 | R=0.036 | Len=8
+Episode 107 | Step 964 | R=0.019 | Len=8
+Episode 108 | Step 964 | R=-0.174 | Len=8
+Episode 109 | Step 1000 | R=-0.059 | Len=8
+Episode 110 | Step 1000 | R=-0.060 | Len=8
+Episode 111 | Step 1000 | R=-0.221 | Len=8
+Episode 112 | Step 1000 | R=-0.062 | Len=8
+Step      1,024 | Eps:    112 | R:    0.037 | Len:   8.0 | PG:  -0.0393 | VF:   0.0057 | Ent:  5.560 | Cache: 4%(64216)
+Episode 113 | Step 1036 | R=-0.082 | Len=8
+Episode 114 | Step 1036 | R=-0.068 | Len=8
+Episode 115 | Step 1036 | R=0.111 | Len=8
+Episode 116 | Step 1036 | R=0.220 | Len=8
+Episode 117 | Step 1072 | R=-0.054 | Len=8
+Episode 118 | Step 1072 | R=0.042 | Len=8
+Episode 119 | Step 1072 | R=-0.335 | Len=8
+Episode 120 | Step 1072 | R=0.056 | Len=8
