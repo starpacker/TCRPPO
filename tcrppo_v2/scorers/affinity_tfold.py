@@ -436,9 +436,11 @@ class AffinityTFoldScorer(BaseScorer):
             return [None] * len(requests)
 
         try:
+            print(f"[tFold] Connecting to server at {sock_path}...", flush=True)
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.settimeout(1800)  # 30 min timeout for cold-start structure predictions
             sock.connect(sock_path)
+            print(f"[tFold] Connected. Sending {len(requests)} extraction requests...", flush=True)
 
             # Send extract request
             request_json = json.dumps({
@@ -447,6 +449,7 @@ class AffinityTFoldScorer(BaseScorer):
             }).encode("utf-8")
             header = struct.pack(">I", len(request_json))
             sock.sendall(header + request_json)
+            print(f"[tFold] Request sent. Waiting for response (timeout=30min)...", flush=True)
 
             # Receive response
             resp_header = b""
@@ -466,9 +469,11 @@ class AffinityTFoldScorer(BaseScorer):
 
             response = json.loads(resp_data.decode("utf-8"))
             sock.close()
+            print(f"[tFold] Response received. Status: {response.get('status')}", flush=True)
 
             if response.get("status") != "ok":
                 logger.error(f"tFold server error: {response.get('error', 'unknown')}")
+                print(f"[tFold] ERROR: {response.get('error', 'unknown')}", flush=True)
                 return [None] * len(requests)
 
             # Decode features from base64
@@ -476,6 +481,7 @@ class AffinityTFoldScorer(BaseScorer):
             errors = response.get("errors", [None] * len(features_b64))
             features = []
 
+            success_count = 0
             for i, (fb64, err) in enumerate(zip(features_b64, errors)):
                 if fb64 is None or err is not None:
                     features.append(None)
@@ -485,7 +491,9 @@ class AffinityTFoldScorer(BaseScorer):
                     feat_bytes = base64.b64decode(fb64)
                     feat = torch.load(io.BytesIO(feat_bytes), map_location="cpu", weights_only=False)
                     features.append(feat)
+                    success_count += 1
 
+            print(f"[tFold] Extraction complete: {success_count}/{len(requests)} successful", flush=True)
             return features
 
         except (ConnectionRefusedError, FileNotFoundError):
@@ -542,6 +550,7 @@ class AffinityTFoldScorer(BaseScorer):
 
         # Extract missing features via server
         if need_extract:
+            print(f"[tFold] Cache miss: {len(need_extract)}/{len(keys)} need extraction", flush=True)
             logger.info(
                 f"tFold cache miss: {len(need_extract)}/{len(keys)} need extraction"
             )
@@ -550,8 +559,10 @@ class AffinityTFoldScorer(BaseScorer):
             for batch_start in range(0, len(need_extract), self.max_subprocess_batch):
                 batch = need_extract[batch_start : batch_start + self.max_subprocess_batch]
                 requests = [item[1] for item in batch]
+                print(f"[tFold] Extracting batch {batch_start//self.max_subprocess_batch + 1} ({len(batch)} samples)...", flush=True)
                 extracted = self._extract_features_server(requests)
                 all_extracted.extend(zip(batch, extracted))
+                print(f"[tFold] Batch {batch_start//self.max_subprocess_batch + 1} done", flush=True)
 
             # Store extracted features
             to_cache = []
@@ -563,6 +574,7 @@ class AffinityTFoldScorer(BaseScorer):
 
             if to_cache:
                 self._cache.put_batch(to_cache)
+                print(f"[tFold] Cached {len(to_cache)} new features (total cache size: {self._cache.size()})", flush=True)
                 logger.info(f"Cached {len(to_cache)} new tFold features")
 
         return results

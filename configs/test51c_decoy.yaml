@@ -1,0 +1,117 @@
+# test51c_decoy: Resume from test51c 100K checkpoint with decoy penalty
+# Key changes from test51c:
+#   - reward_mode: v2_no_decoy -> v2_full (enable decoy penalty)
+#   - w_decoy: 0.0 -> 0.4 (conservative start, user choice)
+#   - n_contrast_decoys: 0 -> 4 (enable decoy sampling)
+#   - Resume from: output/test51c_no_decoy_long_ep/checkpoints/milestone_100000.pt
+
+# === PPO ===
+total_timesteps: 2_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 3.0e-4
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.05
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# === Environment ===
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+hla_pseudoseq_len: 34
+
+# === Policy Network ===
+hidden_dim: 512
+
+# === ESM State Encoder ===
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+
+# === Reward Weights (V2 Full with Conservative Decoy) ===
+w_affinity: 1.0
+w_decoy: 0.4  # Conservative start (changed from 0.0)
+w_naturalness: 0.5
+w_diversity: 0.2
+
+# === Credit Assignment ===
+use_delta_reward: false
+
+# === Affinity Scorer (tFold subprocess) ===
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server.sock"
+tfold_cache_path: "data/tfold_feature_cache.db"
+
+# === Decoy Scorer (ENABLED) ===
+decoy_K: 32  # Changed from 0
+decoy_tau: 10.0
+decoy_tier_weights:
+  A: 3  # Changed from 0
+  B: 3  # Changed from 0
+  D: 2  # Changed from 0
+  C: 1  # Changed from 0
+decoy_unlock_schedule:
+  0: ["A", "B", "D", "C"]  # All tiers unlocked from start
+
+# === Naturalness Scorer (ESM Perplexity) ===
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+
+# === Diversity Scorer ===
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# === Curriculum (L0 + L2, no L1) ===
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.5, L1: 0.0, L2: 0.5}
+
+# === Target Sampling ===
+target_sampling: "uniform"
+
+# === Online Eval (DISABLED) ===
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 50
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+# === Checkpointing ===
+checkpoint_interval: 100000
+milestones: [200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000, 1100000, 1200000, 1300000, 1400000, 1500000, 1600000, 1700000, 1800000, 1900000, 2000000]
+
+# === Reward Mode ===
+reward_mode: "v2_full"  # Changed from "v2_no_decoy"
+
+# === Contrastive Reward (ENABLED) ===
+n_contrast_decoys: 4  # Changed from 0
+contrastive_agg: "mean"
+
+# === Normalization (DISABLED) ===
+use_znorm: false
+norm_window: 10000
+norm_warmup: 1000
+
+# === Seed ===
+seed: 42
+
+# === Paths ===
+decoy_library_path: "/share/liuyutian/pMHC_decoy_library"
+tcrdb_path: "/share/liuyutian/TCRPPO/data/tcrdb"
+test_peptides_path: "/share/liuyutian/TCRPPO/data/test_peptides"
+ergo_model_dir: "tcrppo_v2/ERGO/models"
+ergo_ae_file: "tcrppo_v2/ERGO/TCR_Autoencoder/tcr_ae_dim_100.pt"
+output_dir: "output"
+results_dir: "results"
+l1_seeds_dir: "data/l1_seeds"
+
+# === Training Targets ===
+train_targets: "data/tfold_excellent_peptides.txt"

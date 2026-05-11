@@ -128,13 +128,16 @@ class ESMCache:
         self.tcr_cache_size = tcr_cache_size
 
         # Load ESM-2
+        print(f"[ESMCache] Loading {model_name}...", flush=True)
         if model_name == "esm2_t33_650M_UR50D":
             self.model, self.alphabet = esm.pretrained.esm2_t33_650M_UR50D()
         else:
             raise ValueError(f"Unsupported ESM model: {model_name}")
 
+        print(f"[ESMCache] Moving model to {device}...", flush=True)
         self.model = self.model.to(device)
         self.model.eval()
+        print(f"[ESMCache] Model loaded on {device}", flush=True)
 
         if frozen:
             for param in self.model.parameters():
@@ -148,12 +151,14 @@ class ESMCache:
         self._tcr_cache: OrderedDict = OrderedDict()
 
         # Persistent disk cache
+        print(f"[ESMCache] Initializing disk cache at {disk_cache_path if disk_cache_path else 'default'}...", flush=True)
         if disk_cache_path is None:
             from tcrppo_v2.utils.constants import PROJECT_ROOT
             disk_cache_path = os.path.join(PROJECT_ROOT, "data", "esm_cache.db")
         self._disk_cache = DiskEmbeddingCache(disk_cache_path, self.embed_dim)
         self._disk_hits = 0
         self._disk_misses = 0
+        print(f"[ESMCache] Disk cache ready (skipping size count for speed)", flush=True)
 
     @property
     def output_dim(self) -> int:

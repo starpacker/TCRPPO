@@ -286,6 +286,16 @@ class PPOTrainer:
             from tcrppo_v2.scorers.affinity_nettcr_pytorch import AffinityNetTCRPyTorchScorer
             affinity_scorer = AffinityNetTCRPyTorchScorer(device=self.device)
             print("  NetTCR-PyTorch loaded")
+        elif affinity_model == "tfold_amp":
+            from tcrppo_v2.scorers.affinity_tfold_amp import AffinityTFoldAMPScorer
+            affinity_scorer = AffinityTFoldAMPScorer(
+                device=self.device,
+                gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
+                cache_path=self.config.get("tfold_cache_path", "data/tfold_feature_cache.db"),
+                use_amp=True,
+                fallback_to_subprocess=True,
+            )
+            print("  tFold AMP loaded (3.97× faster)")
         elif affinity_model == "tfold":
             from tcrppo_v2.scorers.affinity_tfold import AffinityTFoldScorer
             affinity_scorer = AffinityTFoldScorer(
@@ -293,7 +303,7 @@ class PPOTrainer:
                 gpu_id=int(os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",")[0]),
                 server_socket_path=self.config.get("tfold_server_socket", "/tmp/tfold_server.sock"),
             )
-            print(f"  tFold V3.4 loaded (cache={affinity_scorer.cache_stats['cache_size']} entries)")
+            print(f"  tFold V3.4 loaded (cache={affinity_scorer.cache_stats['cache_size']} entries)", flush=True)
         elif affinity_model == "ensemble":
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             from tcrppo_v2.scorers.affinity_nettcr import AffinityNetTCRScorer
@@ -466,6 +476,7 @@ class PPOTrainer:
             print("  ERGO loaded")
 
         # State encoder (ESM-2 or lightweight BiLSTM)
+        print("  Loading state encoder...", flush=True)
         encoder_type = self.config.get("encoder", "esm2")
         if encoder_type == "lightweight":
             from tcrppo_v2.utils.lightweight_encoder import LightweightEncoder
@@ -483,11 +494,12 @@ class PPOTrainer:
                 tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
                 disk_cache_path=self.config.get("esm_cache_path"),
             )
-            print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)")
+            print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)", flush=True)
 
-        print(f"  pMHC loader: {len(targets)} targets")
+        print(f"  pMHC loader: {len(targets)} targets", flush=True)
 
         # TCR pool with L1 seeds enabled for enhanced curriculum
+        print("  Loading TCR pool...", flush=True)
         l1_dir = os.path.join(PROJECT_ROOT, "data", "l1_seeds")
         if not os.path.isdir(l1_dir):
             l1_dir = None  # Fall back to L0+L2 only
@@ -496,18 +508,23 @@ class PPOTrainer:
             curriculum_schedule=self.config.get("curriculum_schedule"),
             seed=self.seed,
         )
+        print("  TCRPool initialized", flush=True)
         # Load L0 seeds from decoy D + tc-hard known binders
         decoy_lib_path = self.config.get("decoy_library_path", "/share/liuyutian/pMHC_decoy_library")
+        print(f"  Loading L0 seeds from {decoy_lib_path}...", flush=True)
         tcr_pool.load_l0_from_decoy_d(decoy_lib_path, targets)
+        print("  L0 seeds from decoy_d loaded", flush=True)
         # Also load tc-hard CDR3b binders as L0 seeds
         l0_tchard_dir = os.path.join(PROJECT_ROOT, "data", "l0_seeds_tchard")
         if os.path.isdir(l0_tchard_dir):
+            print(f"  Loading L0 seeds from {l0_tchard_dir}...", flush=True)
             tcr_pool.load_l0_from_dir(l0_tchard_dir)
+            print("  L0 seeds from tchard loaded", flush=True)
         l0_targets = tcr_pool.get_l0_targets()
         l1_targets = tcr_pool.get_l1_targets()
         print(f"  TCR pool: {tcr_pool.num_tcrdb_seqs} seqs, "
               f"L0 targets={len(l0_targets)}/{len(targets)}, "
-              f"L1 targets={len(l1_targets)}/{len(targets)}")
+              f"L1 targets={len(l1_targets)}/{len(targets)}", flush=True)
 
         # Determine if reward schedule requires pre-loading all scorers
         has_schedule = bool(self.config.get("reward_schedule"))
@@ -517,6 +534,7 @@ class PPOTrainer:
         self.decoy_scorer = None
         # Load decoy scorer for any mode that uses decoy penalty or contrastive sampling
         if has_schedule or self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo"):
+            print("  Loading decoy scorer...", flush=True)
             from tcrppo_v2.scorers.decoy import DecoyScorer
             decoy_scorer = DecoyScorer(
                 decoy_library_path=decoy_lib_path,
@@ -530,7 +548,7 @@ class PPOTrainer:
             # Start with only tier A unlocked
             decoy_scorer.set_unlocked_tiers(["A"])
             self.decoy_scorer = decoy_scorer
-            print(f"  Decoy scorer loaded (K={decoy_scorer.K})")
+            print(f"  Decoy scorer loaded (K={decoy_scorer.K})", flush=True)
 
         # Naturalness scorer (requires ESM-2 model — skip for lightweight encoder)
         naturalness_scorer = None
