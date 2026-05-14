@@ -1,15 +1,27 @@
 """Reward manager: combine all scorers into a single reward signal."""
 
 from collections import deque
+import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class RewardManager:
     """Combine multiple scorer signals into reward.
 
-    R_t = w1 * affinity - w2 * R_decoy - w3 * R_naturalness - w4 * R_diversity
+    R_t = w1 * affinity - w2 * R_decoy + w3 * P_naturalness + w4 * P_diversity
+
+    For tFold V3.4 scorers, affinity is the pre-sigmoid binding logit
+    (-gate_logit), not sigmoid(-gate_logit). Larger is better; very low or
+    failed tFold samples receive strongly negative affinity.
+
+    Naturalness/diversity scorers return non-positive penalty terms, where
+    0.0 means acceptable and negative values mean worse. Adding those terms
+    ensures auxiliary objectives can only reduce reward; affinity controls the
+    reward upside.
     """
 
     def __init__(
@@ -55,6 +67,19 @@ class RewardManager:
         # OOD stats tracking
         self._ood_triggered = 0
         self._ood_total = 0
+
+    @staticmethod
+    def _finite_scalar(value: float, default: float, label: str) -> float:
+        """Clamp non-finite scorer outputs before they reach PPO."""
+        try:
+            value = float(value)
+        except Exception:
+            logger.warning("Non-scalar reward component %s=%r; using %.3f", label, value, default)
+            return default
+        if not np.isfinite(value):
+            logger.warning("Non-finite reward component %s=%r; using %.3f", label, value, default)
+            return default
+        return value
 
     def compute_reward(
         self,
@@ -108,6 +133,8 @@ class RewardManager:
                 aff_score = preds[0]
             else:
                 aff_score, _ = self.affinity_scorer.score(tcr, peptide)
+            aff_score = self._finite_scalar(aff_score, 0.0, "affinity_raw")
+            initial_affinity = self._finite_scalar(initial_affinity, 0.0, "initial_affinity")
             aff_delta = aff_score - initial_affinity if self.use_delta_reward else aff_score
             components["affinity_raw"] = aff_score
             components["affinity_delta"] = aff_delta
@@ -120,6 +147,7 @@ class RewardManager:
         if (self.decoy_scorer is not None
                 and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty")):
             decoy_score, _ = self.decoy_scorer.score(tcr, peptide, target=target)
+            decoy_score = self._finite_scalar(decoy_score, 0.0, "decoy_raw")
             components["decoy_raw"] = decoy_score
         else:
             decoy_score = 0.0
@@ -127,8 +155,9 @@ class RewardManager:
 
         # Naturalness penalty — always computed (no frequency gating)
         if (self.naturalness_scorer is not None
-                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo")):
+                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_decoy_delta", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo")):
             nat_score, _ = self.naturalness_scorer.score(tcr)
+            nat_score = self._finite_scalar(nat_score, 0.0, "naturalness_raw")
             components["naturalness_raw"] = nat_score
         else:
             nat_score = 0.0
@@ -136,8 +165,9 @@ class RewardManager:
 
         # Diversity penalty
         if (self.diversity_scorer is not None
-                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
+                and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_decoy_delta", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
             div_score, _ = self.diversity_scorer.score(tcr)
+            div_score = self._finite_scalar(div_score, 0.0, "diversity_raw")
             components["diversity_raw"] = div_score
         else:
             div_score = 0.0
@@ -168,16 +198,20 @@ class RewardManager:
         elif self.reward_mode in ("raw_multi_penalty", "v2_full", "v2_no_decoy", "v2_no_curriculum"):
             total = (aff_score
                     - self.weights["decoy"] * decoy_score
-                    - self.weights["naturalness"] * nat_score
-                    - self.weights["diversity"] * div_score)
+                    + self.weights["naturalness"] * nat_score
+                    + self.weights["diversity"] * div_score)
+        elif self.reward_mode == "v2_no_decoy_delta":
+            total = (aff_delta
+                    + self.weights["naturalness"] * nat_score
+                    + self.weights["diversity"] * div_score)
         elif self.reward_mode == "threshold_penalty":
             if aff_score < 0.5:
                 total = aff_score
             else:
                 total = (aff_score
                         - self.weights["decoy"] * decoy_score
-                        - self.weights["naturalness"] * nat_score
-                        - self.weights["diversity"] * div_score)
+                        + self.weights["naturalness"] * nat_score
+                        + self.weights["diversity"] * div_score)
         elif self.reward_mode == "contrastive_ergo":
             # Contrastive: reward = ERGO(target) - agg(ERGO(decoys))
             # agg = "mean" (original) or "max" (worst-case specificity)
@@ -213,6 +247,7 @@ class RewardManager:
         else:
             total = aff_score  # Fallback: raw affinity
 
+        total = self._finite_scalar(total, 0.0, "reward_total")
         components["total"] = total
         return total, components
 
@@ -260,11 +295,12 @@ class RewardManager:
         # Process each sample — always compute all scorers (no frequency gating)
         for i in range(n):
             components = {}
-            aff_score = aff_scores[i]
+            aff_score = self._finite_scalar(aff_scores[i], 0.0, "affinity_raw")
+            init_aff = self._finite_scalar(initial_affinities[i], 0.0, "initial_affinity")
 
             # Apply OOD penalty if in OOD mode
             if self.reward_mode == "v1_ergo_ood_penalty":
-                uncertainty = uncertainties[i]
+                uncertainty = self._finite_scalar(uncertainties[i], 0.0, "uncertainty")
                 components["uncertainty"] = uncertainty
                 self._ood_total += 1
 
@@ -285,7 +321,7 @@ class RewardManager:
                     else:
                         components["ood_penalty"] = 0.0
 
-            aff_delta = aff_score - initial_affinities[i] if self.use_delta_reward else aff_score
+            aff_delta = aff_score - init_aff if self.use_delta_reward else aff_score
             components["affinity_raw"] = aff_score
             components["affinity_delta"] = aff_delta
 
@@ -293,6 +329,7 @@ class RewardManager:
             if (self.decoy_scorer is not None
                     and self.reward_mode in ("v2_full", "v2_decoy_only", "raw_decoy", "raw_multi_penalty", "threshold_penalty")):
                 decoy_score, _ = self.decoy_scorer.score(tcrs[i], peptides[i], target=targets[i])
+                decoy_score = self._finite_scalar(decoy_score, 0.0, "decoy_raw")
                 components["decoy_raw"] = decoy_score
             else:
                 decoy_score = 0.0
@@ -300,8 +337,9 @@ class RewardManager:
 
             # Naturalness — always computed for every sample
             if (self.naturalness_scorer is not None
-                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo")):
+                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_decoy_delta", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty", "contrastive_ergo")):
                 nat_score, _ = self.naturalness_scorer.score(tcrs[i])
+                nat_score = self._finite_scalar(nat_score, 0.0, "naturalness_raw")
                 components["naturalness_raw"] = nat_score
             else:
                 nat_score = 0.0
@@ -309,8 +347,9 @@ class RewardManager:
 
             # Diversity
             if (self.diversity_scorer is not None
-                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
+                    and self.reward_mode in ("v2_full", "v2_no_decoy", "v2_no_decoy_delta", "v2_no_curriculum", "raw_multi_penalty", "threshold_penalty")):
                 div_score, _ = self.diversity_scorer.score(tcrs[i])
+                div_score = self._finite_scalar(div_score, 0.0, "diversity_raw")
                 components["diversity_raw"] = div_score
             else:
                 div_score = 0.0
@@ -337,16 +376,20 @@ class RewardManager:
             elif self.reward_mode in ("raw_multi_penalty", "v2_full", "v2_no_decoy", "v2_no_curriculum"):
                 total = (aff_score
                         - self.weights["decoy"] * decoy_score
-                        - self.weights["naturalness"] * nat_score
-                        - self.weights["diversity"] * div_score)
+                        + self.weights["naturalness"] * nat_score
+                        + self.weights["diversity"] * div_score)
+            elif self.reward_mode == "v2_no_decoy_delta":
+                total = (aff_delta
+                        + self.weights["naturalness"] * nat_score
+                        + self.weights["diversity"] * div_score)
             elif self.reward_mode == "threshold_penalty":
                 if aff_score < 0.5:
                     total = aff_score
                 else:
                     total = (aff_score
                             - self.weights["decoy"] * decoy_score
-                            - self.weights["naturalness"] * nat_score
-                            - self.weights["diversity"] * div_score)
+                            + self.weights["naturalness"] * nat_score
+                            + self.weights["diversity"] * div_score)
             elif self.reward_mode == "contrastive_ergo":
                 if self.decoy_scorer is not None:
                     decoy_peptides = self.decoy_scorer.sample_decoys(targets[i], k=self.n_contrast_decoys)
@@ -363,12 +406,12 @@ class RewardManager:
                         else:
                             decoy_scores = [self.affinity_scorer.score(tcrs[i], d)[0] for d in decoy_peptides]
                         if self.contrastive_agg == "max":
-                            agg_decoy_score = float(np.max(decoy_scores))
+                            agg_decoy_score = self._finite_scalar(np.max(decoy_scores), 0.0, "decoy_max")
                         else:
-                            agg_decoy_score = float(np.mean(decoy_scores))
+                            agg_decoy_score = self._finite_scalar(np.mean(decoy_scores), 0.0, "decoy_mean")
                         total = aff_score - agg_decoy_score
-                        components["decoy_mean"] = float(np.mean(decoy_scores))
-                        components["decoy_max"] = float(np.max(decoy_scores))
+                        components["decoy_mean"] = self._finite_scalar(np.mean(decoy_scores), 0.0, "decoy_mean")
+                        components["decoy_max"] = self._finite_scalar(np.max(decoy_scores), 0.0, "decoy_max")
                         components["contrast_margin"] = total
                     # Add naturalness bonus if available
                     if self.naturalness_scorer is not None and self.weights["naturalness"] > 0:
@@ -378,6 +421,7 @@ class RewardManager:
             else:
                 total = aff_score  # Fallback
 
+            total = self._finite_scalar(total, 0.0, "reward_total")
             components["total"] = total
             all_rewards.append(total)
             all_components.append(components)

@@ -133,10 +133,10 @@ class TCREditEnv:
             if hasattr(self.reward_manager.affinity_scorer, 'score_batch_fast'):
                 preds = self.reward_manager.affinity_scorer.score_batch_fast(
                     [self.tcr_seq], [self.peptide])
-                self.initial_affinity = preds[0]
+                self.initial_affinity = float(np.nan_to_num(preds[0], nan=0.0, posinf=0.0, neginf=0.0))
             else:
                 aff, _ = self.reward_manager.affinity_scorer.score(self.tcr_seq, self.peptide)
-                self.initial_affinity = aff
+                self.initial_affinity = float(np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0))
         else:
             self.initial_affinity = 0.0
 
@@ -313,6 +313,7 @@ class TCREditEnv:
 
     def _apply_reward(self, reward: float, components: dict) -> None:
         """Apply externally-computed reward to env state."""
+        reward = float(np.nan_to_num(reward, nan=0.0, posinf=0.0, neginf=0.0))
         self.cumulative_delta += reward
 
     def _get_obs(self) -> np.ndarray:
@@ -414,11 +415,11 @@ class VecTCREditEnv:
             if hasattr(scorer, 'score_batch_fast'):
                 preds = scorer.score_batch_fast(tcrs, peps)
                 for i, env in enumerate(self.envs):
-                    env.initial_affinity = preds[i]
+                    env.initial_affinity = float(np.nan_to_num(preds[i], nan=0.0, posinf=0.0, neginf=0.0))
             else:
                 for env in self.envs:
                     aff, _ = scorer.score(env.tcr_seq, env.peptide)
-                    env.initial_affinity = aff
+                    env.initial_affinity = float(np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0))
 
         tcr_seqs = [env.tcr_seq for env in self.envs]
         esm_cache = self.envs[0].esm_cache
@@ -480,25 +481,35 @@ class VecTCREditEnv:
                 if hasattr(scorer, 'score_batch_fast'):
                     preds = scorer.score_batch_fast(reset_tcrs, reset_peps)
                     for j, i in enumerate(reset_indices):
-                        self.envs[i].initial_affinity = preds[j]
+                        self.envs[i].initial_affinity = float(np.nan_to_num(preds[j], nan=0.0, posinf=0.0, neginf=0.0))
                 else:
                     for i in reset_indices:
                         aff, _ = scorer.score(self.envs[i].tcr_seq, self.envs[i].peptide)
-                        self.envs[i].initial_affinity = aff
+                        self.envs[i].initial_affinity = float(np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0))
 
-        # Phase 2: Batch reward computation for stepped envs
-        if stepped_indices:
+        # Phase 2: Batch reward computation for stepped envs. In terminal-only
+        # mode, intermediate transitions must stay at reward=0.
+        reward_indices = [
+            i for i in stepped_indices
+            if (not self.envs[i].terminal_reward_only) or dones[i]
+        ]
+        skipped_reward_indices = [i for i in stepped_indices if i not in reward_indices]
+        for i in skipped_reward_indices:
+            self.envs[i]._apply_reward(0.0, {})
+            infos[i]["reward_components"] = {}
+
+        if reward_indices:
             reward_manager = self.envs[0].reward_manager
-            batch_tcrs = [self.envs[i].tcr_seq for i in stepped_indices]
-            batch_peps = [self.envs[i].peptide for i in stepped_indices]
-            batch_init_aff = [self.envs[i].initial_affinity for i in stepped_indices]
-            batch_targets = [self.envs[i].target for i in stepped_indices]
+            batch_tcrs = [self.envs[i].tcr_seq for i in reward_indices]
+            batch_peps = [self.envs[i].peptide for i in reward_indices]
+            batch_init_aff = [self.envs[i].initial_affinity for i in reward_indices]
+            batch_targets = [self.envs[i].target for i in reward_indices]
 
             batch_rewards, batch_components = reward_manager.compute_reward_batch(
                 batch_tcrs, batch_peps, batch_init_aff, batch_targets
             )
 
-            for j, i in enumerate(stepped_indices):
+            for j, i in enumerate(reward_indices):
                 r = batch_rewards[j]
                 comp = batch_components[j]
 
@@ -515,6 +526,7 @@ class VecTCREditEnv:
 
                 rewards[i] = r
                 self.envs[i]._apply_reward(r, comp)
+                rewards[i] = float(np.nan_to_num(rewards[i], nan=0.0, posinf=0.0, neginf=0.0))
                 infos[i]["reward_components"] = comp
 
         # Phase 3: Batch ESM encoding for all envs

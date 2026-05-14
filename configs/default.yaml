@@ -82,6 +82,7 @@ eval_warmup: 500000
 
 # === Checkpointing ===
 checkpoint_interval: 100000
+latest_checkpoint_interval: 2000
 milestones: [500000, 1000000, 2000000, 5000000, 10000000]
 
 # === Ablation ===

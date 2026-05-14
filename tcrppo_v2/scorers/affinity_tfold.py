@@ -27,6 +27,7 @@ import torch.nn as nn
 from tcrppo_v2.scorers.base import BaseScorer
 
 logger = logging.getLogger(__name__)
+INVALID_FEATURE_SENTINEL = {"_invalid": True}
 
 # Paths
 TFOLD_ROOT = "/share/liuyutian/tfold"
@@ -308,6 +309,15 @@ class TFoldFeatureCache:
         )
         self._conn.commit()
 
+    def delete_batch(self, keys: List[str]) -> None:
+        if not keys:
+            return
+        self._conn.executemany(
+            "DELETE FROM features WHERE cache_key=?",
+            [(key,) for key in keys],
+        )
+        self._conn.commit()
+
     def size(self) -> int:
         return self._conn.execute("SELECT COUNT(*) FROM features").fetchone()[0]
 
@@ -374,11 +384,71 @@ class AffinityTFoldScorer(BaseScorer):
         # Stats
         self._n_subprocess_calls = 0
         self._n_scored = 0
+        # tFold classifier predicts a gate logit where larger means more non-binding.
+        # We expose the pre-sigmoid binding logit (-gate_logit) as the affinity reward.
+        self._default_raw_score = -20.0
+        self._last_batch_trace: List[Dict[str, object]] = []
 
         logger.info(
             f"tFold V3.4 scorer initialized: {self.model._n_params:,} params, "
             f"cache={self._cache.size()} entries, device={device}"
         )
+
+    def _log_prediction_trace(
+        self,
+        trace_rows: List[Dict[str, object]],
+        scores: List[float],
+        confidences: List[float],
+        total_elapsed_s: float,
+    ) -> None:
+        if not trace_rows:
+            return
+
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        end_to_end_ms = (total_elapsed_s * 1000.0) / max(len(trace_rows), 1)
+        for idx, trace in enumerate(trace_rows):
+            score = scores[idx] if idx < len(scores) else self._default_raw_score
+            confidence = confidences[idx] if idx < len(confidences) else 0.0
+            print(
+                f"[tFoldScore] ts={ts} source={trace.get('source', 'unknown')} "
+                f"path_ms={float(trace.get('path_ms', 0.0)):.2f} "
+                f"classify_ms={float(trace.get('classify_ms', 0.0)):.2f} "
+                f"end_to_end_ms={end_to_end_ms:.2f} affinity_logit={score:.4f} "
+                f"conf={confidence:.2f} cdr3b={trace.get('cdr3b', '')[:18]} "
+                f"peptide={trace.get('peptide', '')} hla={trace.get('hla', self.default_hla)}",
+                flush=True,
+            )
+
+    @staticmethod
+    def _feature_is_valid(features: Optional[Dict]) -> bool:
+        if features is None:
+            return False
+        if features.get("_invalid") is True:
+            return False
+
+        tensor_keys = [
+            "sfea_cdr3b", "sfea_cdr3a", "sfea_pep",
+            "ca_cdr3b", "ca_cdr3a", "ca_pep",
+            "pfea_cdr3b_pep", "pfea_cdr3a_pep", "v33_feat",
+        ]
+        int_keys = ["len_cdr3b", "len_cdr3a", "len_pep"]
+
+        try:
+            for key in tensor_keys:
+                value = features.get(key)
+                if value is None or not torch.isfinite(value).all():
+                    return False
+            for key in int_keys:
+                value = int(features.get(key, 0))
+                if value <= 0:
+                    return False
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def _feature_is_invalid_sentinel(features: Optional[Dict]) -> bool:
+        return isinstance(features, dict) and features.get("_invalid") is True
 
     def _load_classifier(self, device: str) -> ClassifierV34Local:
         """Load the pre-trained V3.4 classifier."""
@@ -531,22 +601,56 @@ class AffinityTFoldScorer(BaseScorer):
         # Build cache keys
         keys = [_make_cache_key(c, p, h) for c, p, h in zip(cdr3bs_normalized, peptides, hlas)]
 
+        lookup_t0 = time.perf_counter()
         # Batch cache lookup
         cached = self._cache.get_batch(keys)
+        cache_lookup_ms = ((time.perf_counter() - lookup_t0) * 1000.0) / max(len(keys), 1)
 
         # Find misses
         results = [None] * len(keys)
         need_extract = []  # (original_index, request_dict)
+        trace_rows = [
+            {
+                "cdr3b": cdr3bs_normalized[i],
+                "peptide": peptides[i],
+                "hla": hlas[i],
+                "source": "cache_hit_pending",
+            }
+            for i in range(len(keys))
+        ]
 
+        invalid_cached_keys = []
         for i, key in enumerate(keys):
-            if key in cached:
-                results[i] = cached[key]
-            else:
+            cached_features = cached.get(key)
+            if self._feature_is_invalid_sentinel(cached_features):
+                invalid_cached_keys.append(key)
+                logger.info("Retrying negative-cached tFold features for %s", key)
+                trace_rows[i]["source"] = "negative_cache_reextract"
                 need_extract.append((i, {
                     "cdr3b": cdr3bs_normalized[i],
                     "peptide": peptides[i],
                     "hla": hlas[i],
                 }))
+                continue
+            if cached_features is not None and self._feature_is_valid(cached_features):
+                results[i] = cached_features
+                trace_rows[i]["source"] = "cache_hit"
+                trace_rows[i]["path_ms"] = cache_lookup_ms
+            else:
+                if cached_features is not None:
+                    invalid_cached_keys.append(key)
+                    logger.warning("Invalid cached tFold features for %s; re-extracting", key)
+                    trace_rows[i]["source"] = "cache_invalid_reextract"
+                else:
+                    trace_rows[i]["source"] = "cache_miss"
+                need_extract.append((i, {
+                    "cdr3b": cdr3bs_normalized[i],
+                    "peptide": peptides[i],
+                    "hla": hlas[i],
+                }))
+
+        if invalid_cached_keys:
+            self._cache.delete_batch(invalid_cached_keys)
 
         # Extract missing features via server
         if need_extract:
@@ -556,6 +660,7 @@ class AffinityTFoldScorer(BaseScorer):
             )
             # Process in batches
             all_extracted = []
+            extract_t0 = time.perf_counter()
             for batch_start in range(0, len(need_extract), self.max_subprocess_batch):
                 batch = need_extract[batch_start : batch_start + self.max_subprocess_batch]
                 requests = [item[1] for item in batch]
@@ -563,20 +668,40 @@ class AffinityTFoldScorer(BaseScorer):
                 extracted = self._extract_features_server(requests)
                 all_extracted.extend(zip(batch, extracted))
                 print(f"[tFold] Batch {batch_start//self.max_subprocess_batch + 1} done", flush=True)
+            extract_path_ms = ((time.perf_counter() - extract_t0) * 1000.0) / max(len(need_extract), 1)
 
             # Store extracted features
             to_cache = []
+            invalid_to_cache = []
             for (orig_idx, req), feats in all_extracted:
-                if feats is not None:
+                if self._feature_is_valid(feats):
                     results[orig_idx] = feats
                     key = keys[orig_idx]
                     to_cache.append((key, feats))
+                    trace_rows[orig_idx]["source"] = "extract_ok"
+                    trace_rows[orig_idx]["path_ms"] = extract_path_ms
+                elif feats is not None:
+                    key = keys[orig_idx]
+                    invalid_to_cache.append((key, INVALID_FEATURE_SENTINEL))
+                    trace_rows[orig_idx]["source"] = "extract_invalid"
+                    trace_rows[orig_idx]["path_ms"] = extract_path_ms
+                    logger.warning(
+                        "Discarding non-finite extracted tFold features for %s|%s|%s",
+                        req["cdr3b"], req["peptide"], req["hla"],
+                    )
+                else:
+                    trace_rows[orig_idx]["source"] = "extract_failed"
+                    trace_rows[orig_idx]["path_ms"] = extract_path_ms
 
             if to_cache:
                 self._cache.put_batch(to_cache)
                 print(f"[tFold] Cached {len(to_cache)} new features (total cache size: {self._cache.size()})", flush=True)
                 logger.info(f"Cached {len(to_cache)} new tFold features")
+            if invalid_to_cache:
+                self._cache.put_batch(invalid_to_cache)
+                logger.info("Negative-cached %d invalid tFold feature entries", len(invalid_to_cache))
 
+        self._last_batch_trace = trace_rows
         return results
 
     @torch.no_grad()
@@ -608,9 +733,17 @@ class AffinityTFoldScorer(BaseScorer):
                 [f[key] for f in features_list], dtype=torch.long, device=self.device
             )
 
+        for key, value in batch.items():
+            if torch.is_tensor(value) and not torch.isfinite(value).all():
+                logger.warning("Non-finite tensor detected in tFold classifier input: %s", key)
+                batch[key] = torch.nan_to_num(value, nan=0.0, posinf=0.0, neginf=0.0)
+
         gate_logits = self.model(batch)  # [B] — higher = more non-binding
-        # Convert to binding score: higher = more binding
-        binding_scores = -torch.sigmoid(gate_logits)
+        if not torch.isfinite(gate_logits).all():
+            logger.warning("Non-finite logits from tFold classifier; replacing with zeros")
+            gate_logits = torch.nan_to_num(gate_logits, nan=0.0, posinf=0.0, neginf=0.0)
+        # Convert to a pre-sigmoid binding logit: higher = more binding.
+        binding_scores = -gate_logits
 
         return binding_scores
 
@@ -622,19 +755,29 @@ class AffinityTFoldScorer(BaseScorer):
             peptide: Peptide sequence.
 
         Returns:
-            (binding_score, confidence) where binding_score is in [-1, 0]
+            (binding_logit, confidence) where binding_logit is -gate_logit
             (higher = more binding) and confidence is 1.0 (no uncertainty est).
         """
         hla = kwargs.get("hla", self.default_hla)
         features = self._get_features_batch([tcr], [peptide], [hla])
 
         if features[0] is None:
-            # Feature extraction failed — return neutral score
-            return 0.0, 0.0
+            # Feature extraction failed — treat as non-binding, not neutral.
+            return self._default_raw_score, 0.0
 
         score = self._classify_batch([features[0]])
+        value = float(score[0].item())
+        if not np.isfinite(value):
+            logger.warning(
+                "Non-finite single tFold score for tcr=%s peptide=%s; using fallback %.3f",
+                tcr, peptide, self._default_raw_score,
+            )
+            value = self._default_raw_score
+            confidence = 0.0
+        else:
+            confidence = 1.0
         self._n_scored += 1
-        return float(score[0].item()), 1.0
+        return value, confidence
 
     def score_batch(self, tcrs: list, peptides: list, **kwargs) -> Tuple[list, list]:
         """Score a batch of TCR-peptide pairs with confidence.
@@ -642,8 +785,10 @@ class AffinityTFoldScorer(BaseScorer):
         Returns:
             (scores, confidences) — two lists of floats.
         """
+        t0 = time.perf_counter()
         hlas = kwargs.get("hlas", [self.default_hla] * len(tcrs))
         features = self._get_features_batch(tcrs, peptides, hlas)
+        trace_rows = list(self._last_batch_trace)
 
         # Separate successful and failed
         valid_features = []
@@ -654,30 +799,44 @@ class AffinityTFoldScorer(BaseScorer):
                 valid_indices.append(i)
 
         # Failed extractions get a low score to discourage unscoreable sequences.
-        default_raw = -0.9
+        default_raw = self._default_raw_score
         scores = [default_raw] * len(tcrs)
         confidences = [0.0] * len(tcrs)
 
         if valid_features:
+            classify_t0 = time.perf_counter()
             binding_scores = self._classify_batch(valid_features)
+            classify_ms = ((time.perf_counter() - classify_t0) * 1000.0) / max(len(valid_features), 1)
             for j, orig_idx in enumerate(valid_indices):
-                scores[orig_idx] = float(binding_scores[j].item())
-                confidences[orig_idx] = 1.0
+                score = float(binding_scores[j].item())
+                trace_rows[orig_idx]["classify_ms"] = classify_ms
+                if np.isfinite(score):
+                    scores[orig_idx] = score
+                    confidences[orig_idx] = 1.0
+                else:
+                    logger.warning(
+                        "Non-finite batch tFold score for tcr=%s peptide=%s hla=%s; using fallback %.3f",
+                        tcrs[orig_idx], peptides[orig_idx], hlas[orig_idx], default_raw,
+                    )
 
         self._n_scored += len(tcrs)
+        self._log_prediction_trace(
+            trace_rows=trace_rows,
+            scores=scores,
+            confidences=confidences,
+            total_elapsed_s=time.perf_counter() - t0,
+        )
         return scores, confidences
 
     def score_batch_fast(self, tcrs: list, peptides: list) -> List[float]:
         """Fast batch scoring (no confidence estimation).
 
-        For RL training reward, we map the binding score from [-1, 0] to [0, 1]
-        to be consistent with ERGO's output range.
+        For RL training reward, return the pre-sigmoid binding logit directly.
+        This keeps the high-sensitivity gate-logit signal instead of compressing
+        it through sigmoid.
         """
         scores, _ = self.score_batch(tcrs, peptides)
-        # Map from [-1, 0] (raw) to [0, 1] (ERGO-compatible)
-        # raw = -sigmoid(gate_logit), so raw is in [-1, 0]
-        # mapped = raw + 1 → [0, 1], where 1 = strong binding
-        return [s + 1.0 for s in scores]
+        return [float(s) for s in scores]
 
     @property
     def cache_stats(self) -> Dict[str, int]:
@@ -749,7 +908,8 @@ class TFoldCascadeScorer(BaseScorer):
     def score(self, tcr: str, peptide: str, **kwargs) -> Tuple[float, float]:
         """Score with cascade logic.
 
-        Returns (score, confidence) where score is in [0, 1] range.
+        Returns (score, confidence). ERGO scores remain probability-like;
+        tFold fallback scores are pre-sigmoid binding logits.
         """
         # Step 1: ERGO MC Dropout
         means, stds = self.ergo_scorer.mc_dropout_score([tcr], [peptide])
@@ -767,7 +927,7 @@ class TFoldCascadeScorer(BaseScorer):
         tfold_scores = self.tfold_scorer.score_batch_fast([tcr], [peptide])
         self._n_tfold_calls += 1
 
-        # tFold score is already in [0, 1] range (from score_batch_fast)
+        # tFold score is a pre-sigmoid binding logit from score_batch_fast.
         tfold_score = tfold_scores[0]
 
         # Return tFold score with high confidence

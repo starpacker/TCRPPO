@@ -55,13 +55,15 @@ import torch
 # Add tFold root to path
 TFOLD_ROOT = "/share/liuyutian/tfold"
 sys.path.insert(0, TFOLD_ROOT)
+PROJECT_ROOT = "/share/liuyutian/tcrppo_v2"
+sys.path.insert(0, PROJECT_ROOT)
 
 import importlib
 
 # Import tFold components
 fe = importlib.import_module("TCR_PMHC_pred.4_16.feature_extraction")
-dp = importlib.import_module("TCR_PMHC_pred.4_16.data_pipeline")
 hla_mod = importlib.import_module("TCR_PMHC_pred.4_16.hla_mapping")
+from tcrppo_v2.inference_optimization.tfold_amp_wrapper import TFoldAMPWrapper
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +83,43 @@ _DEFAULT_VREGION_ALPHA_SCAFFOLD = (
 _DEFAULT_CDR3_ALPHA = "CAVNFGNEKLTF"
 
 STANDARD_AA = set("ACDEFGHIKLMNPQRSTVWY")
+
+
+def pad_v34_features(structured: Dict) -> Dict:
+    """Pad V3.4 structured features to fixed shapes."""
+    MAX_CDR3, MAX_PEP = 25, 20
+
+    def pad_2d(t, max_len):
+        L, D = t.shape
+        if L >= max_len:
+            return t[:max_len]
+        return torch.cat([t, torch.zeros(max_len - L, D)], dim=0)
+
+    def pad_3d(t, max_r, max_c):
+        R, C, D = t.shape
+        out = torch.zeros(max_r, max_c, D)
+        r, c = min(R, max_r), min(C, max_c)
+        out[:r, :c, :] = t[:r, :c, :]
+        return out
+
+    Lb = structured["sfea_cdr3b"].shape[0]
+    La = structured["sfea_cdr3a"].shape[0]
+    Lp = structured["sfea_pep"].shape[0]
+
+    return {
+        "sfea_cdr3b": pad_2d(structured["sfea_cdr3b"], MAX_CDR3),
+        "sfea_cdr3a": pad_2d(structured["sfea_cdr3a"], MAX_CDR3),
+        "sfea_pep": pad_2d(structured["sfea_pep"], MAX_PEP),
+        "ca_cdr3b": pad_2d(structured["ca_cdr3b"], MAX_CDR3),
+        "ca_cdr3a": pad_2d(structured["ca_cdr3a"], MAX_CDR3),
+        "ca_pep": pad_2d(structured["ca_pep"], MAX_PEP),
+        "pfea_cdr3b_pep": pad_3d(structured["pfea_cdr3b_pep"], MAX_CDR3, MAX_PEP),
+        "pfea_cdr3a_pep": pad_3d(structured["pfea_cdr3a_pep"], MAX_CDR3, MAX_PEP),
+        "v33_feat": structured["v33_feat"],
+        "len_cdr3b": min(Lb, MAX_CDR3),
+        "len_cdr3a": min(La, MAX_CDR3),
+        "len_pep": min(Lp, MAX_PEP),
+    }
 
 
 def splice_cdr3_into_scaffold(scaffold: str, cdr3: str, cdr3_pos: int,
@@ -148,46 +187,27 @@ def extract_v34_features(predictor, chains: List[Dict], device: str) -> Optional
         if raw is None:
             print(f"  DEBUG: raw features is None", flush=True)
             return None
-        print(f"  DEBUG: raw type={type(raw)}, keys={list(raw.keys()) if isinstance(raw, dict) else 'N/A'}", flush=True)
         structured = fe.extract_structured_features(raw)
         if structured is None:
-            print(f"  DEBUG: structured features is None (raw was not None)", flush=True)
             return None
-        print(f"  DEBUG: structured keys={list(structured.keys())}", flush=True)
+        return pad_v34_features(structured)
+    except Exception:
+        traceback.print_exc()
+        return None
 
-        MAX_CDR3, MAX_PEP = 25, 20
 
-        def pad_2d(t, max_len):
-            L, D = t.shape
-            if L >= max_len:
-                return t[:max_len]
-            return torch.cat([t, torch.zeros(max_len - L, D)], dim=0)
-
-        def pad_3d(t, max_r, max_c):
-            R, C, D = t.shape
-            out = torch.zeros(max_r, max_c, D)
-            r, c = min(R, max_r), min(C, max_c)
-            out[:r, :c, :] = t[:r, :c, :]
-            return out
-
-        Lb = structured["sfea_cdr3b"].shape[0]
-        La = structured["sfea_cdr3a"].shape[0]
-        Lp = structured["sfea_pep"].shape[0]
-
-        return {
-            "sfea_cdr3b": pad_2d(structured["sfea_cdr3b"], MAX_CDR3),
-            "sfea_cdr3a": pad_2d(structured["sfea_cdr3a"], MAX_CDR3),
-            "sfea_pep": pad_2d(structured["sfea_pep"], MAX_PEP),
-            "ca_cdr3b": pad_2d(structured["ca_cdr3b"], MAX_CDR3),
-            "ca_cdr3a": pad_2d(structured["ca_cdr3a"], MAX_CDR3),
-            "ca_pep": pad_2d(structured["ca_pep"], MAX_PEP),
-            "pfea_cdr3b_pep": pad_3d(structured["pfea_cdr3b_pep"], MAX_CDR3, MAX_PEP),
-            "pfea_cdr3a_pep": pad_3d(structured["pfea_cdr3a_pep"], MAX_CDR3, MAX_PEP),
-            "v33_feat": structured["v33_feat"],
-            "len_cdr3b": min(Lb, MAX_CDR3),
-            "len_cdr3a": min(La, MAX_CDR3),
-            "len_pep": min(Lp, MAX_PEP),
-        }
+def extract_v34_features_amp(wrapper: TFoldAMPWrapper, chains: List[Dict]) -> Optional[Dict]:
+    """Run AMP wrapper and convert to padded V3.4 features."""
+    try:
+        raw = wrapper.extract_features(chains)
+        if raw is None:
+            return None
+        structured = fe.extract_structured_features(raw)
+        if structured is None:
+            return None
+        padded = pad_v34_features(structured)
+        padded["_meta"] = raw.get("_meta", {})
+        return padded
     except Exception:
         traceback.print_exc()
         return None
@@ -231,11 +251,22 @@ def send_msg(conn: socket.socket, data: bytes) -> None:
 class TFoldFeatureServer:
     """Persistent tFold feature extraction server."""
 
-    def __init__(self, socket_path: str, gpu_id: int = 0):
+    def __init__(
+        self,
+        socket_path: str,
+        gpu_id: int = 0,
+        use_amp_wrapper: bool = False,
+        chunk_size: Optional[int] = 64,
+        completion_log: Optional[str] = None,
+    ):
         self.socket_path = socket_path
         self.gpu_id = gpu_id
         self.device = f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu"
         self.predictor = None
+        self.wrapper = None
+        self.use_amp_wrapper = use_amp_wrapper
+        self.chunk_size = chunk_size
+        self.completion_log = completion_log
         self.hla_lookup = {}       # Resolved HLA -> {"M": seq, "N": seq} cache
         self._hla_seq_lookup = {}  # Raw allele -> protein sequence lookup (built from FASTA DB)
         self._running = False
@@ -244,11 +275,20 @@ class TFoldFeatureServer:
         """Load the tFold predictor (slow, ~5min) and HLA lookup."""
         print(f"Loading tFold predictor on {self.device}...", flush=True)
         t0 = time.time()
-        self.predictor = fe.load_tfold_predictor(
-            ppi_path=os.path.join(TFOLD_ROOT, "checkpoints", "esm_ppi_650m_tcr.pth"),
-            trunk_path=os.path.join(TFOLD_ROOT, "checkpoints", "tfold_tcr_pmhc_trunk.pth"),
-            device=self.device,
-        )
+        if self.use_amp_wrapper:
+            self.wrapper = TFoldAMPWrapper(
+                ppi_path=os.path.join(TFOLD_ROOT, "checkpoints", "esm_ppi_650m_tcr.pth"),
+                trunk_path=os.path.join(TFOLD_ROOT, "checkpoints", "tfold_tcr_pmhc_trunk.pth"),
+                device=self.device,
+                use_amp=True,
+                chunk_size=self.chunk_size,
+            )
+        else:
+            self.predictor = fe.load_tfold_predictor(
+                ppi_path=os.path.join(TFOLD_ROOT, "checkpoints", "esm_ppi_650m_tcr.pth"),
+                trunk_path=os.path.join(TFOLD_ROOT, "checkpoints", "tfold_tcr_pmhc_trunk.pth"),
+                device=self.device,
+            )
         elapsed = time.time() - t0
         print(f"tFold predictor loaded in {elapsed:.1f}s", flush=True)
 
@@ -284,30 +324,40 @@ class TFoldFeatureServer:
             cdr3b = sample.get("cdr3b", "")
             peptide = sample.get("peptide", "")
             hla = sample.get("hla", "HLA-A*02:01")
+            sample_t0 = time.time()
 
             try:
                 chains = build_chains_from_cdr3b(cdr3b, peptide, hla, self.hla_lookup, self._hla_seq_lookup)
                 if chains is None:
                     features_b64.append(None)
                     errors.append("Failed to build chains (HLA resolution failed)")
+                    self._log_completion(cdr3b, peptide, hla, time.time() - sample_t0, False, {})
                     continue
 
-                # Debug: print chain sequences
-                for ch in chains:
-                    if ch["id"] in ["B", "A"]:
-                        print(f"  DEBUG: Chain {ch['id']}: {ch['sequence'][:50]}...", flush=True)
-
-                feats = extract_v34_features(self.predictor, chains, self.device)
+                if self.use_amp_wrapper:
+                    feats = extract_v34_features_amp(self.wrapper, chains)
+                else:
+                    feats = extract_v34_features(self.predictor, chains, self.device)
                 if feats is None:
                     features_b64.append(None)
                     errors.append("Feature extraction failed")
+                    self._log_completion(cdr3b, peptide, hla, time.time() - sample_t0, False, {})
                 else:
                     features_b64.append(features_to_base64(feats))
                     errors.append(None)
+                    self._log_completion(
+                        cdr3b,
+                        peptide,
+                        hla,
+                        time.time() - sample_t0,
+                        True,
+                        feats.get("_meta", {}),
+                    )
 
             except Exception as e:
                 features_b64.append(None)
                 errors.append(str(e))
+                self._log_completion(cdr3b, peptide, hla, time.time() - sample_t0, False, {})
                 traceback.print_exc()
 
             if (i + 1) % 10 == 0:
@@ -321,6 +371,31 @@ class TFoldFeatureServer:
             "features": features_b64,
             "errors": errors,
         }
+
+    def _log_completion(
+        self,
+        cdr3b: str,
+        peptide: str,
+        hla: str,
+        elapsed_s: float,
+        ok: bool,
+        meta: Dict,
+    ) -> None:
+        line = (
+            f"{time.strftime('%Y-%m-%d %H:%M:%S')} "
+            f"ok={int(ok)} amp={int(bool(meta.get('amp_enabled', self.use_amp_wrapper)))} "
+            f"amp_dtype={meta.get('amp_dtype', 'na')} "
+            f"precision={meta.get('precision_mode', 'unknown')} "
+            f"fallback={int(bool(meta.get('fallback_used', False)))} "
+            f"cache_hit={int(bool(meta.get('receptor_cache_hit', False)))} "
+            f"chunk={meta.get('chunk_size', self.chunk_size)} "
+            f"elapsed_s={elapsed_s:.3f} "
+            f"cdr3b={cdr3b[:18]} peptide={peptide} hla={hla}"
+        )
+        print(line, flush=True)
+        if self.completion_log:
+            with open(self.completion_log, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
 
     def _handle_connection(self, conn: socket.socket):
         """Handle a single client connection (may have multiple requests)."""
@@ -353,6 +428,8 @@ class TFoldFeatureServer:
                         "status": "ok",
                         "hla_cache_size": len(self.hla_lookup),
                         "device": self.device,
+                        "amp_wrapper": self.use_amp_wrapper,
+                        "wrapper_stats": self.wrapper.stats if self.wrapper is not None else {},
                     }
                 else:
                     response = {"status": "error", "error": f"Unknown command: {cmd}"}
@@ -422,11 +499,20 @@ def main():
     parser.add_argument("--socket", default="/tmp/tfold_server.sock",
                        help="Unix domain socket path")
     parser.add_argument("--gpu", type=int, default=0, help="GPU device ID")
+    parser.add_argument("--use-amp-wrapper", action="store_true",
+                       help="Use TFoldAMPWrapper fast path instead of fe.extract_features_from_chains")
+    parser.add_argument("--chunk-size", type=int, default=64,
+                       help="Chunk size for AMP wrapper fast path")
+    parser.add_argument("--completion-log", default="",
+                       help="Append one line per tFold completion to this log file")
     args = parser.parse_args()
 
     server = TFoldFeatureServer(
         socket_path=args.socket,
         gpu_id=args.gpu,
+        use_amp_wrapper=args.use_amp_wrapper,
+        chunk_size=args.chunk_size,
+        completion_log=args.completion_log or None,
     )
     server.serve()
 

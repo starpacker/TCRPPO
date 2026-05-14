@@ -218,6 +218,7 @@ class PPOTrainer:
         self.results_dir = config.get("results_dir", "results")
         self.milestones = config.get("milestones", [500000, 1000000, 2000000, 5000000, 10000000])
         self.checkpoint_interval = config.get("checkpoint_interval", 100000)
+        self.latest_checkpoint_interval = config.get("latest_checkpoint_interval", 2000)
 
         # Eval
         self.eval_interval = config.get("eval_interval", 100000)
@@ -494,7 +495,7 @@ class PPOTrainer:
                 tcr_cache_size=self.config.get("esm_tcr_cache_size", 4096),
                 disk_cache_path=self.config.get("esm_cache_path"),
             )
-            print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache={esm_cache.disk_cache_size} seqs)", flush=True)
+            print(f"  ESM-2 loaded (dim={esm_cache.embed_dim}, disk_cache=ready)", flush=True)
 
         print(f"  pMHC loader: {len(targets)} targets", flush=True)
 
@@ -709,6 +710,7 @@ class PPOTrainer:
                     "naturalness": self.config.get("w_naturalness", 0.5),
                     "diversity": self.config.get("w_diversity", 0.2),
                 },
+                "entropy_coef": self.entropy_coef,
                 "use_znorm": False,  # z-norm removed in bugfix
                 "tfold_correction": self.tfold_correction,
             },
@@ -763,12 +765,18 @@ class PPOTrainer:
         n_updates = 0
         episode_rewards = []
         episode_lengths = []
+        episode_components = []
         ep_reward_buf = np.zeros(self.n_envs)
         ep_length_buf = np.zeros(self.n_envs, dtype=int)
         next_milestone_idx = 0
         # Skip past milestones already reached (important for resume)
         while next_milestone_idx < len(self.milestones) and global_step >= self.milestones[next_milestone_idx]:
             next_milestone_idx += 1
+        next_latest_ckpt_step = None
+        if self.latest_checkpoint_interval and self.latest_checkpoint_interval > 0:
+            next_latest_ckpt_step = (
+                (global_step // self.latest_checkpoint_interval) + 1
+            ) * self.latest_checkpoint_interval
 
         # Per-env trackers for elite buffer (last obs/action before STOP)
         ep_last_obs = [None] * self.n_envs
@@ -844,8 +852,18 @@ class PPOTrainer:
                     if dones[i] and not was_done[i]:
                         episode_rewards.append(ep_reward_buf[i])
                         episode_lengths.append(ep_length_buf[i])
+                        terminal_components = infos[i].get("reward_components", {}) or {}
+                        episode_components.append(terminal_components)
+                        aff_raw = float(terminal_components.get("affinity_raw", 0.0))
+                        nat_raw = float(terminal_components.get("naturalness_raw", 0.0))
+                        div_raw = float(terminal_components.get("diversity_raw", 0.0))
                         # Print episode completion immediately
-                        print(f"Episode {len(episode_rewards)} | Step {global_step} | R={ep_reward_buf[i]:.3f} | Len={ep_length_buf[i]}", flush=True)
+                        print(
+                            f"Episode {len(episode_rewards)} | Step {global_step} | "
+                            f"R={ep_reward_buf[i]:.3f} | Len={ep_length_buf[i]} | "
+                            f"A={aff_raw:.4f} Nat={nat_raw:.4f} Div={div_raw:.4f}",
+                            flush=True,
+                        )
                         # Submit to elite buffer if tFold correction enabled
                         if self.elite_buffer is not None and ep_last_obs[i] is not None:
                             env_i = self.vec_env.envs[i]
@@ -956,6 +974,13 @@ class PPOTrainer:
                 recent = episode_rewards[-100:]
                 mean_r = np.mean(recent)
                 mean_l = np.mean(episode_lengths[-100:])
+                recent_components = episode_components[-100:]
+                comp_stats_str = ""
+                if recent_components:
+                    mean_aff = np.mean([float(c.get("affinity_raw", 0.0)) for c in recent_components])
+                    mean_nat = np.mean([float(c.get("naturalness_raw", 0.0)) for c in recent_components])
+                    mean_div = np.mean([float(c.get("diversity_raw", 0.0)) for c in recent_components])
+                    comp_stats_str = f" | A: {mean_aff:.4f} | Nat: {mean_nat:.4f} | Div: {mean_div:.4f}"
 
                 # Get OOD stats if in OOD penalty mode
                 ood_stats_str = ""
@@ -994,6 +1019,7 @@ class PPOTrainer:
                     f"PG: {avg_pg:>8.4f} | "
                     f"VF: {avg_vf:>8.4f} | "
                     f"Ent: {avg_ent:>6.3f}"
+                    f"{comp_stats_str}"
                     f"{ood_stats_str}"
                     f"{cache_stats_str}"
                     f"{hybrid_stats_str}"
@@ -1023,14 +1049,18 @@ class PPOTrainer:
                             self.logger.add_scalar("train/tfold_cache_size", cache_stats['cache_size'], global_step)
 
             # Checkpointing
-            if next_milestone_idx < len(self.milestones) and global_step >= self.milestones[next_milestone_idx]:
+            while next_milestone_idx < len(self.milestones) and global_step >= self.milestones[next_milestone_idx]:
                 ms = self.milestones[next_milestone_idx]
                 self.save_checkpoint(f"milestone_{ms}", global_step)
                 print(f"  ** Milestone checkpoint saved: {ms:,} steps")
                 next_milestone_idx += 1
 
-            if global_step % self.checkpoint_interval < self.n_envs * self.n_steps:
+            if next_latest_ckpt_step is not None and global_step >= next_latest_ckpt_step:
                 self.save_checkpoint("latest", global_step)
+                print(f"  ** Latest checkpoint refreshed: {global_step:,} steps")
+                next_latest_ckpt_step = (
+                    (global_step // self.latest_checkpoint_interval) + 1
+                ) * self.latest_checkpoint_interval
 
         # Final checkpoint
         self.save_checkpoint("final", global_step)
@@ -1209,12 +1239,14 @@ class PPOTrainer:
     def save_checkpoint(self, name: str, global_step: int = 0) -> None:
         """Save model checkpoint."""
         path = os.path.join(self.ckpt_dir, f"{name}.pt")
+        tmp_path = f"{path}.tmp"
         torch.save({
             "policy_state_dict": self.policy.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
             "config": self.config,
             "global_step": global_step,
-        }, path)
+        }, tmp_path)
+        os.replace(tmp_path, path)
 
     def load_checkpoint(self, path: str) -> int:
         """Load model checkpoint. Returns the step count stored in checkpoint, or from filename."""
@@ -1262,6 +1294,7 @@ def main():
     parser.add_argument("--resume_reset_optimizer", action="store_true", help="Reset optimizer on resume")
     parser.add_argument("--hidden_dim", type=int, default=None, help="Policy hidden dim override")
     parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate override")
+    parser.add_argument("--entropy_coef", type=float, default=None, help="Entropy coefficient override")
     parser.add_argument("--affinity_scorer", default=None, help="Affinity scorer: ergo, nettcr, tcbind, tfold, tfold_cascade, hybrid, ensemble, ensemble_ergo_tcbind, ensemble_ergo_tfold")
     parser.add_argument("--cascade_threshold", type=float, default=None, help="ERGO uncertainty threshold for tFold cascade (default 0.15)")
     parser.add_argument("--cascade_tfold_weight", type=float, default=None, help="Cascade scorer: tFold weight in combination (default 0.7)")
@@ -1271,6 +1304,8 @@ def main():
     parser.add_argument("--encoder_dim", type=int, default=None, help="Lightweight encoder output dim (default 256)")
     parser.add_argument("--esm_cache_path", type=str, default=None, help="Path to ESM cache DB (default: data/esm_cache.db)")
     parser.add_argument("--tfold_cache_path", type=str, default=None, help="Path to tFold feature cache DB")
+    parser.add_argument("--tfold_server_socket", type=str, default=None, help="Path to tFold feature server Unix socket")
+    parser.add_argument("--latest_checkpoint_interval", type=int, default=None, help="Refresh latest.pt every N steps")
     # tFold correction
     parser.add_argument("--tfold_correction", action="store_true", help="Enable tFold elite re-scoring correction")
     parser.add_argument("--tfold_rescore_interval", type=int, default=None, help="Re-score elite TCRs every N rollouts (default 50)")
@@ -1344,6 +1379,8 @@ def main():
         config["hidden_dim"] = args.hidden_dim
     if args.learning_rate is not None:
         config["learning_rate"] = args.learning_rate
+    if args.entropy_coef is not None:
+        config["entropy_coef"] = args.entropy_coef
     if args.affinity_scorer is not None:
         config["affinity_model"] = args.affinity_scorer
     if args.encoder is not None:
@@ -1354,6 +1391,10 @@ def main():
         config["esm_cache_path"] = args.esm_cache_path
     if args.tfold_cache_path is not None:
         config["tfold_cache_path"] = args.tfold_cache_path
+    if args.tfold_server_socket is not None:
+        config["tfold_server_socket"] = args.tfold_server_socket
+    if args.latest_checkpoint_interval is not None:
+        config["latest_checkpoint_interval"] = args.latest_checkpoint_interval
     if args.tfold_correction:
         config["tfold_correction"] = True
     if args.tfold_rescore_interval is not None:
