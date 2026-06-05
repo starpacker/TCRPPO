@@ -177,10 +177,30 @@ online_tcr_pool_use_dynamic_bands: true  # 动态难度调整
 
 1. **ESM-2 Perplexity** — 不能有效评估 TCR naturalness
 2. **Step-wise Delta Reward** — 信用分配混乱，训练失败
-3. **tFold + AMP** — 数值不稳定，结果不可复现
+3. **tFold + AMP (Mixed Precision)** — 数值不稳定，结果不可复现
 4. **大量 Decoy Sampling (K=32)** — 太慢且无明显提升
-5. **传统 Curriculum Learning** — 限制探索，效果不佳
+5. **传统 Curriculum Learning (L0/L1/L2)** — 限制探索，效果不佳
 6. **Imitation Learning (SFT)** — 分布不匹配，catastrophic forgetting
+7. **Cross-Attention Policy** — 训练更慢，没有明显优势
+
+### 🔬 正在探索的方向
+
+1. **Peptide Embedding Centering** 🆕
+   - 对 peptide 的 ESM-2 embeddings 进行 mean-centering
+   - 假设：消除 batch effect，提升不同 peptides 间的可比性
+   - 状态：待验证
+
+2. **生物化学特征增强** 🆕
+   - 在 state 中加入氨基酸的**电荷** (charge) 和**疏水性** (hydrophobicity) 信息
+   - 实现：`tcrppo_v2/utils/biochem_features.py`
+   - 假设：显式的物理化学信息可以帮助模型理解 TCR-pMHC 结合
+   - 状态：已实现，待大规模测试
+
+3. **两阶段训练策略** 🆕
+   - **Phase 1 (Pre-train)**: 只优化 naturalness（w_affinity=0, w_decoy=0）
+   - **Phase 2 (Fine-tune)**: 固定 naturalness，优化 affinity + decoy
+   - 假设：先学会生成自然的 TCR，再学习特异性识别
+   - 状态：配置已准备 (`configs/trace97_pretrain_then_finetune.yaml`)
 
 **详细说明请参考 `LESSONS_LEARNED.md`**
 

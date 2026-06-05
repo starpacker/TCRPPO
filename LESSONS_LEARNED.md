@@ -242,30 +242,153 @@ target_pass_bonus: 3.0  # 增加 pass bonus
 | test1-50 | Various attempts | Failed | 需要 peptide-scorer 对齐 |
 | trace61 | Online pool + dynamic bands | Moderate | 引入动态 pool 机制 |
 | trace70-72 | Gate mechanism | Better | Gate 有效但需要调优 |
-| trace73 | Curated targets + gate=-0.5 | **0.5933 AUROC** | 首次突破 0.5！ |
+| trace73 | Curated targets + gate=-0.5 | **0.5933 AUROC** | 🏆 首次突破 0.5！ |
 | trace74-83 | Various curriculum attempts | Mixed | Curriculum 不是银弹 |
-| trace94 | FP32 tFold + AE+GMM nat | **Stable baseline** | 当前最佳配置 |
+| trace94 | FP32 tFold + AE+GMM nat | **Stable baseline** | 当前最佳配置 ⭐ |
 | trace95 | Variable length episodes | Testing | 允许提前 STOP |
-| trace96 | Nat gating + adaptive bands | Planned | 下一步创新 |
+| trace96 | Nat gating + adaptive bands | Planned | Gating 强制 naturalness |
+| trace97 | Pre-train nat → Fine-tune spec | 🔬 Planned | 两阶段训练策略 |
+| trace98+ | Biochem features | 🔬 Planned | 电荷 + 疏水性增强 |
+| trace99+ | Peptide centering | 🔬 Planned | Centered embeddings |
+
+---
+
+## 🧪 正在探索的方向（未验证）
+
+### 1. **Peptide Embedding Centering** 🔬
+- **动机**: ESM-2 embeddings 可能存在 batch effect 或 peptide-specific bias
+- **方法**: 对 peptide 的 ESM-2 embeddings 进行 mean-centering
+  ```python
+  centered_pep_emb = pep_emb - pep_emb.mean(dim=1, keepdim=True)
+  ```
+- **假设**: 消除不同 peptides 间的系统性差异，提升可比性
+- **预期效果**: 
+  - 更稳定的 affinity 比较（跨不同 peptides）
+  - 减少 peptide-specific overfitting
+  - 提升模型泛化能力
+- **状态**: 💡 **待实现和验证**
+- **下一步**: 在 trace97+ 中测试 centered vs non-centered
+
+### 2. **生物化学特征增强** 🧬
+- **动机**: ESM-2 是通用语言模型，可能缺乏显式的物理化学理解
+- **方法**: 在 state 中加入氨基酸的**电荷**和**疏水性**信息
+  - 实现位置: `tcrppo_v2/utils/biochem_features.py`
+  - 电荷: 根据 pH 7.4 计算（Asp/Glu: -1, Lys/Arg: +1, His: +0.5, 其他: 0）
+  - 疏水性: Kyte-Doolittle scale（Ile: +4.5, Arg: -4.5, etc.）
+- **State 增强方式**:
+  ```python
+  # Original: [tcr_emb, pep_emb, hla_emb]
+  # Enhanced: [tcr_emb, pep_emb, hla_emb, tcr_charge, tcr_hydro, pep_charge, pep_hydro]
+  ```
+- **假设**: 显式的物理化学信息可以帮助模型理解：
+  - 静电相互作用（charged residues）
+  - 疏水核心形成（hydrophobic residues）
+  - 盐桥和氢键模式
+- **预期效果**:
+  - 更快的收敛（物理先验）
+  - 更好的泛化（超越序列相似性）
+  - 更符合物理规律的设计
+- **状态**: ✅ **已实现**，待大规模测试
+- **实现细节**:
+  ```python
+  from tcrppo_v2.utils.biochem_features import get_charge_vector, get_hydrophobicity_vector
+  
+  tcr_charge = get_charge_vector(tcr_seq)       # shape: (L,)
+  tcr_hydro = get_hydrophobicity_vector(tcr_seq) # shape: (L,)
+  ```
+- **下一步**: 
+  - 在 trace97+ 中对比 with/without biochem features
+  - 测量是否加速收敛
+  - 分析生成的 TCRs 的物理化学性质分布
+
+### 3. **两阶段训练策略（Pre-train Naturalness → Fine-tune Specificity）** 🎯
+- **动机**: 同时优化所有目标可能导致冲突和不稳定
+- **方法**: 分阶段训练
+  
+  **Phase 1: Naturalness Pre-training**
+  ```yaml
+  # 只优化 naturalness，学会生成自然的 TCR
+  w_affinity: 0.0
+  w_decoy: 0.0
+  w_naturalness: 1.0
+  w_diversity: 0.1
+  total_steps: 500k
+  ```
+  
+  **Phase 2: Specificity Fine-tuning**
+  ```yaml
+  # 固定 naturalness（强制 gate），优化 affinity + specificity
+  w_affinity: 1.0
+  w_decoy: 0.5
+  w_naturalness: 0.15  # 保持但不是主要目标
+  w_diversity: 0.02
+  naturalness_gate_threshold: 0.6  # 硬约束
+  total_steps: 1.5M
+  checkpoint_resume: "output/phase1/final.pt"
+  ```
+
+- **假设**: 
+  - Phase 1 确保探索空间限制在自然 TCRs
+  - Phase 2 可以专注于优化 specificity，不担心 unnaturalness
+  - 避免 "affinity 提升但 naturalness 崩溃" 的问题
+- **类比**: 就像先教模型说流利的句子（语法），再教它说有意义的句子（语义）
+- **预期效果**:
+  - 更稳定的训练（阶段目标明确）
+  - 更高的最终 naturalness score
+  - 减少 poly-C 等 exploit（Phase 1 已经消除）
+  - 可能更慢收敛（两阶段总时长），但质量更高
+- **状态**: 📋 **配置已准备** (`configs/trace97_pretrain_then_finetune.yaml`)
+- **风险**:
+  - Phase 1 可能过拟合到 "boring but natural" 的 TCRs
+  - Phase 2 可能 catastrophic forgetting（类似 SFT-RL 问题）
+- **缓解策略**:
+  - Phase 1 保持 diversity reward，避免模式崩溃
+  - Phase 2 保留 naturalness reward（权重降低），防止遗忘
+  - 使用较小的 learning rate 进行 fine-tune
+- **下一步**: 
+  - 启动 Phase 1 训练（500k steps）
+  - 评估 naturalness distribution
+  - 如果 Phase 1 成功，继续 Phase 2
+
+### 4. **其他待探索的想法** 💭
+
+#### 4.1 **Contrastive Peptide Embeddings**
+- **想法**: 不仅对比 target vs decoy peptides，也对比不同 target peptides
+- **方法**: Multi-task learning，同时学习多个 peptides 的特征
+- **期望**: 更好的跨 peptide 泛化
+
+#### 4.2 **Uncertainty-aware Exploration**
+- **想法**: 利用 MC Dropout 的 uncertainty 指导探索
+- **方法**: 对 high-uncertainty TCRs 给予 exploration bonus
+- **期望**: 更高效的探索，避免陷入局部最优
+
+#### 4.3 **Structure-guided Reward**
+- **想法**: 使用 AlphaFold 预测 TCR-pMHC 复合物结构，计算接触数
+- **方法**: 额外的 reward component = num_contacts / expected_contacts
+- **期望**: 更物理化的设计，更可能在 wet-lab 验证成功
 
 ---
 
 ## 🔮 未来方向
 
 ### 短期（trace96-100）
-1. **Naturalness Gating**: 不 natural 的序列直接不给 affinity reward
-2. **Adaptive Curriculum Bands**: 根据性能自动调整采样难度
-3. **Multi-target Training**: 同时在多个 peptides 上训练，提升泛化
+1. ✅ **Naturalness Gating**: 不 natural 的序列直接不给 affinity reward（trace96）
+2. ✅ **Adaptive Curriculum Bands**: 根据性能自动调整采样难度（trace96）
+3. 🔬 **Peptide Centering**: 测试 centered embeddings（待验证）
+4. 🧬 **Biochem Features**: 验证电荷和疏水性增强（已实现）
+5. 🎯 **Two-stage Training**: Pre-train naturalness → Fine-tune specificity（trace97）
 
 ### 中期
 1. **Ensemble Scoring**: 结合 ERGO + NetTCR + tFold
 2. **Structure-aware Reward**: 整合 AlphaFold 结构信息
 3. **Active Learning**: 在不确定的区域优先探索
+4. **Multi-target Training**: 同时在多个 peptides 上训练，提升泛化
 
 ### 长期
 1. **Foundation Model**: 预训练 TCR encoder
 2. **Multi-objective RL**: 同时优化 affinity, specificity, stability, immunogenicity
 3. **Wet-lab Validation**: 合成并测试 RL 生成的 TCRs
+4. **Clinical Translation**: 面向实际治疗应用的 TCR 设计
 
 ---
 
