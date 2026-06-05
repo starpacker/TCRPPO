@@ -1,0 +1,131 @@
+# test59: absolute target-binding / decoy-nonbinding specificity reward
+#
+# Biological objective:
+#   bind target peptide, do not bind decoy peptides.
+#
+# Reward:
+#   target_satisfied = clip(target_A - target_floor, 0, cap)
+#   target_shortfall = relu(target_floor - target_A)
+#   decoy_violation = relu(decoy_A - decoy_ceiling)
+#
+#   R = w_affinity * target_satisfied
+#       - target_shortfall_weight * target_shortfall * (1 + target_shortfall)
+#       - w_decoy * decoy_violation * (1 + decoy_violation)
+#       + naturalness/diversity penalties
+#
+# Larger tFold logits mean stronger predicted binding.
+
+# === PPO ===
+total_timesteps: 2_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 2.0e-4
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.015
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# === Environment ===
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+
+# === Policy Network ===
+hidden_dim: 512
+
+# === ESM State Encoder ===
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# === Reward Weights ===
+reward_mode: "v2_absolute_specificity"
+use_delta_reward: false
+w_affinity: 1.0
+w_decoy: 0.8
+w_naturalness: 0.05
+w_diversity: 0.02
+
+# === Absolute Binding / Non-binding Thresholds ===
+affinity_guard_logit: -3.0       # target binding floor
+decoy_affinity_ceiling: -4.5     # decoy non-binding ceiling
+affinity_guard_weight: 6.0       # target shortfall penalty
+target_surplus_cap: 2.0          # saturate target reward above floor
+
+# === Affinity Scorer (tFold server) ===
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server.sock"
+tfold_cache_path: "data/tfold_feature_cache_trace59_absolute_specificity.db"
+
+# === Decoys ===
+decoy_K: 2
+n_contrast_decoys: 2
+contrastive_agg: "max"
+decoy_tau: 10.0
+decoy_tier_weights:
+  A: 3
+  B: 3
+  D: 2
+  C: 1
+decoy_unlock_schedule:
+  0: ["A", "B"]
+  800000: ["A", "B", "D"]
+  1400000: ["A", "B", "D", "C"]
+
+# === Naturalness Scorer (ESM Perplexity) ===
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+
+# === Diversity Scorer ===
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# === Curriculum: trace11 settings ===
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.5, L1: 0.0, L2: 0.5}
+
+# === Target Sampling ===
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+# === Online Eval (DISABLED) ===
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 50
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+# === Checkpointing ===
+checkpoint_interval: 20000
+latest_checkpoint_interval: 2000
+milestones: [20000, 40000, 60000, 80000, 100000, 120000, 140000, 160000, 180000, 200000, 220000, 240000, 260000, 280000, 300000, 320000, 340000, 360000, 380000, 400000, 420000, 440000, 460000, 480000, 500000, 520000, 540000, 560000, 580000, 600000, 620000, 640000, 660000, 680000, 700000, 720000, 740000, 760000, 780000, 800000, 820000, 840000, 860000, 880000, 900000, 920000, 940000, 960000, 980000, 1000000, 1100000, 1200000, 1300000, 1400000, 1500000, 1600000, 1700000, 1800000, 1900000, 2000000]
+
+# === Normalization (DISABLED) ===
+use_znorm: false
+norm_window: 10000
+norm_warmup: 1000
+
+# === Seed ===
+seed: 42
+
+# === Paths ===
+decoy_library_path: "/share/liuyutian/pMHC_decoy_library"
+tcrdb_path: "/share/liuyutian/TCRPPO/data/tcrdb"
+test_peptides_path: "/share/liuyutian/TCRPPO/data/test_peptides"
+ergo_model_dir: "tcrppo_v2/ERGO/models"
+ergo_ae_file: "tcrppo_v2/ERGO/TCR_Autoencoder/tcr_ae_dim_100.pt"
+output_dir: "output"
+results_dir: "results"

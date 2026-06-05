@@ -1,0 +1,119 @@
+# trace81: Fresh start with curated targets - only keep ESM encoder
+#
+# ROOT CAUSE ANALYSIS:
+#   trace79 & trace80 both suffered catastrophic forgetting because:
+#   1. trace73's policy was trained on 20 targets (15 unlearnable)
+#   2. Switching to 10 different targets requires massive policy adjustment
+#   3. During adjustment, the policy forgets what it learned
+#   4. Delta reward (trace80) only delayed the collapse, didn't prevent it
+#
+# NEW STRATEGY:
+#   - Train policy from scratch on 10 curated targets
+#   - Keep ESM encoder (frozen, provides good embeddings)
+#   - use_delta_reward: true (proven to help in early trace80)
+#   - Standard learning rate 1.2e-4 (no need to lower for fresh start)
+#   - 10 curated targets are all learnable → should converge faster
+#
+# Expected outcome:
+#   - No catastrophic forgetting (nothing to forget)
+#   - Policy learns optimal strategy for these 10 targets
+#   - Should reach mean > -0.5 within 200-500 episodes
+#   - Should reach mean > 0.0 within 1000-2000 episodes
+
+total_timesteps: 2_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 1.2e-4  # Standard rate for fresh training
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.020  # Good exploration
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda:0"  # GPU 0
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+reward_mode: "v2_simple_target_gated_decoy"
+use_delta_reward: true  # Reward improvement, not absolute affinity
+w_affinity: 1.0
+w_decoy: 0.3
+w_naturalness: 0.05
+w_diversity: 0.02
+
+# Curriculum gate schedule - start easier than trace73
+gate_schedule:
+  0: -3.0        # Start very easy
+  50000: -2.5
+  100000: -2.0
+  200000: -1.5
+  400000: -1.0
+  800000: -0.5   # Final target
+
+target_affinity_gate: -3.0
+target_affinity_bonus: 1.0
+decoy_affinity_penalty_weight: 0.3
+
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_trace81_fresh.sock"
+tfold_cache_path: "data/tfold_feature_cache.db"
+
+decoy_K: 2
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights: {A: 0, B: 0, D: 0, C: 0}
+decoy_unlock_schedule: {}
+decoy_difficulty: "easy"
+decoy_difficulty_schedule: {}
+
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
+
+# Online pool - start from beginning
+online_tcr_pool_enabled: true
+online_tcr_pool_start_step: 0  # Start immediately
+online_tcr_pool_warmup_steps: 100  # Short warmup
+online_tcr_pool_max_ratio: 0.7
+online_tcr_pool_max_per_target: 256
+online_tcr_pool_min_affinity: -10.0  # No filter, let pool build naturally
+online_tcr_pool_max_decoy_violation: 999.0
+online_tcr_pool_min_hamming: 2
+online_tcr_pool_mutate_prob: 0.0
+
+online_tcr_pool_use_dynamic_bands: true
+online_tcr_pool_recent_window: 50
+
+target_sampling: "uniform"
+train_targets: "data/trace79_curated_targets.txt"  # Same 10 curated targets
+
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 0
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+checkpoint_interval: 20000
+milestones: [50000, 100000, 200000, 400000, 800000, 1000000, 1500000, 2000000]

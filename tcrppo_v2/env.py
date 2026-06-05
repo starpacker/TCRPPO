@@ -4,19 +4,21 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from tcrppo_v2.utils.constants import (
-    AMINO_ACIDS, NUM_AMINO_ACIDS, IDX_TO_AA,
+    AMINO_ACIDS, NUM_AMINO_ACIDS, AA_TO_IDX, IDX_TO_AA,
     MIN_TCR_LEN, MAX_TCR_LEN, MAX_STEPS_PER_EPISODE,
     OP_SUB, OP_INS, OP_DEL, OP_STOP, NUM_OPS,
 )
 from tcrppo_v2.utils.encoding import is_valid_tcr
+from tcrppo_v2.utils.biochem_features import compute_biochem_features
 
 
 class TCREditEnv:
     """Single TCR editing environment.
 
-    Observation: [TCR_emb | pMHC_emb | remaining_steps/max | cumulative_delta]
+    Observation: [TCR_emb | pMHC_emb], optionally plus 8D biochem features.
     Action: (op_type, position, token) — 3-head autoregressive
     """
 
@@ -34,7 +36,12 @@ class TCREditEnv:
         min_steps: int = 0,
         min_steps_penalty: float = 0.0,
         ban_stop: bool = False,
+        sub_only: bool = False,
         terminal_reward_only: bool = False,
+        use_biochem_features: bool = False,
+        allow_stop_at_step0: bool = False,
+        stop_at_step0_min_init_affinity: Optional[float] = None,
+        pmhc_obs_transform: Optional[Dict[str, object]] = None,
     ):
         """Initialize environment.
 
@@ -51,7 +58,15 @@ class TCREditEnv:
             min_steps: Minimum steps before STOP is allowed.
             min_steps_penalty: Penalty for early STOP.
             ban_stop: If True, STOP action is never allowed.
+            sub_only: If True, only substitution edits are allowed.
             terminal_reward_only: If True, only compute reward at episode end.
+            use_biochem_features: If True, append 8D biochemical features
+                (charge and hydrophobicity statistics) to the observation.
+            allow_stop_at_step0: If True, STOP is valid immediately after reset.
+            stop_at_step0_min_init_affinity: Optional initial-affinity floor for
+                immediate STOP. If set, low-init episodes must attempt editing.
+            pmhc_obs_transform: Optional transform applied only to the pMHC
+                observation embedding. Raw ESM cache/reward inputs stay unchanged.
         """
         self.esm_cache = esm_cache
         self.pmhc_loader = pmhc_loader
@@ -66,12 +81,21 @@ class TCREditEnv:
         self.min_steps = min_steps
         self.min_steps_penalty = min_steps_penalty
         self.ban_stop = ban_stop
+        self.sub_only = sub_only
         self.terminal_reward_only = terminal_reward_only
+        self.use_biochem_features = use_biochem_features
+        self.allow_stop_at_step0 = bool(allow_stop_at_step0)
+        self.stop_at_step0_min_init_affinity = (
+            None
+            if stop_at_step0_min_init_affinity is None
+            else float(stop_at_step0_min_init_affinity)
+        )
+        self.pmhc_obs_transform = pmhc_obs_transform or {}
 
         # State dimensions
         self.esm_dim = esm_cache.output_dim  # 1280
-        # obs = [tcr_emb(1280) | pmhc_emb(1280) | remaining_steps(1) | cumulative_delta(1)]
-        self.obs_dim = self.esm_dim * 2 + 2
+        biochem_dim = 8 if self.use_biochem_features else 0
+        self.obs_dim = self.esm_dim * 2 + biochem_dim
 
         # Episode state
         self.tcr_seq: str = ""
@@ -82,8 +106,16 @@ class TCREditEnv:
         self.step_count: int = 0
         self.cumulative_delta: float = 0.0
         self.initial_affinity: float = 0.0
+        self.initial_tcr_source: str = ""
+        self.previous_affinity: float = 0.0
         self.done: bool = True
         self.global_step: int = 0  # For curriculum/decoy schedule
+
+    def _reward_reference_affinity(self) -> float:
+        """Return the affinity baseline for the next reward computation."""
+        if getattr(self.reward_manager, "reward_mode", None) == "tfold_stepwise":
+            return self.previous_affinity
+        return self.initial_affinity
 
     def set_global_step(self, step: int) -> None:
         """Update global training step for curriculum scheduling."""
@@ -122,8 +154,9 @@ class TCREditEnv:
         # Select initial TCR
         if init_tcr is not None:
             self.tcr_seq = init_tcr
+            self.initial_tcr_source = "provided"
         else:
-            self.tcr_seq, _ = self.tcr_pool.sample_tcr(
+            self.tcr_seq, self.initial_tcr_source = self.tcr_pool.sample_tcr(
                 self.target, step=self.global_step, reward_mode=self.reward_mode
             )
         self.initial_tcr = self.tcr_seq
@@ -139,6 +172,7 @@ class TCREditEnv:
                 self.initial_affinity = float(np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0))
         else:
             self.initial_affinity = 0.0
+        self.previous_affinity = self.initial_affinity
 
         self.step_count = 0
         self.cumulative_delta = 0.0
@@ -190,7 +224,8 @@ class TCREditEnv:
                 reward, components = self.reward_manager.compute_reward(
                     tcr=self.tcr_seq,
                     peptide=self.peptide,
-                    initial_affinity=self.initial_affinity,
+                    initial_affinity=self._reward_reference_affinity(),
+                    initial_tcr=self.initial_tcr,
                     target=self.target,
                 )
             else:
@@ -201,9 +236,13 @@ class TCREditEnv:
             reward, components = self.reward_manager.compute_reward(
                 tcr=self.tcr_seq,
                 peptide=self.peptide,
-                initial_affinity=self.initial_affinity,
+                initial_affinity=self._reward_reference_affinity(),
+                initial_tcr=self.initial_tcr,
                 target=self.target,
             )
+
+        if components and "affinity_raw" in components:
+            self.previous_affinity = float(components["affinity_raw"])
 
         # Min-steps penalty: penalize STOP before min_steps
         if op_type == OP_STOP and self.min_steps > 0 and self.step_count < self.min_steps:
@@ -219,6 +258,8 @@ class TCREditEnv:
     def _apply_sub(self, position: int, token: int) -> str:
         """Substitute amino acid at position with token."""
         seq = list(self.tcr_seq)
+        if not seq or position <= 0:
+            return self.tcr_seq
         pos = min(position, len(seq) - 1)
         aa = IDX_TO_AA.get(token, AMINO_ACIDS[token % NUM_AMINO_ACIDS])
         seq[pos] = aa
@@ -229,7 +270,7 @@ class TCREditEnv:
         seq = list(self.tcr_seq)
         if len(seq) >= self.max_tcr_len:
             return self.tcr_seq  # Safety: shouldn't happen with masking
-        pos = min(position, len(seq))
+        pos = min(max(position, 1), len(seq))
         aa = IDX_TO_AA.get(token, AMINO_ACIDS[token % NUM_AMINO_ACIDS])
         seq.insert(pos, aa)
         return "".join(seq)
@@ -239,6 +280,8 @@ class TCREditEnv:
         seq = list(self.tcr_seq)
         if len(seq) <= self.min_tcr_len:
             return self.tcr_seq  # Safety: shouldn't happen with masking
+        if position <= 0:
+            return self.tcr_seq
         pos = min(position, len(seq) - 1)
         del seq[pos]
         return "".join(seq)
@@ -272,6 +315,7 @@ class TCREditEnv:
 
         # Initial affinity is set to 0.0 for now — VecEnv will batch-compute it
         self.initial_affinity = 0.0
+        self.previous_affinity = 0.0
 
         self.step_count = 0
         self.cumulative_delta = 0.0
@@ -320,21 +364,38 @@ class TCREditEnv:
         """Build observation vector."""
         # TCR embedding (re-computed each step)
         tcr_emb = self.esm_cache.encode_tcr(self.tcr_seq)
-
-        # Concatenate: [tcr_emb | pmhc_emb | remaining_steps/max | cumulative_delta]
-        remaining = (self.max_steps - self.step_count) / self.max_steps
-        obs = torch.cat([
-            tcr_emb,
-            self.pmhc_emb,
-            torch.tensor([remaining, self.cumulative_delta], device=tcr_emb.device),
-        ])
+        obs = self._build_obs_from_tcr_emb(tcr_emb)
         return obs.cpu().numpy()
+
+    def _build_obs_from_tcr_emb(self, tcr_emb: torch.Tensor) -> torch.Tensor:
+        """Build observation from a precomputed TCR embedding."""
+        parts = [tcr_emb, self._transform_pmhc_obs(self.pmhc_emb)]
+        if self.use_biochem_features:
+            biochem_feats = compute_biochem_features(self.tcr_seq)
+            parts.append(torch.tensor(biochem_feats, device=tcr_emb.device, dtype=tcr_emb.dtype))
+        return torch.cat(parts)
+
+    def _transform_pmhc_obs(self, pmhc_emb: torch.Tensor) -> torch.Tensor:
+        """Apply the configured observation-only pMHC transform."""
+        if not self.pmhc_obs_transform:
+            return pmhc_emb
+
+        out = pmhc_emb
+        center = self.pmhc_obs_transform.get("center")
+        if center is not None:
+            center = center.to(device=out.device, dtype=out.dtype)
+            out = out - center
+
+        if self.pmhc_obs_transform.get("layer_norm", False):
+            out = F.layer_norm(out, out.shape)
+
+        return out
 
     def get_action_mask(self) -> Dict[str, np.ndarray]:
         """Get action masks for current state.
 
         Returns:
-            Dict with 'op_mask' (4,), 'pos_mask' (max_tcr_len,), both boolean (True=valid).
+            Dict with op/position/token masks, all boolean (True=valid).
         """
         seq_len = len(self.tcr_seq)
 
@@ -344,14 +405,34 @@ class TCREditEnv:
             op_mask[OP_INS] = False
         if seq_len <= self.min_tcr_len:
             op_mask[OP_DEL] = False
-        if self.step_count == 0 or self.ban_stop:
+        if self.sub_only:
+            op_mask[OP_INS] = False
+            op_mask[OP_DEL] = False
+        block_step0_stop = self.step_count == 0 and not self.allow_stop_at_step0
+        if (
+            self.step_count == 0
+            and self.stop_at_step0_min_init_affinity is not None
+            and self.initial_affinity < self.stop_at_step0_min_init_affinity
+        ):
+            block_step0_stop = True
+        if block_step0_stop or self.step_count < self.min_steps or self.ban_stop:
             op_mask[OP_STOP] = False
 
         # Position mask: only valid positions
         pos_mask = np.zeros(self.max_tcr_len, dtype=bool)
-        pos_mask[:seq_len] = True
+        # Protect the conserved leading Cys in CDR3-like sequences.
+        if seq_len <= 1:
+            pos_mask[:seq_len] = True
+        else:
+            pos_mask[1:seq_len] = True
 
-        return {"op_mask": op_mask, "pos_mask": pos_mask}
+        token_mask = np.ones((self.max_tcr_len, NUM_AMINO_ACIDS), dtype=bool)
+        for pos, aa in enumerate(self.tcr_seq[:self.max_tcr_len]):
+            aa_idx = AA_TO_IDX.get(aa)
+            if aa_idx is not None:
+                token_mask[pos, aa_idx] = False
+
+        return {"op_mask": op_mask, "pos_mask": pos_mask, "token_mask": token_mask}
 
     @property
     def current_tcr(self) -> str:
@@ -371,14 +452,23 @@ class VecTCREditEnv:
         reward_manager,
         decoy_sampler=None,
         max_steps: int = MAX_STEPS_PER_EPISODE,
+        max_tcr_len: int = MAX_TCR_LEN,
+        min_tcr_len: int = MIN_TCR_LEN,
         reward_mode: str = "v2_full",
         min_steps: int = 0,
         min_steps_penalty: float = 0.0,
         ban_stop: bool = False,
+        sub_only: bool = False,
         terminal_reward_only: bool = False,
+        active_clipping: bool = False,
+        include_state_scalars: bool = True,
+        allow_stop_at_step0: bool = False,
+        stop_at_step0_min_init_affinity: Optional[float] = None,
+        pmhc_obs_transform: Optional[Dict[str, object]] = None,
     ):
         """Create n_envs parallel environments sharing scorers."""
         self.n_envs = n_envs
+        self.active_clipping = active_clipping
         self.envs = [
             TCREditEnv(
                 esm_cache=esm_cache,
@@ -387,11 +477,18 @@ class VecTCREditEnv:
                 reward_manager=reward_manager,
                 decoy_sampler=decoy_sampler,
                 max_steps=max_steps,
+                max_tcr_len=max_tcr_len,
+                min_tcr_len=min_tcr_len,
                 reward_mode=reward_mode,
                 min_steps=min_steps,
                 min_steps_penalty=min_steps_penalty,
                 ban_stop=ban_stop,
+                sub_only=sub_only,
                 terminal_reward_only=terminal_reward_only,
+                include_state_scalars=include_state_scalars,
+                allow_stop_at_step0=allow_stop_at_step0,
+                stop_at_step0_min_init_affinity=stop_at_step0_min_init_affinity,
+                pmhc_obs_transform=pmhc_obs_transform,
             )
             for _ in range(n_envs)
         ]
@@ -416,10 +513,12 @@ class VecTCREditEnv:
                 preds = scorer.score_batch_fast(tcrs, peps)
                 for i, env in enumerate(self.envs):
                     env.initial_affinity = float(np.nan_to_num(preds[i], nan=0.0, posinf=0.0, neginf=0.0))
+                    env.previous_affinity = env.initial_affinity
             else:
                 for env in self.envs:
                     aff, _ = scorer.score(env.tcr_seq, env.peptide)
                     env.initial_affinity = float(np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0))
+                    env.previous_affinity = env.initial_affinity
 
         tcr_seqs = [env.tcr_seq for env in self.envs]
         esm_cache = self.envs[0].esm_cache
@@ -427,15 +526,54 @@ class VecTCREditEnv:
 
         obs_list = []
         for i, env in enumerate(self.envs):
-            remaining = (env.max_steps - env.step_count) / env.max_steps
-            obs = torch.cat([
-                tcr_embs[i],
-                env.pmhc_emb,
-                torch.tensor([remaining, env.cumulative_delta], device=tcr_embs[i].device),
-            ]).cpu().numpy()
-            obs_list.append(obs)
+            obs_list.append(env._build_obs_from_tcr_emb(tcr_embs[i]).cpu().numpy())
 
         return np.stack(obs_list)
+
+    def reset_done(self) -> Tuple[List[int], Optional[np.ndarray]]:
+        """Reset environments that finished on the previous step.
+
+        Returns reset indices plus fresh observations in the same order. This lets
+        the trainer start the next sampled action from a real initial state instead
+        of adding a reward=0 phantom transition from a terminal observation.
+        """
+        reset_indices = [i for i, env in enumerate(self.envs) if env.done]
+        if not reset_indices:
+            return [], None
+
+        for i in reset_indices:
+            self.envs[i]._reset_internal()
+
+        # Batch-compute initial affinities for the reset envs.
+        scorer = self.envs[0].reward_manager.affinity_scorer
+        if scorer is not None:
+            reset_tcrs = [self.envs[i].tcr_seq for i in reset_indices]
+            reset_peps = [self.envs[i].peptide for i in reset_indices]
+            if hasattr(scorer, 'score_batch_fast'):
+                preds = scorer.score_batch_fast(reset_tcrs, reset_peps)
+                for j, i in enumerate(reset_indices):
+                    self.envs[i].initial_affinity = float(
+                        np.nan_to_num(preds[j], nan=0.0, posinf=0.0, neginf=0.0)
+                    )
+                    self.envs[i].previous_affinity = self.envs[i].initial_affinity
+            else:
+                for i in reset_indices:
+                    aff, _ = scorer.score(self.envs[i].tcr_seq, self.envs[i].peptide)
+                    self.envs[i].initial_affinity = float(
+                        np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0)
+                    )
+                    self.envs[i].previous_affinity = self.envs[i].initial_affinity
+
+        tcr_seqs = [self.envs[i].tcr_seq for i in reset_indices]
+        esm_cache = self.envs[0].esm_cache
+        tcr_embs = esm_cache.encode_tcr_batch(tcr_seqs)
+
+        obs_list = []
+        for j, i in enumerate(reset_indices):
+            env = self.envs[i]
+            obs_list.append(env._build_obs_from_tcr_emb(tcr_embs[j]).cpu().numpy())
+
+        return reset_indices, np.stack(obs_list)
 
     def reset_single(self, idx: int, **kwargs) -> np.ndarray:
         """Reset a single environment."""
@@ -482,16 +620,21 @@ class VecTCREditEnv:
                     preds = scorer.score_batch_fast(reset_tcrs, reset_peps)
                     for j, i in enumerate(reset_indices):
                         self.envs[i].initial_affinity = float(np.nan_to_num(preds[j], nan=0.0, posinf=0.0, neginf=0.0))
+                        self.envs[i].previous_affinity = self.envs[i].initial_affinity
                 else:
                     for i in reset_indices:
                         aff, _ = scorer.score(self.envs[i].tcr_seq, self.envs[i].peptide)
                         self.envs[i].initial_affinity = float(np.nan_to_num(aff, nan=0.0, posinf=0.0, neginf=0.0))
+                        self.envs[i].previous_affinity = self.envs[i].initial_affinity
 
         # Phase 2: Batch reward computation for stepped envs. In terminal-only
         # mode, intermediate transitions must stay at reward=0.
         reward_indices = [
             i for i in stepped_indices
-            if (not self.envs[i].terminal_reward_only) or dones[i]
+            if (
+                ((not self.envs[i].terminal_reward_only) or dones[i])
+                and not (self.active_clipping and self.envs[i].terminal_reward_only and dones[i])
+            )
         ]
         skipped_reward_indices = [i for i in stepped_indices if i not in reward_indices]
         for i in skipped_reward_indices:
@@ -502,11 +645,15 @@ class VecTCREditEnv:
             reward_manager = self.envs[0].reward_manager
             batch_tcrs = [self.envs[i].tcr_seq for i in reward_indices]
             batch_peps = [self.envs[i].peptide for i in reward_indices]
-            batch_init_aff = [self.envs[i].initial_affinity for i in reward_indices]
+            batch_initial_tcrs = [self.envs[i].initial_tcr for i in reward_indices]
+            if reward_manager.reward_mode == "tfold_stepwise":
+                batch_init_aff = [self.envs[i].previous_affinity for i in reward_indices]
+            else:
+                batch_init_aff = [self.envs[i].initial_affinity for i in reward_indices]
             batch_targets = [self.envs[i].target for i in reward_indices]
 
             batch_rewards, batch_components = reward_manager.compute_reward_batch(
-                batch_tcrs, batch_peps, batch_init_aff, batch_targets
+                batch_tcrs, batch_peps, batch_init_aff, batch_initial_tcrs, batch_targets
             )
 
             for j, i in enumerate(reward_indices):
@@ -517,15 +664,18 @@ class VecTCREditEnv:
                 if reward_manager.reward_mode == "v1_ergo_shaped":
                     aff_raw = comp.get("affinity_raw", 0.0)
                     init_aff = batch_init_aff[j]
+                    aff_weight = reward_manager.weights.get("affinity", 1.0)
                     if dones[i]:
                         # Terminal: full affinity score
-                        r = aff_raw
+                        r = aff_weight * aff_raw
                     else:
                         # Intermediate: small delta signal
-                        r = 0.1 * (aff_raw - init_aff)
+                        r = 0.1 * aff_weight * (aff_raw - init_aff)
 
                 rewards[i] = r
                 self.envs[i]._apply_reward(r, comp)
+                if comp and "affinity_raw" in comp:
+                    self.envs[i].previous_affinity = float(comp["affinity_raw"])
                 rewards[i] = float(np.nan_to_num(rewards[i], nan=0.0, posinf=0.0, neginf=0.0))
                 infos[i]["reward_components"] = comp
 
@@ -539,13 +689,7 @@ class VecTCREditEnv:
         obs_list = []
         for j, i in enumerate(all_indices):
             env = self.envs[i]
-            remaining = (env.max_steps - env.step_count) / env.max_steps
-            obs = torch.cat([
-                tcr_embs[j],
-                env.pmhc_emb,
-                torch.tensor([remaining, env.cumulative_delta], device=tcr_embs[j].device),
-            ]).cpu().numpy()
-            obs_list.append(obs)
+            obs_list.append(env._build_obs_from_tcr_emb(tcr_embs[j]).cpu().numpy())
 
         return np.stack(obs_list), rewards, dones, infos
 

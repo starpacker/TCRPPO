@@ -48,6 +48,7 @@ w_diversity: 0.2  # V2 default
 
 # === Credit Assignment ===
 use_delta_reward: false
+active_clipping: false  # If true, run full episode then train on best-affinity prefix
 
 # === Affinity Scorer (tFold) ===
 affinity_model: "tfold"

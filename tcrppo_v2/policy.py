@@ -135,6 +135,14 @@ class ActorCritic(nn.Module):
         pos_emb = self.pos_embed(pos)
         tok_input = torch.cat([features, op_emb, pos_emb], dim=-1)
         tok_logits = self.token_head(tok_input)
+        if action_masks is not None and "token_mask" in action_masks:
+            batch_idx = torch.arange(B, device=device)
+            selected_token_mask = action_masks["token_mask"][batch_idx, pos]
+            apply_token_mask = (op == OP_SUB).unsqueeze(-1)
+            tok_logits = tok_logits.masked_fill(
+                apply_token_mask & ~selected_token_mask,
+                float("-inf"),
+            )
         tok_dist = Categorical(logits=tok_logits, validate_args=False)
         tok = tok_dist.sample()
 
@@ -175,6 +183,14 @@ class ActorCritic(nn.Module):
         pos_emb = self.pos_embed(pos_actions)
         tok_input = torch.cat([features, op_emb, pos_emb], dim=-1)
         tok_logits = self.token_head(tok_input)
+        if action_masks is not None and "token_mask" in action_masks:
+            batch_idx = torch.arange(features.shape[0], device=features.device)
+            selected_token_mask = action_masks["token_mask"][batch_idx, pos_actions]
+            apply_token_mask = (op_actions == OP_SUB).unsqueeze(-1)
+            tok_logits = tok_logits.masked_fill(
+                apply_token_mask & ~selected_token_mask,
+                float("-inf"),
+            )
         tok_dist = Categorical(logits=tok_logits, validate_args=False)
         tok_log_prob = tok_dist.log_prob(tok_actions)
         tok_entropy = tok_dist.entropy()

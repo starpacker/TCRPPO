@@ -15,6 +15,7 @@ import hashlib
 import json
 import logging
 import os
+import random
 import sqlite3
 import sys
 import time
@@ -245,24 +246,112 @@ class TFoldFeatureCache:
     Value: Padded feature dict serialized as bytes via torch.save.
     """
 
-    def __init__(self, db_path: str):
-        os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else ".", exist_ok=True)
-        self._conn = sqlite3.connect(db_path, check_same_thread=False, timeout=30)
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA synchronous=NORMAL")
-        self._conn.execute("PRAGMA busy_timeout=30000")
-        self._conn.execute(
-            "CREATE TABLE IF NOT EXISTS features "
-            "(cache_key TEXT PRIMARY KEY, data BLOB)"
-        )
-        self._conn.commit()
+    _SQLITE_BUSY_TIMEOUT_MS = 250
+    _WRITE_RETRY_DEADLINE_S = 10.0
+    _READ_RETRY_DEADLINE_S = 10.0
+
+    def __init__(self, db_path: str, read_only: bool = False):
+        self._db_path = db_path
+        self.read_only = bool(read_only)
+        if self.read_only:
+            abs_path = os.path.abspath(db_path)
+            if not os.path.exists(abs_path):
+                raise FileNotFoundError(f"Read-only tFold cache not found: {abs_path}")
+            self._conn = sqlite3.connect(
+                f"file:{abs_path}?mode=ro",
+                uri=True,
+                check_same_thread=False,
+                timeout=1.0,
+            )
+        else:
+            os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else ".", exist_ok=True)
+            self._conn = sqlite3.connect(db_path, check_same_thread=False, timeout=1.0)
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._conn.execute(f"PRAGMA busy_timeout={self._SQLITE_BUSY_TIMEOUT_MS}")
         self.hits = 0
         self.misses = 0
+        self.write_retries = 0
+        self.write_skips = 0
+        self.read_skips = 0
+        if not self.read_only:
+            self._write_with_retry(
+                "init_schema",
+                lambda: self._conn.execute(
+                    "CREATE TABLE IF NOT EXISTS features "
+                    "(cache_key TEXT PRIMARY KEY, data BLOB)"
+                ),
+                skip_on_timeout=False,
+            )
+
+    @staticmethod
+    def _is_lock_error(exc: sqlite3.OperationalError) -> bool:
+        msg = str(exc).lower()
+        return "database is locked" in msg or "database table is locked" in msg or "database is busy" in msg
+
+    def _sleep_before_retry(self, attempt: int) -> None:
+        delay = min(0.05 * (2 ** attempt), 0.5) + random.uniform(0.0, 0.05)
+        time.sleep(delay)
+
+    def _write_with_retry(self, op_name: str, fn, skip_on_timeout: bool = True) -> bool:
+        start = time.monotonic()
+        attempt = 0
+        while True:
+            try:
+                fn()
+                self._conn.commit()
+                return True
+            except sqlite3.OperationalError as exc:
+                try:
+                    self._conn.rollback()
+                except sqlite3.Error:
+                    pass
+                if not self._is_lock_error(exc):
+                    raise
+                elapsed = time.monotonic() - start
+                if elapsed >= self._WRITE_RETRY_DEADLINE_S:
+                    if not skip_on_timeout:
+                        raise
+                    self.write_skips += 1
+                    msg = (
+                        f"[tFoldCache] SQLite locked for {elapsed:.1f}s during {op_name}; "
+                        f"skipping cache write to {self._db_path}"
+                    )
+                    logger.warning(msg)
+                    return False
+                self.write_retries += 1
+                attempt += 1
+                self._sleep_before_retry(attempt)
+
+    def _read_with_retry(self, op_name: str, fn, default):
+        start = time.monotonic()
+        attempt = 0
+        while True:
+            try:
+                return fn()
+            except sqlite3.OperationalError as exc:
+                if not self._is_lock_error(exc):
+                    raise
+                elapsed = time.monotonic() - start
+                if elapsed >= self._READ_RETRY_DEADLINE_S:
+                    self.read_skips += 1
+                    msg = (
+                        f"[tFoldCache] SQLite locked for {elapsed:.1f}s during {op_name}; "
+                        f"treating as cache miss for {self._db_path}"
+                    )
+                    logger.warning(msg)
+                    return default
+                attempt += 1
+                self._sleep_before_retry(attempt)
 
     def get(self, key: str) -> Optional[Dict]:
-        row = self._conn.execute(
-            "SELECT data FROM features WHERE cache_key=?", (key,)
-        ).fetchone()
+        row = self._read_with_retry(
+            "get",
+            lambda: self._conn.execute(
+                "SELECT data FROM features WHERE cache_key=?", (key,)
+            ).fetchone(),
+            None,
+        )
         if row is None:
             self.misses += 1
             return None
@@ -276,10 +365,14 @@ class TFoldFeatureCache:
         for i in range(0, len(keys), 500):
             chunk = keys[i : i + 500]
             placeholders = ",".join("?" * len(chunk))
-            rows = self._conn.execute(
-                f"SELECT cache_key, data FROM features WHERE cache_key IN ({placeholders})",
-                chunk,
-            ).fetchall()
+            rows = self._read_with_retry(
+                "get_batch",
+                lambda chunk=chunk, placeholders=placeholders: self._conn.execute(
+                    f"SELECT cache_key, data FROM features WHERE cache_key IN ({placeholders})",
+                    chunk,
+                ).fetchall(),
+                [],
+            )
             for k, blob in rows:
                 results[k] = torch.load(io.BytesIO(blob), map_location="cpu", weights_only=False)
         self.hits += len(results)
@@ -287,42 +380,96 @@ class TFoldFeatureCache:
         return results
 
     def put(self, key: str, features: Dict) -> None:
+        if self.read_only:
+            return None
         import io
         buf = io.BytesIO()
         torch.save(features, buf)
-        self._conn.execute(
-            "INSERT OR REPLACE INTO features (cache_key, data) VALUES (?, ?)",
-            (key, buf.getvalue()),
+        self._write_with_retry(
+            "put",
+            lambda: self._conn.execute(
+                "INSERT OR IGNORE INTO features (cache_key, data) VALUES (?, ?)",
+                (key, buf.getvalue()),
+            ),
         )
-        self._conn.commit()
 
     def put_batch(self, items: List[Tuple[str, Dict]]) -> None:
+        if self.read_only or not items:
+            return
         import io
-        rows = []
+        deduped = {}
         for key, feats in items:
+            if key not in deduped:
+                deduped[key] = feats
+        rows = []
+        for key, feats in deduped.items():
             buf = io.BytesIO()
             torch.save(feats, buf)
             rows.append((key, buf.getvalue()))
-        self._conn.executemany(
-            "INSERT OR REPLACE INTO features (cache_key, data) VALUES (?, ?)",
-            rows,
+        self._write_with_retry(
+            "put_batch",
+            lambda: self._conn.executemany(
+                "INSERT OR IGNORE INTO features (cache_key, data) VALUES (?, ?)",
+                rows,
+            ),
         )
-        self._conn.commit()
 
     def delete_batch(self, keys: List[str]) -> None:
-        if not keys:
+        if self.read_only or not keys:
             return
-        self._conn.executemany(
-            "DELETE FROM features WHERE cache_key=?",
-            [(key,) for key in keys],
+        deduped = list(dict.fromkeys(keys))
+        self._write_with_retry(
+            "delete_batch",
+            lambda: self._conn.executemany(
+                "DELETE FROM features WHERE cache_key=?",
+                [(key,) for key in deduped],
+            ),
         )
-        self._conn.commit()
 
     def size(self) -> int:
-        return self._conn.execute("SELECT COUNT(*) FROM features").fetchone()[0]
+        row = self._read_with_retry(
+            "size",
+            lambda: self._conn.execute("SELECT COUNT(*) FROM features").fetchone(),
+            None,
+        )
+        return -1 if row is None else row[0]
 
     def close(self):
         self._conn.close()
+
+
+class NullTFoldFeatureCache:
+    """No-op cache for ablations that must avoid any cache IO."""
+
+    def __init__(self):
+        self.hits = 0
+        self.misses = 0
+        self.write_retries = 0
+        self.write_skips = 0
+        self.read_skips = 0
+
+    def get(self, key: str) -> Optional[Dict]:
+        self.misses += 1
+        return None
+
+    def get_batch(self, keys: List[str]) -> Dict[str, Dict]:
+        self.misses += len(keys)
+        return {}
+
+    def put(self, key: str, features: Dict) -> None:
+        return None
+
+    def put_batch(self, items: List[Tuple[str, Dict]]) -> None:
+        return None
+
+    def delete_batch(self, keys: List[str]) -> None:
+        return None
+
+    def size(self) -> int:
+        return 0
+
+    def close(self):
+        return None
 
 
 # ============================================================================
@@ -355,7 +502,9 @@ class AffinityTFoldScorer(BaseScorer):
         default_hla: str = "HLA-A*02:01",
         gpu_id: int = 0,
         max_subprocess_batch: int = 32,
-        server_socket_path: str = "/tmp/tfold_server.sock",
+        server_socket_path: str = None,
+        use_cache: bool = True,
+        cache_read_only: bool = False,
     ):
         """Initialize tFold V3.4 scorer.
 
@@ -371,15 +520,22 @@ class AffinityTFoldScorer(BaseScorer):
         self.default_hla = default_hla
         self.gpu_id = gpu_id
         self.max_subprocess_batch = max_subprocess_batch
-        self.server_socket_path = server_socket_path
+        self.server_socket_path = server_socket_path or os.environ.get("TFOLD_SERVER_SOCKET", "/tmp/tfold_server.sock")
+        self.use_cache = use_cache
+        self.cache_read_only = bool(cache_read_only)
+
+        print(f"[tFold INIT] scorer_id={id(self)} socket={self.server_socket_path}", flush=True)
 
         # Load V3.4 classifier
         self.model = self._load_classifier(device)
 
         # Feature cache
-        if cache_path is None:
-            cache_path = os.path.join(PROJECT_ROOT, "data", "tfold_feature_cache.db")
-        self._cache = TFoldFeatureCache(cache_path)
+        if self.use_cache:
+            if cache_path is None:
+                cache_path = os.path.join(PROJECT_ROOT, "data", "tfold_feature_cache.db")
+            self._cache = TFoldFeatureCache(cache_path, read_only=self.cache_read_only)
+        else:
+            self._cache = NullTFoldFeatureCache()
 
         # Stats
         self._n_subprocess_calls = 0
@@ -391,7 +547,7 @@ class AffinityTFoldScorer(BaseScorer):
 
         logger.info(
             f"tFold V3.4 scorer initialized: {self.model._n_params:,} params, "
-            f"cache={self._cache.size()} entries, device={device}"
+            f"cache={self._cache.size()} entries, cache_enabled={self.use_cache}, device={device}"
         )
 
     def _log_prediction_trace(
@@ -498,6 +654,9 @@ class AffinityTFoldScorer(BaseScorer):
         self._n_subprocess_calls += 1
         sock_path = self.server_socket_path
 
+        if self._n_subprocess_calls <= 10:
+            print(f"[tFold DEBUG] call#{self._n_subprocess_calls} scorer_id={id(self)} socket={sock_path}", flush=True)
+
         if not os.path.exists(sock_path):
             logger.warning(
                 f"tFold server socket not found at {sock_path}. "
@@ -603,7 +762,7 @@ class AffinityTFoldScorer(BaseScorer):
 
         lookup_t0 = time.perf_counter()
         # Batch cache lookup
-        cached = self._cache.get_batch(keys)
+        cached = self._cache.get_batch(keys) if self.use_cache else {}
         cache_lookup_ms = ((time.perf_counter() - lookup_t0) * 1000.0) / max(len(keys), 1)
 
         # Find misses
@@ -649,7 +808,7 @@ class AffinityTFoldScorer(BaseScorer):
                     "hla": hlas[i],
                 }))
 
-        if invalid_cached_keys:
+        if self.use_cache and invalid_cached_keys:
             self._cache.delete_batch(invalid_cached_keys)
 
         # Extract missing features via server
@@ -693,11 +852,11 @@ class AffinityTFoldScorer(BaseScorer):
                     trace_rows[orig_idx]["source"] = "extract_failed"
                     trace_rows[orig_idx]["path_ms"] = extract_path_ms
 
-            if to_cache:
+            if self.use_cache and to_cache:
                 self._cache.put_batch(to_cache)
                 print(f"[tFold] Cached {len(to_cache)} new features (total cache size: {self._cache.size()})", flush=True)
                 logger.info(f"Cached {len(to_cache)} new tFold features")
-            if invalid_to_cache:
+            if self.use_cache and invalid_to_cache:
                 self._cache.put_batch(invalid_to_cache)
                 logger.info("Negative-cached %d invalid tFold feature entries", len(invalid_to_cache))
 
@@ -842,9 +1001,14 @@ class AffinityTFoldScorer(BaseScorer):
     def cache_stats(self) -> Dict[str, int]:
         """Return cache performance statistics."""
         return {
+            "cache_enabled": int(self.use_cache),
+            "cache_read_only": int(self.cache_read_only),
             "cache_size": self._cache.size(),
             "cache_hits": self._cache.hits,
             "cache_misses": self._cache.misses,
+            "cache_write_retries": getattr(self._cache, "write_retries", 0),
+            "cache_write_skips": getattr(self._cache, "write_skips", 0),
+            "cache_read_skips": getattr(self._cache, "read_skips", 0),
             "subprocess_calls": self._n_subprocess_calls,
             "total_scored": self._n_scored,
         }

@@ -4,15 +4,23 @@
 __pycache__/
 *.tsv
 output/
+output_*/
 results/
+results_*/
 figures/
 .wandb/
 wandb/
+
+# Logs
+logs/
+logs_*/
+*.log
 
 # Database caches
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/*.db-journal
 
 # Trained model weights
 runs/
@@ -25,3 +33,19 @@ models/
 *.zip
 *.bin
 *.h5
+
+# Temporary and cache files
+.pytest_cache/
+*.swp
+*~
+.DS_Store
+
+# Keep important small data files
+!data/single_peptide_*.txt
+!data/tfold_excellent_peptides.txt
+!data/sft_v4_trajectories.json
+
+# PNG files (too large)
+*.png
+*.jpg
+*.jpeg

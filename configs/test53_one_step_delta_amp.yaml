@@ -1,0 +1,91 @@
+# test53: one-step terminal tFold delta with nonlinear positive-delta amplification.
+#
+# Motivation:
+# - trace11_delta: 8-step terminal delta can improve reward but drifts to poor
+#   absolute tFold logits and gives weak credit for rare large improvements.
+# - trace17/18: 8-step stepwise delta is easier to optimize but repeatedly edits
+#   into unnatural motifs.
+# - This run turns the task into a one-edit contextual bandit: random natural
+#   TCRdb seed -> one substitution -> terminal final-vs-initial tFold delta.
+
+total_timesteps: 200000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 2.0e-4
+gamma: 1.0
+gae_lambda: 1.0
+clip_range: 0.2
+entropy_coef: 0.05
+entropy_coef_final: 0.02
+entropy_decay_start: 50000
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+max_tcr_len: 20
+min_tcr_len: 8
+max_steps: 1
+ban_stop: true
+sub_only: true
+terminal_reward_only: true
+
+hidden_dim: 512
+encoder: esm2
+esm_tcr_cache_size: 4096
+
+reward_mode: tfold_delta_amplified
+affinity_model: tfold
+w_affinity: 1.0
+w_decoy: 0.0
+w_naturalness: 0.5
+w_diversity: 0.0
+n_contrast_decoys: 0
+
+# Piecewise-linear amplified delta:
+#   0.0-0.5: slope 1
+#   0.5-1.0: slope 2
+#   1.0-2.0: slope 4
+#   >2.0:    slope 8
+# Example: delta=1.5 -> 3.5 shaped reward before naturalness.
+delta_amp_thresholds: [0.5, 1.0, 2.0]
+delta_amp_slopes: [1.0, 2.0, 4.0, 8.0]
+delta_negative_scale: 1.0
+delta_deadband: 0.05
+delta_deadband_penalty: -0.05
+delta_amp_clip: 12.0
+naturalness_gate: true
+
+# Initial TCR naturalness: pure L2 means seeds are sampled directly from TCRdb,
+# with no L0 binder mutation and no L1 scorer-selected synthetic bias.
+l0_mutation_range: [0, 0]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
+
+train_targets: data/tfold_easy3_peptides.txt
+target_sampling: uniform
+
+tfold_server_socket: /tmp/tfold_server_test53_one_step_delta_amp.sock
+tfold_cache_path: data/tfold_feature_cache.db
+tfold_use_cache: true
+
+naturalness_threshold_zscore: 2.0
+cdr3_ppl_stats: data/cdr3_ppl_stats.json
+
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 50
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+latest_checkpoint_interval: 2000
+checkpoint_interval: 20000
+milestones: [20000, 40000, 60000, 80000, 100000, 150000, 200000]
+
+seed: 42
+decoy_library_path: /share/liuyutian/pMHC_decoy_library
+tcrdb_path: /share/liuyutian/TCRPPO/data/tcrdb
+output_dir: output
+results_dir: results
+l1_seeds_dir: data/l1_seeds

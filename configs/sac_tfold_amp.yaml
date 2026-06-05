@@ -1,0 +1,118 @@
+# SAC migration of the metasurface design framework to TCR design.
+# Uses ESM state encoding and tFold AMP as the affinity scorer.
+
+# === SAC ===
+total_timesteps: 500000
+n_envs: 4
+batch_size: 128
+sac_batch_size: 128
+replay_buffer_capacity: 200000
+learning_starts: 1024
+random_steps: 1024
+gradient_steps: 1
+policy_delay: 1
+learning_rate: 3.0e-4
+actor_learning_rate: 3.0e-4
+critic_learning_rate: 3.0e-4
+alpha_learning_rate: 3.0e-4
+gamma: 0.98
+tau: 0.005
+init_temperature: 0.1
+automatic_entropy_tuning: true
+target_entropy: -4.0
+max_grad_norm: 0.5
+
+# PPOTrainer base fields reused during setup/checkpointing.
+n_steps: 32
+n_epochs: 1
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.0
+vf_coef: 0.5
+
+# === Environment ===
+max_tcr_len: 20
+min_tcr_len: 8
+max_steps: 40
+max_steps_per_episode: 40
+min_steps: 1
+ban_stop: true
+sub_only: true
+terminal_reward_only: false
+include_state_scalars: false
+
+# === Policy / Q Networks ===
+hidden_dim: 512
+
+# === ESM State Encoder ===
+encoder: "esm2"
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+
+# === Affinity Scorer ===
+affinity_model: "tfold_amp"
+tfold_cache_path: "data/tfold_feature_cache.db"
+tfold_use_cache: true
+tfold_cache_read_only: true
+
+# === Reward: target affinity first ===
+reward_mode: "tfold_stepwise"
+use_delta_reward: true
+w_affinity: 1.0
+w_decoy: 0.0
+w_naturalness: 0.2
+w_diversity: 0.1
+affinity_ref_logit: -4.5
+delta_amp_thresholds: [0.25, 0.75, 1.5]
+delta_amp_slopes: [1.0, 2.0, 4.0, 8.0]
+delta_negative_scale: 1.5
+delta_deadband: 0.05
+delta_deadband_penalty: -0.05
+delta_amp_clip: 12.0
+naturalness_gate: true
+
+# === Naturalness / Diversity ===
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# === Curriculum ===
+l0_mutation_range: [4, 8]
+l1_top_k: 0
+curriculum_schedule:
+  - {until: null, L0: 1.0, L1: 0.0, L2: 0.0}
+
+# === Decoy scorer disabled for this target-affinity run ===
+decoy_K: 0
+decoy_tau: 10.0
+decoy_tier_weights: {A: 0, B: 0, D: 0, C: 0}
+decoy_unlock_schedule:
+  0: []
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+
+# === Checkpointing / logging ===
+checkpoint_interval: 50000
+latest_checkpoint_interval: 5000
+milestones: [50000, 100000, 200000, 300000, 400000, 500000]
+log_every_episodes: 20
+best_live_update_interval: 1
+best_event_log: true
+
+# === Paths ===
+decoy_library_path: "/share/liuyutian/pMHC_decoy_library"
+tcrdb_path: "/share/liuyutian/TCRPPO/data/tcrdb"
+output_dir: "output_sac"
+results_dir: "results_sac"
+l1_seeds_dir: "data/l1_seeds"
+
+# Multi-peptide target set. The earlier single-peptide run was only a smoke test.
+train_targets: "data/tfold_excellent_peptides.txt"
+
+# === Seed/device ===
+seed: 42
+device: "cuda"
+run_name: "sac_tfold_amp"

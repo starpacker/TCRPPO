@@ -37,8 +37,12 @@ class DecoyScorer(BaseScorer):
         self.decoy_a_min_count = decoy_a_min_count
         self.decoy_d_max_count = decoy_d_max_count
 
-        # Load all decoy peptides per target per tier
+        # Load all decoy peptides per target per tier. ``decoys`` keeps the
+        # legacy list-of-sequences API; ``decoy_records`` preserves metadata
+        # such as hamming distance for difficulty curricula.
         self.decoys: Dict[str, Dict[str, List[str]]] = {}
+        self.decoy_records: Dict[str, Dict[str, List[dict]]] = {}
+        self.decoy_difficulty = "easy"
         self._load_decoys(targets)
 
         # Unlocked tiers (start with all for scoring; controlled externally)
@@ -54,7 +58,7 @@ class DecoyScorer(BaseScorer):
         if os.path.exists(tier_c_path):
             with open(tier_c_path) as f:
                 tier_c_data = json.load(f)
-            entries = tier_c_data.get("entries", tier_c_data)
+            entries = tier_c_data.get("entries", tier_c_data) if isinstance(tier_c_data, dict) else tier_c_data
             if isinstance(entries, list):
                 for entry in entries:
                     pep_info = entry.get("peptide_info", {})
@@ -64,20 +68,33 @@ class DecoyScorer(BaseScorer):
 
         for target in targets:
             self.decoys[target] = {"A": [], "B": [], "C": tier_c_peptides, "D": []}
+            self.decoy_records[target] = {
+                "A": [],
+                "B": [],
+                "C": [{"sequence": seq} for seq in tier_c_peptides],
+                "D": [],
+            }
 
             # Tier A: graduated hamming distance (hd<=2 -> <=3 -> <=4)
             tier_a_path = os.path.join(data_dir, "decoy_a", target, "decoy_a_results.json")
             if os.path.exists(tier_a_path):
                 with open(tier_a_path) as f:
                     entries = json.load(f)
-                self.decoys[target]["A"] = self._filter_tier_a(entries)
+                records = self._filter_tier_a_records(entries)
+                self.decoy_records[target]["A"] = records
+                self.decoys[target]["A"] = [r["sequence"] for r in records]
 
             # Tier B
             tier_b_path = os.path.join(data_dir, "decoy_b", target, "decoy_b_results.json")
             if os.path.exists(tier_b_path):
                 with open(tier_b_path) as f:
                     entries = json.load(f)
-                self.decoys[target]["B"] = [e["sequence"] for e in entries if "sequence" in e]
+                records = [
+                    dict(e) for e in entries
+                    if isinstance(e, dict) and "sequence" in e
+                ]
+                self.decoy_records[target]["B"] = records
+                self.decoys[target]["B"] = [r["sequence"] for r in records]
 
             # Tier D: capped to decoy_d_max_count
             tier_d_path = os.path.join(data_dir, "decoy_d", target, "decoy_d_results.csv")
@@ -91,8 +108,9 @@ class DecoyScorer(BaseScorer):
                         )
                         d_seqs = [d_seqs[i] for i in indices]
                     self.decoys[target]["D"] = d_seqs
+                    self.decoy_records[target]["D"] = [{"sequence": seq} for seq in d_seqs]
 
-    def _filter_tier_a(self, entries: list) -> List[str]:
+    def _filter_tier_a_records(self, entries: list) -> List[dict]:
         """Filter tier A entries using graduated hamming distance.
 
         Strategy: hd<=2 first; if < min_count, expand to hd<=3, then hd<=4.
@@ -100,24 +118,95 @@ class DecoyScorer(BaseScorer):
         """
         has_hd = any("hamming_distance" in e for e in entries if isinstance(e, dict))
         if not has_hd:
-            return [e["sequence"] for e in entries if isinstance(e, dict) and "sequence" in e]
+            return [dict(e) for e in entries if isinstance(e, dict) and "sequence" in e]
 
         for max_hd in (2, 3, 4):
-            seqs = [
-                e["sequence"]
+            records = [
+                dict(e)
                 for e in entries
                 if isinstance(e, dict)
                 and "sequence" in e
                 and e.get("hamming_distance", 999) <= max_hd
             ]
-            if len(seqs) >= self.decoy_a_min_count:
-                return seqs
+            if len(records) >= self.decoy_a_min_count:
+                return records
         # Return whatever we have at hd<=4 even if < min_count
-        return seqs
+        return records
 
     def set_unlocked_tiers(self, tiers: List[str]) -> None:
         """Update which tiers are unlocked (for curriculum)."""
         self.unlocked_tiers = tiers
+
+    def set_decoy_difficulty(self, difficulty: str) -> None:
+        """Update the A/B hamming-distance curriculum stage."""
+        difficulty = str(difficulty or "easy").lower()
+        if difficulty not in {"easy", "medium", "hard"}:
+            raise ValueError(f"Unknown decoy difficulty: {difficulty}")
+        self.decoy_difficulty = difficulty
+
+    @staticmethod
+    def _difficulty_range(tier: str, difficulty: str) -> Tuple[Optional[int], Optional[int]]:
+        """Return inclusive hamming-distance range for tier/difficulty."""
+        ranges = {
+            "easy": {
+                "A": (4, 4),
+                "B": (8, None),
+            },
+            "medium": {
+                "A": (2, 4),
+                "B": (5, 8),
+            },
+            "hard": {
+                "A": (1, 4),
+                "B": (2, 5),
+            },
+        }
+        return ranges.get(difficulty, ranges["easy"]).get(tier, (None, None))
+
+    def _filter_records_by_difficulty(self, records: List[dict], tier: str) -> List[dict]:
+        lo, hi = self._difficulty_range(tier, self.decoy_difficulty)
+        if lo is None and hi is None:
+            return records
+        filtered = []
+        for record in records:
+            try:
+                hd = int(record.get("hamming_distance"))
+            except Exception:
+                continue
+            if lo is not None and hd < lo:
+                continue
+            if hi is not None and hd > hi:
+                continue
+            filtered.append(record)
+        return filtered
+
+    def sample_decoys_by_difficulty(
+        self,
+        target: str,
+        tiers: Optional[List[str]] = None,
+        k_per_tier: int = 1,
+    ) -> List[str]:
+        """Sample fixed tiers using the current hamming-distance difficulty.
+
+        This is intended for simple target-gated specificity training where
+        each episode uses one A decoy and one B decoy, with C excluded.
+        """
+        tiers = list(tiers or ["A", "B"])
+        target_records = self.decoy_records.get(target, {})
+        decoys: List[str] = []
+        for tier in tiers:
+            if tier == "C":
+                continue
+            records = list(target_records.get(tier, []))
+            candidates = self._filter_records_by_difficulty(records, tier)
+            if not candidates:
+                candidates = records
+            if not candidates:
+                continue
+            k = min(int(k_per_tier), len(candidates))
+            indices = self.rng.choice(len(candidates), size=k, replace=False)
+            decoys.extend([candidates[i]["sequence"] for i in indices])
+        return decoys
 
     def sample_decoys(self, target: str, k: int = None) -> List[str]:
         """Sample K decoys using tier-weighted sampling."""

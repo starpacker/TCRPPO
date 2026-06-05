@@ -77,6 +77,7 @@ class AffinityTFoldAMPScorer(BaseScorer):
         default_hla: str = "HLA-A*02:01",
         use_amp: bool = True,
         fallback_to_subprocess: bool = True,
+        cache_read_only: bool = False,
     ):
         self.device = device
         self.gpu_id = gpu_id
@@ -84,10 +85,12 @@ class AffinityTFoldAMPScorer(BaseScorer):
         self.use_amp = use_amp and (device == "cuda")
         self.fallback_to_subprocess = fallback_to_subprocess
         self.cache_path = cache_path
+        self.cache_read_only = bool(cache_read_only)
 
         # Initialize cache (shared with subprocess scorer)
-        self._cache = TFoldFeatureCache(cache_path)
-        logger.info(f"tFold V3.4 AMP scorer (cache at {cache_path})")
+        self._cache = TFoldFeatureCache(cache_path, read_only=self.cache_read_only)
+        ro_suffix = ", read_only=True" if self.cache_read_only else ""
+        logger.info(f"tFold V3.4 AMP scorer (cache at {cache_path}{ro_suffix})")
 
         # Initialize V3.4 classifier
         self._classifier = self._load_v34_classifier()
@@ -347,6 +350,7 @@ class AffinityTFoldAMPScorer(BaseScorer):
                 gpu_id=self.gpu_id,
                 cache_path=self.cache_path,
                 default_hla=self.default_hla,
+                cache_read_only=self.cache_read_only,
             )
         return self._subprocess_scorer
 
@@ -497,4 +501,8 @@ class AffinityTFoldAMPScorer(BaseScorer):
             "n_amp_calls": self._n_amp_calls,
             "n_subprocess_fallback": self._n_subprocess_fallback,
             "amp_enabled": not self._amp_failed,
+            "cache_read_only": int(self.cache_read_only),
+            "cache_hits": self._cache.hits,
+            "cache_misses": self._cache.misses,
+            "cache_write_skips": getattr(self._cache, "write_skips", 0),
         }

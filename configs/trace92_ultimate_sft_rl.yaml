@@ -1,0 +1,177 @@
+# trace92_ultimate_sft_rl.yaml
+# Ultimate configuration with SFT pretrained initialization
+# Goal: Start from SFT checkpoint, push to mean affinity 0.0+
+# Best practices from 165 experiments + SFT advantages
+
+name: "trace92_ultimate_sft_rl"
+
+# ============================================================================
+# Core Training Hyperparameters (adjusted for SFT fine-tuning)
+# ============================================================================
+total_timesteps: 2_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 1.0e-4  # Slightly lower than trace72 for fine-tuning stability
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.18  # Slightly tighter for fine-tuning
+entropy_coef: 0.015  # Slightly higher to maintain exploration from SFT
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# ============================================================================
+# Environment & Architecture (MATCH SFT if using SFT checkpoint)
+# ============================================================================
+max_tcr_len: 27
+min_tcr_len: 8
+max_pep_len: 15
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+include_state_scalars: true  # Set to false if SFT was trained without
+sub_only: false
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda:0"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# ============================================================================
+# Reward Configuration (v2_simple_target_gated_decoy + delta)
+# ============================================================================
+reward_mode: "v2_simple_target_gated_decoy"
+
+# Weights optimized for naturalness
+w_affinity: 1.0
+w_decoy: 0.3
+w_naturalness: 0.15  # INCREASED from 0.05
+w_diversity: 0.02
+
+# Use delta reward if SFT model starts with decent affinity
+use_delta_reward: false  # Set to true if SFT pool has good starting affinities
+w_delta_affinity: 0.5  # Weight on improvement if using delta
+
+# Gate optimized for pushing beyond SFT quality
+target_affinity_gate: -1.5  # Start from best practice
+target_affinity_bonus: 1.0
+decoy_affinity_penalty_weight: 0.3
+target_decoy_gate_logit: -1.5
+target_pass_bonus: 1.0
+decoy_affinity_center: -1.0  # SFT should start better than -2.0
+
+# Aggressive gate schedule to push beyond 0.0
+gate_schedule:
+  - {step: 0, gate: -1.5}
+  - {step: 100000, gate: -1.2}
+  - {step: 200000, gate: -1.0}
+  - {step: 400000, gate: -0.8}
+  - {step: 600000, gate: -0.5}
+  - {step: 800000, gate: -0.3}
+  - {step: 1000000, gate: 0.0}
+  - {step: 1400000, gate: 0.2}
+  - {step: 1800000, gate: 0.5}
+
+# ============================================================================
+# Affinity Scorer (tFold)
+# ============================================================================
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_trace92_ultimate_sft_rl.sock"
+tfold_cache_path: "data/tfold_feature_cache.db"
+tfold_use_cache: true
+tfold_cache_read_only: false
+
+# ============================================================================
+# Decoy Configuration
+# ============================================================================
+decoy_K: 2
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights: {A: 0, B: 0, D: 0, C: 0}
+decoy_unlock_schedule: {}
+decoy_difficulty: "easy"
+decoy_difficulty_schedule: {}
+
+# ============================================================================
+# Naturalness Configuration (IMPROVED)
+# ============================================================================
+naturalness_threshold_zscore: 1.0  # Lowered from 2.0 to catch CCC
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+
+# ============================================================================
+# Diversity Configuration
+# ============================================================================
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# ============================================================================
+# TCR Initialization (Online pool from SFT trajectories)
+# ============================================================================
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+
+# Mostly online pool if SFT provides good starting points
+curriculum_schedule:
+  - {until: 50000, L0: 0.2, L1: 0.3, L2: 0.5}
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}  # Full online pool after warmup
+
+# Online TCR Pool - preloaded with SFT trajectories if available
+online_tcr_pool_enabled: true
+online_tcr_pool_start_step: 0  # Start immediately with SFT pool
+online_tcr_pool_warmup_steps: 10000
+online_tcr_pool_max_ratio: 0.7  # Higher ratio for SFT: 70% pool, 30% L2
+online_tcr_pool_max_per_target: 256
+online_tcr_pool_min_affinity: -2.0  # Keep only decent SFT TCRs
+online_tcr_pool_max_decoy_violation: 999.0
+online_tcr_pool_min_hamming: 2
+online_tcr_pool_mutate_prob: 0.0
+online_tcr_pool_snapshot_path: "data/sft_online_pool_snapshot.json"  # Preload if available
+
+# Dynamic band selection
+online_tcr_pool_use_dynamic_bands: true
+online_tcr_pool_recent_window: 50
+online_tcr_pool_bands:
+  - [-2, -1]
+  - [-1, -0.5]
+  - [-0.5, 0]
+  - [0, 0.5]
+  - [0.5, 1.0]
+
+# ============================================================================
+# Target Peptides (20 peptides - optimal)
+# ============================================================================
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+# ============================================================================
+# Evaluation & Checkpointing
+# ============================================================================
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 0
+eval_abort_threshold: 0.40
+eval_warmup: 200000
+
+checkpoint_interval: 20000
+latest_checkpoint_interval: 2000
+milestones: [50000, 100000, 200000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000]
+
+# ============================================================================
+# Other Settings
+# ============================================================================
+use_znorm: false
+active_clipping: false
+seed: 42
+
+# ============================================================================
+# Resume from SFT checkpoint
+# ============================================================================
+resume_from: "output/sft_filtered_training/checkpoint_final.pt"  # Update with actual SFT checkpoint path
+# If no SFT checkpoint, comment above and uncomment below:
+# resume_from: "output/trace72_delta_from_trace70/checkpoints/latest.pt"

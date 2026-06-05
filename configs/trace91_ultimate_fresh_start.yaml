@@ -1,0 +1,170 @@
+# trace91_ultimate_fresh_start.yaml
+# Ultimate configuration from 165 experiments of wisdom
+# Goal: Fresh start training, targeting mean affinity 0.0
+# Best practices from trace72 (-0.93) + improvements for naturalness
+
+name: "trace91_ultimate_fresh_start"
+
+# ============================================================================
+# Core Training Hyperparameters (from trace72, trace61, trace70)
+# ============================================================================
+total_timesteps: 3_000_000  # Extended for fresh start
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 1.5e-4  # Best from trace72
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.012  # Best from trace72, stable exploration
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# ============================================================================
+# Environment & Architecture
+# ============================================================================
+max_tcr_len: 27
+min_tcr_len: 8
+max_pep_len: 15
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true  # Critical: prevents premature stopping
+terminal_reward_only: true  # Critical: better credit assignment
+include_state_scalars: true
+sub_only: false  # Allow indel operations
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda:0"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# ============================================================================
+# Reward Configuration (v2_simple_target_gated_decoy - BEST MODE)
+# ============================================================================
+reward_mode: "v2_simple_target_gated_decoy"
+
+# Key insight: Affinity + gated decoy is the winning combination
+w_affinity: 1.0
+w_decoy: 0.3
+w_naturalness: 0.15  # INCREASED from 0.05 to combat CCC artifacts
+w_diversity: 0.02
+
+# Gate schedule: -1.5 is optimal (from trace70)
+target_affinity_gate: -1.5
+target_affinity_bonus: 1.0
+decoy_affinity_penalty_weight: 0.3
+target_decoy_gate_logit: -1.5
+target_pass_bonus: 1.0
+decoy_affinity_center: -2.0
+
+# Gate schedule: gradually tighten from -2.0 to -1.0 over training
+gate_schedule:
+  - {step: 0, gate: -2.0}
+  - {step: 200000, gate: -1.8}
+  - {step: 400000, gate: -1.5}
+  - {step: 800000, gate: -1.2}
+  - {step: 1200000, gate: -1.0}
+  - {step: 1800000, gate: -0.8}
+  - {step: 2400000, gate: -0.5}
+
+# ============================================================================
+# Affinity Scorer (tFold - only effective scorer)
+# ============================================================================
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_trace91_ultimate_fresh_start.sock"
+tfold_cache_path: "data/tfold_feature_cache.db"
+tfold_use_cache: true
+tfold_cache_read_only: false
+
+# ============================================================================
+# Decoy Configuration (K=2 is sufficient)
+# ============================================================================
+decoy_K: 2
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights: {A: 0, B: 0, D: 0, C: 0}
+decoy_unlock_schedule: {}
+decoy_difficulty: "easy"
+decoy_difficulty_schedule: {}
+
+# ============================================================================
+# Naturalness Configuration (IMPROVED to combat CCC)
+# ============================================================================
+naturalness_threshold_zscore: 1.0  # LOWERED from 2.0 to catch CCC patterns
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+
+# ============================================================================
+# Diversity Configuration
+# ============================================================================
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# ============================================================================
+# TCR Initialization & Online Pool (CRITICAL for success)
+# ============================================================================
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+
+# Start with L0/L1 curriculum, then enable online pool
+curriculum_schedule:
+  - {until: 50000, L0: 0.6, L1: 0.3, L2: 0.1}
+  - {until: 150000, L0: 0.4, L1: 0.4, L2: 0.2}
+  - {until: 300000, L0: 0.2, L1: 0.5, L2: 0.3}
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}  # Full online pool after 300K
+
+# Online TCR Pool - Key to success
+online_tcr_pool_enabled: true
+online_tcr_pool_start_step: 100000  # Start after initial exploration
+online_tcr_pool_warmup_steps: 50000  # Gradual ramp-up
+online_tcr_pool_max_ratio: 0.5  # 50% from pool, 50% L2
+online_tcr_pool_max_per_target: 256
+online_tcr_pool_min_affinity: -10.0  # Accept all initially
+online_tcr_pool_max_decoy_violation: 999.0
+online_tcr_pool_min_hamming: 2
+online_tcr_pool_mutate_prob: 0.0
+
+# Dynamic band selection (from trace61)
+online_tcr_pool_use_dynamic_bands: true
+online_tcr_pool_recent_window: 50
+online_tcr_pool_bands:
+  - [-4, -2]
+  - [-2, -1]
+  - [-1, 0]
+  - [0, 0.6]
+
+# ============================================================================
+# Target Peptides (20 peptides - optimal)
+# ============================================================================
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+# ============================================================================
+# Evaluation & Checkpointing
+# ============================================================================
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 0
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+checkpoint_interval: 20000
+latest_checkpoint_interval: 2000
+milestones: [50000, 100000, 200000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000, 2500000, 3000000]
+
+# ============================================================================
+# Other Settings
+# ============================================================================
+use_znorm: false
+active_clipping: false  # Not critical, may reduce variance but also upper bound
+seed: 42
+
+# ============================================================================
+# Resume from best checkpoint (comment out for true fresh start)
+# ============================================================================
+# resume_from: null  # True fresh start
+resume_from: "output/trace72_delta_from_trace70/checkpoints/latest.pt"  # Or start from trace72 for faster results

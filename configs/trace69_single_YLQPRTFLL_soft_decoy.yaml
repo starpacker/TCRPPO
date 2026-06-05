@@ -1,0 +1,137 @@
+# trace69: single-peptide YLQPRTFLL soft decoy reward
+#
+# Goal:
+#   Resume from the strong trace29 checkpoint and continue conservatively on
+#   YLQPRTFLL. Target affinity is always rewarded. Decoy specificity ramps in
+#   smoothly around A=0.5, below the biological binding reference A=0.6, so
+#   the run does not wait for a hard threshold.
+#
+# Reward:
+#   gate = sigmoid((A_target - 0.5) / 0.12)
+#   R = A_target
+#       + gate * (0.45 * clipped(A_target - decoy_top2_mean)
+#                 + 0.15 * clipped(A_target - decoy_mean))
+#       + small naturalness/diversity terms
+
+# === PPO: conservative resume ===
+total_timesteps: 1_200_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 2
+learning_rate: 5.0e-5
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.12
+target_kl: 0.015
+entropy_coef: 0.006
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# === Environment ===
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+
+# === Policy Network ===
+hidden_dim: 512
+
+# === ESM State Encoder ===
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# === Reward Weights ===
+reward_mode: "v2_soft_target_decoy_gap"
+use_delta_reward: false
+w_affinity: 1.0
+w_decoy: 0.45
+w_decoy_mean: 0.15
+w_naturalness: 0.03
+w_diversity: 0.01
+
+# === Soft Target-Gated Decoy Reward ===
+soft_gate_affinity: 0.5
+soft_gate_temperature: 0.12
+soft_decoy_min_gate: 0.02
+decoy_topk: 2
+decoy_margin_clip: 3.0
+decoy_fixed_tiers: ["A", "B"]
+decoy_k_per_tier: 2
+
+# === Affinity Scorer (tFold server) ===
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server.sock"
+tfold_cache_path: "data/tfold_feature_cache_trace69_single_YLQPRTFLL_soft_decoy.db"
+
+# === Decoy Curriculum ===
+decoy_K: 4
+n_contrast_decoys: 4
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights:
+  A: 1
+  B: 1
+  D: 0
+  C: 0
+decoy_unlock_schedule:
+  0: ["A", "B"]
+decoy_difficulty: "easy"
+decoy_difficulty_schedule:
+  0: "easy"
+  900000: "medium"
+  1050000: "hard"
+
+# === Naturalness Scorer (ESM Perplexity) ===
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+
+# === Diversity Scorer ===
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# === Curriculum: keep trace29-style L0/L2 mix ===
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.5, L1: 0.0, L2: 0.5}
+
+# === Target Sampling ===
+target_sampling: "uniform"
+train_targets: "data/single_peptide_YLQPRTFLL.txt"
+
+# === Online Eval (disabled during finetune) ===
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 50
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+# === Checkpointing ===
+checkpoint_interval: 20000
+latest_checkpoint_interval: 2000
+milestones: [780000, 800000, 820000, 840000, 860000, 880000, 900000, 920000, 940000, 960000, 980000, 1000000, 1020000, 1040000, 1060000, 1080000, 1100000, 1120000, 1140000, 1160000, 1180000, 1200000]
+
+# === Normalization (disabled) ===
+use_znorm: false
+norm_window: 10000
+norm_warmup: 1000
+
+# === Seed ===
+seed: 42
+
+# === Paths ===
+decoy_library_path: "/share/liuyutian/pMHC_decoy_library"
+tcrdb_path: "/share/liuyutian/TCRPPO/data/tcrdb"
+test_peptides_path: "/share/liuyutian/TCRPPO/data/test_peptides"
+ergo_model_dir: "tcrppo_v2/ERGO/models"
+ergo_ae_file: "tcrppo_v2/ERGO/TCR_Autoencoder/tcr_ae_dim_100.pt"
+output_dir: "output"
+results_dir: "results"

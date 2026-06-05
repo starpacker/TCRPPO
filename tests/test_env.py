@@ -4,6 +4,7 @@ import sys
 import os
 import pytest
 import numpy as np
+import torch
 
 # Ensure project root is on path
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,10 +19,48 @@ from tcrppo_v2.utils.constants import (
 @pytest.fixture(scope="module")
 def env_components():
     """Set up all shared components for env tests."""
-    from tcrppo_v2.utils.esm_cache import ESMCache
-    from tcrppo_v2.data.pmhc_loader import PMHCLoader
-    from tcrppo_v2.data.tcr_pool import TCRPool
     from tcrppo_v2.reward_manager import RewardManager
+
+    class FakeESMCache:
+        output_dim = 4
+
+        def encode_sequence(self, seq):
+            return self.encode_tcr(seq)
+
+        def encode_tcr(self, tcr):
+            return torch.tensor([
+                float(len(tcr)),
+                float(tcr.startswith("C")),
+                float(tcr.count("G")),
+                1.0,
+            ])
+
+        def encode_tcr_batch(self, tcrs):
+            return torch.stack([self.encode_tcr(tcr) for tcr in tcrs])
+
+        def encode_pmhc(self, pmhc):
+            return torch.tensor([
+                float(len(pmhc)),
+                float(pmhc.count("G")),
+                float(pmhc.count("L")),
+                1.0,
+            ])
+
+    class FakePMHCLoader:
+        targets = ["GILGFVFTL", "NLVPMVATV"]
+
+        def sample_target(self, rng=None):
+            return self.targets[0]
+
+        def sample_target_weighted(self, weights, rng=None):
+            return max(weights, key=weights.get)
+
+        def get_pmhc_string(self, peptide):
+            return peptide
+
+    class FakeTCRPool:
+        def sample_tcr(self, target, step=0, reward_mode="v2_full"):
+            return "CASSIRSSYEQYF", "L2"
 
     # Use mock affinity scorer for speed
     class MockAffinityScorer:
@@ -33,9 +72,9 @@ def env_components():
             scores = [min(len(t) / 20.0, 1.0) for t in tcrs]
             return scores, [1.0] * len(tcrs)
 
-    esm_cache = ESMCache(device="cuda", tcr_cache_size=128)
-    pmhc_loader = PMHCLoader(targets=["GILGFVFTL", "NLVPMVATV"])
-    tcr_pool = TCRPool(seed=42)
+    esm_cache = FakeESMCache()
+    pmhc_loader = FakePMHCLoader()
+    tcr_pool = FakeTCRPool()
     reward_manager = RewardManager(
         affinity_scorer=MockAffinityScorer(),
         reward_mode="v1_ergo_only",  # Simple mode for testing
@@ -85,7 +124,7 @@ class TestTCREditEnv:
         env.reset(peptide="GILGFVFTL")
         old_len = len(env.current_tcr)
         if old_len > MIN_TCR_LEN:
-            obs, reward, done, info = env.step((OP_DEL, 0, 0))
+            obs, reward, done, info = env.step((OP_DEL, 1, 0))
             assert len(env.current_tcr) == old_len - 1
             assert info["action_name"] == "DEL"
 
@@ -104,9 +143,32 @@ class TestTCREditEnv:
         assert masks["pos_mask"].shape == (MAX_TCR_LEN,)
         # Step 0: STOP should be masked
         assert not masks["op_mask"][OP_STOP]
-        # Valid positions should be True
-        assert masks["pos_mask"][:len(env.current_tcr)].all()
+        # Valid editable positions should be True; position 0 is conserved Cys.
+        assert not masks["pos_mask"][0]
+        assert masks["pos_mask"][1:len(env.current_tcr)].all()
         assert not masks["pos_mask"][len(env.current_tcr):].any()
+
+    def test_pure_esm_observation_without_scalars(self, env_components):
+        from tcrppo_v2.env import TCREditEnv, VecTCREditEnv
+
+        env = TCREditEnv(
+            **env_components,
+            reward_mode="v1_ergo_only",
+            include_state_scalars=False,
+        )
+        obs = env.reset(peptide="GILGFVFTL")
+        assert env.obs_dim == env_components["esm_cache"].output_dim * 2
+        assert obs.shape == (env.obs_dim,)
+
+        vec_env = VecTCREditEnv(
+            n_envs=2,
+            **env_components,
+            reward_mode="v1_ergo_only",
+            include_state_scalars=False,
+        )
+        vec_obs = vec_env.reset()
+        assert vec_env.obs_dim == env_components["esm_cache"].output_dim * 2
+        assert vec_obs.shape == (2, vec_env.obs_dim)
 
     def test_max_steps_termination(self, env):
         env.reset(peptide="GILGFVFTL")

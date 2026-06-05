@@ -1,0 +1,107 @@
+# trace73: trace70 + curriculum learning + increased exploration
+#
+# Base: trace70 latest checkpoint (global_step=644096)
+# Changes:
+#   1. Curriculum gate schedule: -2.0 -> -1.5 -> -1.0 -> -0.5
+#   2. Increased entropy: 0.012 -> 0.020 (67% increase)
+#   3. Slightly lower learning rate for stability: 1.5e-4 -> 1.2e-4
+
+total_timesteps: 2_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 1.2e-4  # Slightly lower for curriculum stability
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.020  # Increased from 0.012 for more exploration
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda:3"  # Use GPU 3
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+reward_mode: "v2_simple_target_gated_decoy"
+use_delta_reward: false
+w_affinity: 1.0
+w_decoy: 0.3
+w_naturalness: 0.05
+w_diversity: 0.02
+
+# Curriculum gate schedule (progressive difficulty)
+# Phase 1 (644K-670K): gate -2.0, easy to pass, build pool
+# Phase 2 (670K-700K): gate -1.5, moderate difficulty
+# Phase 3 (700K-750K): gate -1.0, harder
+# Phase 4 (750K+): gate -0.5, hardest
+gate_schedule:
+  644096: -2.0   # Start easy
+  670000: -1.5   # Increase difficulty
+  700000: -1.0   # Harder
+  750000: -0.5   # Final target
+
+# Start with easy gate
+target_affinity_gate: -2.0
+target_affinity_bonus: 1.0
+decoy_affinity_penalty_weight: 0.3
+
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_trace73_curriculum_exploration.sock"
+tfold_cache_path: "data/tfold_feature_cache_trace73_curriculum_exploration.db"
+
+decoy_K: 2
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights: {A: 0, B: 0, D: 0, C: 0}
+decoy_unlock_schedule: {}
+decoy_difficulty: "easy"
+decoy_difficulty_schedule: {}
+
+naturalness_threshold_zscore: -2.0
+cdr3_ppl_stats: "data/cdr3_ppl_stats.json"
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
+
+online_tcr_pool_enabled: true
+online_tcr_pool_start_step: 644096  # Continue from trace70
+online_tcr_pool_warmup_steps: 1
+online_tcr_pool_max_ratio: 0.5
+online_tcr_pool_max_per_target: 256
+online_tcr_pool_min_affinity: -10.0
+online_tcr_pool_max_decoy_violation: 999.0
+online_tcr_pool_min_hamming: 2
+online_tcr_pool_mutate_prob: 0.0
+
+online_tcr_pool_use_dynamic_bands: true
+online_tcr_pool_recent_window: 50
+
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+eval_interval: 999999999
+eval_n_tcrs: 5
+eval_n_decoys: 0
+eval_abort_threshold: 0.40
+eval_warmup: 500000
+
+checkpoint_interval: 20000
+milestones: [660000, 670000, 680000, 700000, 720000, 750000, 780000, 800000, 900000, 1000000, 1200000, 1400000, 1600000, 1800000, 2000000]

@@ -25,10 +25,12 @@ class NaturalnessScorer(BaseScorer):
         esm_batch_converter=None,
         device: str = "cuda",
         stats_file: Optional[str] = None,
-        threshold_zscore: float = -2.0,
+        threshold_zscore: float = 2.0,
+        two_sided: bool = True,
     ):
         self.device = device
-        self.threshold = threshold_zscore
+        self.threshold = abs(float(threshold_zscore))
+        self.two_sided = two_sided
 
         # ESM model can be shared with state encoder
         if esm_model is not None:
@@ -145,10 +147,14 @@ class NaturalnessScorer(BaseScorer):
         ppl = self.compute_pseudo_perplexity([tcr])[0]
         z = self._zscore(ppl)
 
-        if z >= self.threshold:
-            return 0.0, 1.0
+        if self.two_sided:
+            excess = abs(z) - self.threshold
         else:
-            return float(z - self.threshold), 1.0
+            excess = z - self.threshold
+
+        if excess <= 0:
+            return 0.0, 1.0
+        return float(-excess), 1.0
 
     def score_batch(self, tcrs: list, peptides: list = None, **kwargs) -> Tuple[list, list]:
         """Score a batch of TCRs for naturalness."""
@@ -156,9 +162,13 @@ class NaturalnessScorer(BaseScorer):
         scores = []
         for ppl in ppls:
             z = self._zscore(float(ppl))
-            if z >= self.threshold:
+            if self.two_sided:
+                excess = abs(z) - self.threshold
+            else:
+                excess = z - self.threshold
+            if excess <= 0:
                 scores.append(0.0)
             else:
-                scores.append(float(z - self.threshold))
+                scores.append(float(-excess))
         confidences = [1.0] * len(tcrs)
         return scores, confidences

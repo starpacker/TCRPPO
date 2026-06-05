@@ -133,6 +133,19 @@ def evaluate_specificity_multi(
         return {name: {"auroc": 0.0, "mean_target_score": 0.0, "mean_decoy_score": 0.0}
                 for name in scorers}
 
+    # Skip decoy scoring entirely when n_decoys=0
+    if n_decoys <= 0:
+        results = {}
+        for scorer_name, scorer in scorers.items():
+            target_scores = _score_tcrs_with_scorer(scorer, tcrs, target_peptide, scorer_name)
+            results[scorer_name] = {
+                "auroc": 0.5, "mean_target_score": float(np.mean(target_scores)) if target_scores else 0.0,
+                "mean_decoy_score": 0.0, "std_target_score": float(np.std(target_scores)) if target_scores else 0.0,
+                "std_decoy_score": 0.0, "n_tcrs": len(target_scores), "n_decoys_per_tcr": 0,
+                "per_tier_auroc": {}, "target_scores": target_scores,
+            }
+        return results
+
     # Sample decoys grouped by tier for per-tier AUROC (exclude C per user request)
     decoys_by_tier = decoy_scorer.sample_decoys_by_tier(
         target_peptide, k_per_tier=max(10, n_decoys // 3)
