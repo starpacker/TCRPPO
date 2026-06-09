@@ -256,6 +256,21 @@ class NaturalnessAEGMMScorer(BaseScorer):
             return 0.0, 1.0
         return float(combined - self.threshold), 1.0     # negative penalty
 
+    def score_raw(self, tcr: str, peptide: str = "", **kwargs) -> float:
+        """Return raw combined score (0~1) without threshold truncation."""
+        edit_acc, z = self._edit_accuracy([tcr])
+        gmm_like = self._gmm_likelihood(z)
+        return float(edit_acc[0] + gmm_like[0])
+
+    def score_raw_batch(self, tcrs: list, peptides: list = None, **kwargs) -> list:
+        """Return raw combined scores (0~1) for a batch, no truncation."""
+        if len(tcrs) == 0:
+            return []
+        edit_acc, z = self._edit_accuracy(tcrs)
+        gmm_like = self._gmm_likelihood(z)
+        combined = edit_acc + gmm_like
+        return [float(c) for c in combined]
+
     def score_batch(self, tcrs: list, peptides: list = None, **kwargs) -> Tuple[list, list]:
         """Score a batch of TCRs."""
         if len(tcrs) == 0:

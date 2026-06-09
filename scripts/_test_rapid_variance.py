@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Quick test: score the SAME 50 pairs through a tFold server N times rapidly.
+Measures within-server variance to determine if 0.28 drift is noise or real."""
+
+import sys, time, json
+import numpy as np
+sys.path.insert(0, "/share/liuyutian/tcrppo_v2")
+
+from scripts.test_tfold_scorer_drift import (
+    generate_test_pairs, extract_features_via_socket, load_classifier, classify_features
+)
+
+SOCKET = "/tmp/tfold_server_drift_monitor.sock"
+N_REPS = 5
+N_PAIRS = 50
+
+pairs = generate_test_pairs(n=N_PAIRS, seed=999)
+samples = [{"cdr3b": p["cdr3b"], "peptide": p["peptide"], "hla": p["hla"]} for p in pairs]
+
+print("Loading classifier...", flush=True)
+classifier = load_classifier("cpu")
+
+print(f"\nScoring {N_PAIRS} pairs x {N_REPS} repetitions through {SOCKET}", flush=True)
+print(f"(Each rep extracts fresh features - no caching)", flush=True)
+print(flush=True)
+
+all_scores = []
+for rep in range(N_REPS):
+    t0 = time.time()
+    feats = extract_features_via_socket(SOCKET, samples, timeout=600)
+    scores = classify_features(classifier, feats)
+    elapsed = time.time() - t0
+    all_scores.append(scores)
+    m = np.mean(scores)
+    print(f"  Rep {rep+1}/{N_REPS}: mean={m:.4f}  std={np.std(scores):.4f}  ({elapsed:.0f}s)", flush=True)
+
+# Analysis
+means = [np.mean(s) for s in all_scores]
+arr = np.array(all_scores)  # [N_REPS, N_PAIRS]
+
+print(flush=True)
+print("=" * 60, flush=True)
+print("RAPID-FIRE VARIANCE ANALYSIS", flush=True)
+print("=" * 60, flush=True)
+print(f"  Means across reps:    {[f'{m:.4f}' for m in means]}", flush=True)
+print(f"  Mean of means:        {np.mean(means):.4f}", flush=True)
+print(f"  Std of means:         {np.std(means):.4f}", flush=True)
+print(f"  Max spread (max-min): {max(means)-min(means):.4f}", flush=True)
+print(flush=True)
+
+# Per-pair variance
+per_pair_std = arr.std(axis=0)
+print(f"  Per-pair std (across reps):", flush=True)
+print(f"    Mean:  {per_pair_std.mean():.6f}", flush=True)
+print(f"    Max:   {per_pair_std.max():.6f}", flush=True)
+print(f"    Min:   {per_pair_std.min():.6f}", flush=True)
+print(flush=True)
+
+# Compare rep1 vs repN pairwise
+for i in range(1, N_REPS):
+    diff = np.array(all_scores[0]) - np.array(all_scores[i])
+    print(f"  Rep1 vs Rep{i+1}: mean_diff={np.mean(diff):+.4f}  max_abs={np.max(np.abs(diff)):.4f}  corr={np.corrcoef(all_scores[0], all_scores[i])[0,1]:.6f}", flush=True)
+
+# Verdict
+if np.std(means) < 0.05:
+    print(f"\nVERDICT: DETERMINISTIC within server (std of means = {np.std(means):.4f} < 0.05)", flush=True)
+elif np.std(means) < 0.2:
+    print(f"\nVERDICT: MINOR VARIANCE (std of means = {np.std(means):.4f})", flush=True)
+else:
+    print(f"\nVERDICT: NON-DETERMINISTIC (std of means = {np.std(means):.4f})", flush=True)
+
+# Save
+with open("logs/tfold_rapid_fire_variance.json", "w") as f:
+    json.dump({"means": means, "all_scores": all_scores, "per_pair_std": per_pair_std.tolist()}, f, indent=2)
+print(f"\nSaved to logs/tfold_rapid_fire_variance.json", flush=True)

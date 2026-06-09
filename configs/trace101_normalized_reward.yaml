@@ -1,0 +1,110 @@
+# trace101: Normalized reward scaling + resume from trace99
+#
+# Strategy: Instead of hard gate, normalize all reward components to similar magnitude
+# so naturalness penalty can actually compete with affinity reward.
+#
+# Key insight from diagnosis:
+#   - affinity_logit range: [-6, +4] -> span of 10
+#   - nat_penalty range: [-0.6, 0] -> span of 0.6
+#   - Even with w_nat=5.0, nat term = 5.0 × (-0.6) = -3.0
+#   - But target_pass_bonus = +2.0 easily compensates
+#
+# Solution: Apply sigmoid/tanh to normalize affinity to [-1, +1] range,
+# then naturalness penalty can compete on equal footing.
+
+total_timesteps: 1_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 5e-5
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.02
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+use_biochem_features: false
+include_state_scalars: true
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# Use sigmoid delta mode for normalized affinity
+reward_mode: "v2_no_decoy_sigmoid_delta"  # sigmoid normalizes affinity to [0,1]
+use_delta_reward: true
+
+# Balanced weights (all components in similar range after normalization)
+w_affinity: 3.0  # affinity_sigmoid in [0,1] -> term in [0, 3]
+w_decoy: 0.0  # Disable decoy for now (focus on nat+aff first)
+w_naturalness: 5.0  # nat_penalty in [-0.6, 0] -> term in [-3, 0]
+w_diversity: 0.1
+
+# No gate/bonus (rely on normalized weights)
+target_decoy_gate_logit: -999.0  # Effectively disabled
+target_pass_bonus: 0.0
+decoy_affinity_penalty_weight: 0.0
+
+# Soft naturalness gate
+naturalness_gate_affinity: false
+naturalness_gate_threshold: 0.0
+
+# FP32 tFold
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_trace101.sock"
+tfold_cache_path: "data/tfold_cache_trace101.db"
+
+# Decoy disabled for this experiment
+decoy_K: 0
+n_contrast_decoys: 0
+
+# Naturalness - AE+GMM
+naturalness_scorer_type: "ae_gmm"
+naturalness_ae_model: "/share/liuyutian/TCRPPO/code/reward/ae_model"
+naturalness_gmm_model: "/share/liuyutian/TCRPPO/code/reward/gmm.pkl"
+naturalness_blosum: "/share/liuyutian/TCRPPO/code/blosum.txt"
+naturalness_ae_threshold: 0.8
+
+# Diversity
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# Pure L2
+curriculum_schedule:
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
+
+# Online pool
+online_tcr_pool_enabled: true
+online_tcr_pool_start_step: 0
+online_tcr_pool_warmup_steps: 1
+online_tcr_pool_max_ratio: 0.5
+online_tcr_pool_max_per_target: 256
+online_tcr_pool_min_affinity: -10.0
+online_tcr_pool_max_decoy_violation: 999.0
+online_tcr_pool_min_hamming: 2
+
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+eval_interval: 50000
+eval_n_tcrs: 10
+eval_n_decoys: 5
+
+checkpoint_interval: 10000
+latest_checkpoint_interval: 2000
+milestones: [100000, 200000, 300000, 400000, 500000, 1000000]
+
+use_znorm: false

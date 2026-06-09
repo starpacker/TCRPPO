@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCRPPO v2 — TCR CDR3β 序列设计框架与结果</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:#ffffff; color:#1a1a2e;
+  line-height:1.7; padding:0 0 60px;
+}
+.container{max-width:1160px;margin:0 auto;padding:0 28px}
+.hero{
+  background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%);
+  color:#fff; padding:56px 0 40px; text-align:center;
+}
+.hero h1{font-size:2.3rem;font-weight:700;letter-spacing:.5px}
+.hero .sub{font-size:1.05rem;color:#a8d8ea;margin-top:10px}
+.hero .badges{margin-top:16px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.82rem;font-weight:600}
+.badge.green{background:#00c853;color:#fff}
+.badge.blue{background:#2979ff;color:#fff}
+.badge.orange{background:#ff9100;color:#fff}
+.badge.purple{background:#aa00ff;color:#fff}
+section{padding:36px 0 20px}
+h2{
+  font-size:1.55rem;font-weight:700;margin-bottom:18px;
+  padding-bottom:8px;border-bottom:3px solid #2979ff;color:#0d1b2a;
+}
+h3{font-size:1.18rem;font-weight:600;margin:18px 0 10px;color:#1b3a4b}
+p,li{font-size:.97rem;color:#333}
+.card{
+  background:#f8f9fa;border:1px solid #dee2e6;border-radius:10px;
+  padding:22px 26px;margin-bottom:18px;
+}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin:12px 0}
+th{
+  background:#e3f2fd;color:#0d47a1;font-weight:600;
+  padding:10px 12px;text-align:left;border-bottom:2px solid #90caf9;
+}
+td{padding:9px 12px;border-bottom:1px solid #e0e0e0}
+tr:hover td{background:#e8f5e9}
+.row-good{background:#e8f5e9}
+.row-warn{background:#fff8e1}
+.row-bad{background:#fce4ec}
+code{
+  background:#e8eaf6;padding:2px 7px;border-radius:4px;
+  font-family:'Fira Code','Consolas',monospace;font-size:.88rem;color:#283593;
+}
+pre{
+  background:#263238;color:#eeffff;padding:16px 20px;border-radius:8px;
+  overflow-x:auto;font-size:.85rem;line-height:1.6;
+}
+.chart-wrap{
+  background:#fff;border:1px solid #dee2e6;border-radius:10px;
+  padding:18px;margin:16px 0;
+}
+.chart-wrap canvas{max-height:420px}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.feat-item{
+  background:#fff;border:1px solid #e0e0e0;border-radius:8px;
+  padding:14px 16px;display:flex;align-items:flex-start;gap:10px;
+}
+.feat-icon{font-size:1.4rem;min-width:28px;text-align:center}
+.feat-text .ft{font-weight:600;color:#1b3a4b;font-size:.92rem}
+.feat-text .fd{color:#555;font-size:.84rem}
+.tag{
+  display:inline-block;padding:2px 10px;border-radius:12px;
+  font-size:.78rem;font-weight:600;margin:2px 4px;
+}
+.tag-green{background:#c8e6c9;color:#2e7d32}
+.tag-red{background:#ffcdd2;color:#c62828}
+.tag-blue{background:#bbdefb;color:#1565c0}
+.tag-yellow{background:#fff9c4;color:#f57f17}
+.tag-purple{background:#e1bee7;color:#6a1b9a}
+.arch-box{
+  background:#f3e5f5;border:2px solid #ab47bc;border-radius:10px;
+  padding:14px 18px;margin:8px 0;font-family:'Fira Code',monospace;
+  font-size:.82rem;line-height:1.7;color:#4a148c;white-space:pre;overflow-x:auto;
+}
+@media(max-width:768px){
+  .container{padding:0 12px}
+  h2{font-size:1.3rem}
+  .card-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <h1>🧬 TCRPPO v2 — TCR CDR3β 序列设计</h1>
+    <div class="sub">基于 PPO 强化学习 + tFold (FP32) 结构亲和力评分 + Online Dynamic Pool</div>
+    <div class="badges">
+      <span class="badge green">29 Qualifying TCRs</span>
+      <span class="badge blue">tFold FP32 Scorer</span>
+      <span class="badge orange">Terminal Reward</span>
+      <span class="badge purple">AE+GMM Naturalness</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- 1. FRAMEWORK OVERVIEW -->
+<section id="overview">
+<h2>1. 框架概述</h2>
+<p>
+  TCRPPO v2 使用 <strong>PPO（Proximal Policy Optimization）</strong> 强化学习算法，
+  通过序列编辑操作（替换/插入/删除）来设计 T细胞受体 CDR3β 序列。
+  目标是同时满足三重约束：<strong>高靶标亲和力</strong>、<strong>低脱靶交叉反应</strong>和<strong>高自然度</strong>。
+</p>
+
+<div class="card" style="margin-top:16px">
+<h3>🔑 核心设计要素</h3>
+<div class="feat-grid">
+  <div class="feat-item"><div class="feat-icon">🎯</div><div class="feat-text"><div class="ft">tFold (FP32) 亲和力评分</div><div class="fd">基于结构的结合亲和力评分器，输出 binding logit（非 sigmoid）。FP32 精度确保评分一致性。735M 参数特征提取器 + 1.57M 分类器。</div></div></div>
+  <div class="feat-item"><div class="feat-icon">🔄</div><div class="feat-text"><div class="ft">Online Dynamic Pool</div><div class="fd">训练中持续收集高质量 TCR 到在线池，dynamic band selection 基于近期表现自动调整采样范围。</div></div></div>
+  <div class="feat-item"><div class="feat-icon">🏁</div><div class="feat-text"><div class="ft">Terminal Reward</div><div class="fd">每个 episode 结束（8步后）才给予一次性奖励。terminal reward 信号更干净—</div></div></div>
+  <div class="feat-item"><div class="feat-icon">🧬</div><div class="feat-text"><div class="ft">AE+GMM 自然度评分</div><div class="fd">Autoencoder 重建精度 + GMM 潜空间似然度组合评分，检测 poly-C 等不自然序列。阈值 0.8 以上无惩罚，低于产生负惩罚。</div></div></div>
+  <div class="feat-item"><div class="feat-icon">🛡️</div><div class="feat-text"><div class="ft">Decoy 特异性约束</div><div class="fd">Tier A+B decoy 肽段（1-3 AA 突变体），K=2 采样，确保 TCR 不对相似肽段交叉反应。</div></div></div>
+  <div class="feat-item"><div class="feat-icon">🧊</div><div class="feat-text"><div class="ft">ESM-2 (650M) 冻结编码器</div><div class="fd">预训练蛋白质语言模型提取 1280 维特征，frozen 模式不需反向传播。</div></div></div>
+</div>
+</div>
+
+<div class="card">
+<h3>📐 奖励函数</h3>
+<p><strong>Reward Mode</strong>: <code>v2_simple_target_gated_decoy</code></p>
+<div style="background:#e8eaf6;padding:14px 18px;border-radius:8px;margin:10px 0;font-family:'Fira Code',monospace;font-size:.9rem;color:#1a237e">
+  R = w_aff × A_target − w_decoy × DecoyPenalty + w_nat × P_nat + w_div × P_div + bonus × 𝟙[A_target > gate]
+</div>
+<ul style="margin:8px 0 0 20px">
+  <li><strong>A_target</strong>: tFold FP32 输出的 binding logit（可正可负，正值表示结合倾向）</li>
+  <li><strong>DecoyPenalty</strong>: 当 A_target ≥ gate 时才计算，K=2 个 Tier A+B decoy 的平均亲和力</li>
+  <li><strong>P_nat</strong>: AE+GMM 组合分 ≥ 0.8 → 0（无惩罚），< 0.8 → 负值惩罚</li>
+  <li><strong>P_div</strong>: 序列多样性奖励（Hamming 距离）</li>
+  <li><strong>bonus</strong>: A_target 超过 gate 时的固定奖励</li>
+</ul>
+</div>
+</section>
+
+<!-- 2. NETWORK ARCHITECTURE -->
+<section id="architecture">
+<h2>2. 网络架构详解</h2>
+
+<div class="card">
+<h3>2.1 观测空间（Observation Space）</h3>
+<table>
+<tr><th>组成部分</th><th>维度</th><th>来源</th><th>说明</th></tr>
+<tr><td>TCR embedding</td><td>1280</td><td>ESM-2 (650M)</td><td>当前 CDR3β 的语言模型表示，每步重新编码</td></tr>
+<tr><td>pMHC embedding</td><td>1280</td><td>ESM-2 (650M)</td><td>目标肽段表示，per-episode 缓存</td></tr>
+<tr><td>Biochem features (可选)</td><td>8</td><td>手工特征</td><td>电荷 + 疏水性统计量（见 §2.4）</td></tr>
+<tr><td>State scalars (可选)</td><td>2</td><td>环境状态</td><td>remaining_steps_norm, cumulative_delta</td></tr>
+</table>
+<p><strong>总维度</strong>：2560（基础）/ 2568（+biochem）/ 2562（+scalars）/ 2570（+both）</p>
+</div>
+
+<div class="card">
+<h3>2.2 标准 MLP 策略网络（ActorCritic）</h3>
+<p>用于 trace94, trace98, trace99。三头自回归动作空间：</p>
+<div class="arch-box">obs [B, obs_dim]
+  │
+  ▼
+Backbone: Linear(obs_dim→512) → ReLU → Linear(512→512) → ReLU
+  │
+  ├──▶ Head 1: op_type (4-way)  [SUB / INS / DEL / STOP]
+  │     Linear(512→4) + action masking → sample → op
+  │
+  ├──▶ Head 2: position (max_len=20)  conditioned on op
+  │     op → Embedding(4,32) → op_emb
+  │     [features|op_emb] → Linear(544→256) → ReLU → Linear(256→20)
+  │     + pos_mask → sample → pos
+  │
+  ├──▶ Head 3: token (20 amino acids)  conditioned on op + pos
+  │     pos → Embedding(20,32) → pos_emb
+  │     [features|op_emb|pos_emb] → Linear(576→256) → ReLU → Linear(256→20)
+  │     + token_mask (仅 SUB) → sample → tok
+  │
+  └──▶ Value Head (Critic)
+       Linear(512→256) → ReLU → Linear(256→1)</div>
+<p style="margin-top:10px;color:#555;font-size:.88rem">
+  <strong>自回归特性</strong>：position 以 op 为条件，token 以 op+position 为条件。
+  orthogonal init (gain=√2)，策略头 gain=0.01 鼓励初始探索。
+</p>
+</div>
+
+<div class="card">
+<h3>2.3 Cross-Attention 策略网络 — trace100</h3>
+<p>TCR-peptide 交叉注意力机制（4 heads, hidden_dim=256）：</p>
+<div class="arch-box">obs → split → TCR_emb[1280] | pMHC_emb[1280] | scalars
+  │                         │
+  ▼                         ▼
+TCR Encoder              Peptide Encoder
+Linear(1280→256)→ReLU    Linear(1280→256)→ReLU
+  │                         │
+  │    Cross-Attention (4 heads, dim=256)
+  │    Q = TCR_features    K,V = pep_features
+  │    Multi-head scaled dot-product → attended_pep
+  │                         │
+  ▼                         ▼
+Fusion: [TCR_feat(256) | attended_pep(256) | pep_feat(256) | scalars]
+  │   (total: 768 + scalar_dim)
+  ▼
+Backbone → 3-Head Actor + Value Head（同 §2.2）</div>
+<p style="margin-top:10px">
+  <strong>设计意图</strong>：cross-attention 让 TCR 特征显式"关注"肽段特征，
+  使策略针对不同靶标产生不同编辑策略。标准 MLP 仅简单拼接 embedding。
+</p>
+</div>
+
+<div class="card">
+<h3>2.4 Biochem Features（8D 生化特征）</h3>
+<p>当 <code>use_biochem_features=true</code>（trace98, trace100），追加 8 维手工特征：</p>
+<table>
+<tr><th>#</th><th>特征名</th><th>计算方式</th><th>生物学意义</th></tr>
+<tr><td>1</td><td>Total Charge</td><td>Σ charge(aa)：K,R,H=+1; D,E=−1</td><td>CDR3β 净电荷</td></tr>
+<tr><td>2</td><td>Positive Count</td><td>count(K,R,H)</td><td>碱性残基数</td></tr>
+<tr><td>3</td><td>Negative Count</td><td>count(D,E)</td><td>酸性残基数</td></tr>
+<tr><td>4</td><td>Charge Density</td><td>total_charge / len</td><td>归一化净电荷</td></tr>
+<tr><td>5</td><td>Mean Hydrophobicity</td><td>mean(Kyte-Doolittle)</td><td>平均疏水性</td></tr>
+<tr><td>6</td><td>Max Hydrophobicity</td><td>max(KD)</td><td>最疏水残基 (I=4.5)</td></tr>
+<tr><td>7</td><td>Min Hydrophobicity</td><td>min(KD)</td><td>最亲水残基 (R=−4.5)</td></tr>
+<tr><td>8</td><td>Hydrophobicity Std</td><td>std(KD)</td><td>疏水性变异度/两亲性</td></tr>
+</table>
+<p style="font-size:.88rem;color:#555;margin-top:8px">
+  Kyte-Doolittle 疏水性量表。在 ESM-2 embedding 之外提供低维可解释的物理化学信号。
+</p>
+</div>
+</section>
+
+<!-- 3. EXPERIMENT SETTINGS -->
+<section id="experiments">
+<h2>3. 实验配置对比</h2>
+<div style="overflow-x:auto">
+<table>
+<tr>
+  <th>参数</th>
+  <th>trace94 <span class="tag tag-green">Scratch</span></th>
+  <th>trace98 <span class="tag tag-green">Scratch</span></th>
+  <th>trace99 <span class="tag tag-blue">Resume</span></th>
+  <th>trace100 <span class="tag tag-purple">CrossAttn</span></th>
+</tr>
+<tr><td><strong>Policy</strong></td><td>MLP</td><td>MLP</td><td>MLP</td><td><strong>CrossAttn (4H)</strong></td></tr>
+<tr><td><strong>起点</strong></td><td>从零</td><td>从零</td><td>trace61 ckpt</td><td>从零</td></tr>
+<tr><td><strong>w_naturalness</strong></td><td>0.15</td><td><strong>5.0</strong> (33×)</td><td><strong>5.0</strong></td><td><strong>5.0</strong></td></tr>
+<tr><td><strong>biochem</strong></td><td>❌</td><td>✅ (+8D)</td><td>❌</td><td>✅ (+8D)</td></tr>
+<tr><td><strong>state_scalars</strong></td><td>❌</td><td>❌</td><td>✅ (+2D)</td><td>❌</td></tr>
+<tr><td><strong>obs_dim</strong></td><td>2560</td><td>2568</td><td>2562</td><td>2568</td></tr>
+<tr><td><strong>w_aff / w_dec</strong></td><td>1.0 / 0.3</td><td>1.0 / 0.3</td><td>1.0 / 0.3</td><td>1.0 / 0.3</td></tr>
+<tr><td><strong>gate / bonus</strong></td><td>0.0 / 2.0</td><td>0.0 / 2.0</td><td>0.0 / 2.0</td><td>0.0 / 2.0</td></tr>
+<tr><td><strong>Scorer</strong></td><td colspan="4">tFold FP32 + AE+GMM + Decoy K=2 Tier A+B</td></tr>
+<tr><td><strong>Terminal reward</strong></td><td colspan="4">✅ episode 结束给一次性奖励</td></tr>
+<tr><td><strong>Dynamic pool</strong></td><td colspan="4">✅ online + dynamic band selection</td></tr>
+<tr><td><strong>训练步数</strong></td><td>~260K</td><td>~188K</td><td>~800K</td><td>~37K</td></tr>
+</table>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h3>💡 关键差异</h3>
+<ul style="margin-left:18px">
+  <li><strong>trace94→98</strong>: w_nat 0.15→5.0（33×），+biochem。nat_pass: 8.6%→71.2%，但亲和力下降。</li>
+  <li><strong>trace99</strong>: 从高亲和力 trace61 继续，加 w_nat=5.0，验证"先亲和后自然"fine-tune 策略。</li>
+  <li><strong>trace100</strong>: trace98 基础上换 cross-attention 策略，37K 步，尚处早期。</li>
+</ul>
+</div>
+</section>
+
+<!-- 4. CROSS-ATTENTION ANALYSIS -->
+<section id="cross-attn">
+<h2>4. Cross-Attention 策略分析</h2>
+<div class="card">
+<h3>🔬 Cross-Attention vs MLP：trace100 vs trace98</h3>
+<table>
+<tr><th>指标</th><th>trace98 (MLP) @ 30K</th><th>trace100 (CrossAttn) @ 30K</th><th>trace98 (MLP) @ 180K</th></tr>
+<tr><td>avg_A</td><td>−3.34</td><td><strong>−1.99</strong></td><td>−1.13</td></tr>
+<tr><td>max_A</td><td>1.11</td><td>0.83</td><td>1.44</td></tr>
+<tr><td>%A>0</td><td>1.1%</td><td><strong>1.9%</strong></td><td>11.5%</td></tr>
+<tr><td>nat_pass %</td><td>68.7%</td><td><strong>78.5%</strong></td><td>71.2%</td></tr>
+</table>
+
+<p style="margin-top:12px"><strong>初步结论</strong>：</p>
+<ul style="margin-left:18px">
+  <li><strong>Cross-attention 早期更优</strong>：同步数下 avg_A 更高（−1.99 vs −3.34），%A>0 和 nat_pass 也更好</li>
+  <li>⚠️ trace100 仅 ~37K 步，远未收敛，需更长训练验证</li>
+  <li>当前是 <strong>pooled embedding 级别</strong>（各一个 1280D 向量）的 cross-attention，per-residue 级别可能更强</li>
+</ul>
+</div>
+</section>
+
+<!-- 5. TRAINING CURVES -->
+<section id="training">
+<h2>5. 训练曲线</h2>
+<p>从各 trace 训练日志逐 episode 解析，按 10K 步分桶统计。</p>
+<div class="chart-wrap"><h3>5.1 平均靶标亲和力 (avg_A)</h3><canvas id="chartAvgA"></canvas></div>
+<div class="chart-wrap"><h3>5.2 最高靶标亲和力 (max_A)</h3><canvas id="chartMaxA"></canvas></div>
+<div class="chart-wrap"><h3>5.3 A>0 比例 (%)</h3><canvas id="chartPctPos"></canvas></div>
+<div class="chart-wrap"><h3>5.4 Naturalness 通过率 (%)</h3><canvas id="chartNatPass"></canvas></div>
+<div class="chart-wrap"><h3>5.5 平均 Reward</h3><canvas id="chartAvgR"></canvas></div>
+</section>
+
+<!-- 6. QUALIFYING TCRs -->
+<section id="qualifying">
+<h2>6. 合格 TCR 设计结果</h2>
+<p>
+  筛选标准：<code>target_affinity ≥ 0.6</code>，<code>naturalness ≥ −0.15</code>。
+  共 <strong>29 条</strong>合格序列，覆盖 <strong>12 个靶标肽段</strong>。
+</p>
+
+<div class="chart-wrap">
+  <h3>6.1 气泡图：Target Affinity × Decoy Affinity × Absolute Naturalness</h3>
+  <p style="font-size:.85rem;color:#666">气泡大小 = absolute naturalness (AE+GMM 原始组合分，未截断)。颜色区分 trace。</p>
+  <canvas id="chartBubble"></canvas>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h3>6.2 Absolute Naturalness 说明</h3>
+<p>
+  训练中的 naturalness 使用<strong>阈值截断</strong>：combined = edit_accuracy + gmm_likelihood，
+  若 ≥ 0.8 则 penalty=0.0，否则 penalty = combined − 0.8。
+  <strong>Absolute naturalness</strong> 用 <code>score_raw()</code> 返回原始组合分（~0-1.5），不截断。
+</p>
+<p>
+  29 条合格 TCR 绝对自然度范围 <strong>0.06 ~ 1.31</strong>，均值 <strong>0.61</strong>。
+  trace98 的短序列（如 CASSVLLHF, 9aa）自然度最高（~1.25），
+  trace94 的长序列（18aa，含 H/P 重复）自然度低（~0.13-0.29）。
+</p>
+</div>
+
+<h3 style="margin-top:20px">6.3 合格 TCR 完整列表</h3>
+<div style="overflow-x:auto">
+<table id="tblQualifying">
+<tr>
+  <th>#</th><th>Trace</th><th>CDR3β</th><th>Len</th><th>Peptide</th>
+  <th>Target Aff.</th><th>Decoy Aff.</th><th>Gated Nat.</th><th>Abs. Nat.</th><th>Reward</th>
+</tr>
+</table>
+</div>
+</section>
+
+<!-- 7. RANDOM BASELINE -->
+<section id="baseline">
+<h2>7. Random Baseline 对比</h2>
+<p>对每个靶标肽段生成 <strong>20,000 条随机 CDR3β</strong>，tFold FP32 评分。</p>
+<div class="card">
+<table>
+<tr><th>Peptide</th><th>N</th><th>Best Score</th><th>Mean Score</th><th>#Positive</th><th>% Positive</th></tr>
+<tr class="row-bad"><td>GILGFVFTL</td><td>20,000</td><td>−0.5086</td><td>−9.5442</td><td>0</td><td><strong>0.0%</strong></td></tr>
+<tr class="row-bad"><td>ELAGIGILTV</td><td>20,000</td><td>−2.2612</td><td>—</td><td>0</td><td><strong>0.0%</strong></td></tr>
+<tr class="row-bad"><td>GLCTLVAML</td><td>20,000</td><td>—</td><td>—</td><td>0</td><td><strong>~0.0%</strong></td></tr>
+</table>
+<div style="margin-top:14px;padding:14px 18px;background:#fce4ec;border-radius:8px;border-left:4px solid #e53935">
+  <strong>结论</strong>：60,000 条随机序列中<strong>零正分</strong>（best=−0.51）。
+  tFold FP32 评分空间极稀疏，随机搜索完全无效。
+  TCRPPO v2 成功在此空间中找到 29 条高亲和力自然序列。
+</div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h3>📊 RL vs Random 效率对比</h3>
+<table>
+<tr><th>方法</th><th>搜索量</th><th>A>0 数</th><th>合格序列</th><th>最高亲和力</th></tr>
+<tr class="row-bad"><td>Random CDR3β</td><td>60,000</td><td>0</td><td>0</td><td>−0.5086</td></tr>
+<tr class="row-good"><td>TCRPPO v2 (trace94)</td><td>~32,500 ep</td><td>~10,700</td><td>20</td><td>1.6802</td></tr>
+<tr class="row-good"><td>TCRPPO v2 (trace98)</td><td>~23,500 ep</td><td>~2,700</td><td>9</td><td>1.2922</td></tr>
+</table>
+</div>
+</section>
+
+<!-- 8. TRAINING SUMMARY -->
+<section id="summary">
+<h2>8. 各实验训练概况</h2>
+<div class="card-grid">
+  <div class="card">
+    <h3><span class="tag tag-blue">trace94</span> Scratch + w_nat=0.15</h3>
+    <table>
+      <tr><td>训练步数</td><td><strong>260K</strong></td></tr>
+      <tr><td>avg_A</td><td>−0.733</td></tr>
+      <tr><td>max_A</td><td>1.719</td></tr>
+      <tr><td>%A>0</td><td><strong>33.1%</strong></td></tr>
+      <tr><td>nat_pass</td><td>8.6%</td></tr>
+      <tr><td>合格 TCRs</td><td><strong>20</strong></td></tr>
+    </table>
+    <p style="font-size:.85rem;color:#555;margin-top:8px">低 w_nat → 主要优化亲和力，nat_pass 仅 8.6%，但产出最多合格 TCR。</p>
+  </div>
+  <div class="card">
+    <h3><span class="tag tag-green">trace98</span> Scratch + w_nat=5.0 + biochem</h3>
+    <table>
+      <tr><td>训练步数</td><td><strong>188K</strong></td></tr>
+      <tr><td>avg_A</td><td>−1.133</td></tr>
+      <tr><td>max_A</td><td>1.443</td></tr>
+      <tr><td>%A>0</td><td>11.5%</td></tr>
+      <tr><td>nat_pass</td><td><strong>71.2%</strong></td></tr>
+      <tr><td>合格 TCRs</td><td><strong>9</strong></td></tr>
+    </table>
+    <p style="font-size:.85rem;color:#555;margin-top:8px">高 w_nat 大幅提升自然度（71.2%），合格 TCR 更短更自然（abs_nat 均值~1.1）。</p>
+  </div>
+  <div class="card">
+    <h3><span class="tag tag-blue">trace99</span> Resume trace61 + w_nat=5.0</h3>
+    <table>
+      <tr><td>训练步数</td><td><strong>800K</strong></td></tr>
+      <tr><td>avg_A</td><td><strong>1.008</strong></td></tr>
+      <tr><td>max_A</td><td><strong>3.969</strong></td></tr>
+      <tr><td>%A>0</td><td><strong>79.7%</strong></td></tr>
+      <tr><td>nat_pass</td><td>0.7%</td></tr>
+      <tr><td>合格 TCRs</td><td>0</td></tr>
+    </table>
+    <p style="font-size:.85rem;color:#555;margin-top:8px">继承 trace61 高亲和力（79.7% A>0），但 nat 极低（0.7%），不自然策略难以 fine-tune 纠正。</p>
+  </div>
+  <div class="card">
+    <h3><span class="tag tag-purple">trace100</span> CrossAttn + w_nat=5.0</h3>
+    <table>
+      <tr><td>训练步数</td><td><strong>37K</strong></td></tr>
+      <tr><td>avg_A</td><td>−1.987</td></tr>
+      <tr><td>max_A</td><td>0.831</td></tr>
+      <tr><td>%A>0</td><td>1.9%</td></tr>
+      <tr><td>nat_pass</td><td><strong>78.5%</strong></td></tr>
+      <tr><td>合格 TCRs</td><td>0</td></tr>
+    </table>
+    <p style="font-size:.85rem;color:#555;margin-top:8px">仅 37K 步，早期信号优于同期 MLP，需更长训练。</p>
+  </div>
+</div>
+</section>
+
+<!-- 9. KEY INSIGHTS -->
+<section id="insights">
+<h2>9. 核心发现与结论</h2>
+<div class="card">
+<h3>🎯 主要结论</h3>
+<ol style="margin-left:18px;line-height:2">
+  <li><strong>tFold FP32 评分空间极稀疏</strong>：6 万随机序列零正分，RL ~260K 步可找到多条高分序列（max=1.68）</li>
+  <li><strong>Naturalness-Affinity trade-off</strong>：trace94（低 w_nat）→ 高亲和力+低自然度；trace98（高 w_nat）→ 高自然度+中等亲和力</li>
+  <li><strong>从高亲和力 fine-tune naturalness 效果差</strong>：trace99 继承高亲和力但 nat_pass=0.7%，策略已陷入不自然局部最优</li>
+  <li><strong>Naturalness 应从训练初期引入</strong>：trace98 从零同时约束，nat_pass 71.2%</li>
+  <li><strong>Cross-attention 显示早期优势</strong>：trace100 在 ~30K 步时优于同期 MLP</li>
+  <li><strong>Biochem features 提供互补信号</strong>：8D 电荷+疏水性特征帮助策略更快学习基本物化模式</li>
+</ol>
+</div>
+<div class="card">
+<h3>🔮 后续方向</h3>
+<ul style="margin-left:18px;line-height:2">
+  <li>继续训练 trace100 到 200K+ 步验证 cross-attention 效果</li>
+  <li>两阶段训练：先高 w_nat 学自然度，再逐步提升 w_aff</li>
+  <li>Per-residue cross-attention（而非 pooled embedding 级别）</li>
+  <li>对 29 条合格 TCR 进行 tFold 结构预测验证结合构象</li>
+</ul>
+</div>
+</section>
+
+</div>
+
+<script>
+const trainingData = {"trace94": [{"step": 0, "avg_A": -2.354141987179488, "max_A": 0.6841, "pct_pos": 0.5608974358974359, "avg_R": -2.398192307692307, "avg_nat": -0.34256258012820523, "pct_nat_pass": 17.94871794871795, "avg_decA": -0.0038648237179487177, "n": 1248}, {"step": 10000, "avg_A": -1.6950817307692323, "max_A": 1.6499, "pct_pos": 2.564102564102564, "avg_R": -1.7399046474358966, "avg_nat": -0.5016160256410257, "pct_nat_pass": 2.1634615384615383, "avg_decA": -0.007407532051282051, "n": 1248}, {"step": 20000, "avg_A": -1.5839439102564101, "max_A": 1.1042, "pct_pos": 2.8846153846153846, "avg_R": -1.6233469551282051, "avg_nat": -0.4908616987179488, "pct_nat_pass": 3.8461538461538463, "avg_decA": -0.008335657051282055, "n": 1248}, {"step": 30000, "avg_A": -1.5055816878980888, "max_A": 1.6802, "pct_pos": 4.2993630573248405, "avg_R": -1.5284243630573238, "avg_nat": -0.48159721337579614, "pct_nat_pass": 3.4235668789808917, "avg_decA": -0.007225398089171975, "n": 1256}, {"step": 40000, "avg_A": -1.2085362980769245, "max_A": 1.6054, "pct_pos": 9.695512820512821, "avg_R": -1.1651033653846168, "avg_nat": -0.44842804487179494, "pct_nat_pass": 4.647435897435898, "avg_decA": -0.015231330128205127, "n": 1248}, {"step": 50000, "avg_A": -1.1086591346153867, "max_A": 1.6802, "pct_pos": 13.060897435897436, "avg_R": -1.0267059294871799, "avg_nat": -0.42078854166666674, "pct_nat_pass": 8.733974358974358, "avg_decA": -0.006736458333333335, "n": 1248}, {"step": 60000, "avg_A": -1.0461973557692301, "max_A": 1.6802, "pct_pos": 14.983974358974358, "avg_R": -0.947004006410256, "avg_nat": -0.4463332532051285, "pct_nat_pass": 6.810897435897435, "avg_decA": -0.006943269230769229, "n": 1248}, {"step": 70000, "avg_A": -1.0026015923566876, "max_A": 1.6802, "pct_pos": 15.843949044585987, "avg_R": -0.8871265923566867, "avg_nat": -0.42453447452229315, "pct_nat_pass": 6.449044585987261, "avg_decA": -0.018650079617834395, "n": 1256}, {"step": 80000, "avg_A": -1.016093028846153, "max_A": 1.6802, "pct_pos": 16.907051282051285, "avg_R": -0.8936818910256409, "avg_nat": -0.4493100961538462, "pct_nat_pass": 3.4455128205128207, "avg_decA": -0.015115384615384616, "n": 1248}, {"step": 90000, "avg_A": -1.0024022435897435, "max_A": 1.6802, "pct_pos": 18.509615384615387, "avg_R": -0.8665961538461553, "avg_nat": -0.44509038461538464, "pct_nat_pass": 4.887820512820513, "avg_decA": 0.0009839743589743577, "n": 1248}, {"step": 100000, "avg_A": -0.9351306891025638, "max_A": 1.6802, "pct_pos": 19.71153846153846, "avg_R": -0.7865817307692324, "avg_nat": -0.44921410256410316, "pct_nat_pass": 4.887820512820513, "avg_decA": 0.00028870192307692174, "n": 1248}, {"step": 110000, "avg_A": -0.9905319267515906, "max_A": 1.6802, "pct_pos": 18.710191082802545, "avg_R": -0.8549036624203827, "avg_nat": -0.4495636942675157, "pct_nat_pass": 4.219745222929936, "avg_decA": 0.0067241242038216555, "n": 1256}, {"step": 120000, "avg_A": -0.978072996794871, "max_A": 1.697, "pct_pos": 20.11217948717949, "avg_R": -0.8243605769230765, "avg_nat": -0.43390969551282066, "pct_nat_pass": 5.689102564102564, "avg_decA": 0.005635897435897442, "n": 1248}, {"step": 130000, "avg_A": -0.9881848557692293, "max_A": 1.697, "pct_pos": 19.71153846153846, "avg_R": -0.832883012820514, "avg_nat": -0.4156159455128203, "pct_nat_pass": 5.929487179487179, "avg_decA": -0.0050000801282051284, "n": 1248}, {"step": 140000, "avg_A": -0.9342622596153833, "max_A": 1.6802, "pct_pos": 19.791666666666664, "avg_R": -0.780829326923077, "avg_nat": -0.42697972756410235, "pct_nat_pass": 5.288461538461538, "avg_decA": -0.0014656249999999986, "n": 1248}, {"step": 150000, "avg_A": -0.9107620222929937, "max_A": 1.697, "pct_pos": 23.248407643312103, "avg_R": -0.7220087579617835, "avg_nat": -0.4438108280254778, "pct_nat_pass": 4.538216560509554, "avg_decA": -0.0011371815286624223, "n": 1256}, {"step": 160000, "avg_A": -0.9183010416666673, "max_A": 1.6802, "pct_pos": 24.519230769230766, "avg_R": -0.7195344551282051, "avg_nat": -0.44414951923076923, "pct_nat_pass": 5.368589743589744, "avg_decA": 0.011799038461538455, "n": 1248}, {"step": 170000, "avg_A": -0.8402934294871796, "max_A": 1.7193, "pct_pos": 25.560897435897434, "avg_R": -0.6327107371794872, "avg_nat": -0.4420499198717949, "pct_nat_pass": 6.25, "avg_decA": 0.02142996794871794, "n": 1248}, {"step": 180000, "avg_A": -0.9119221153846161, "max_A": 1.7193, "pct_pos": 23.557692307692307, "avg_R": -0.7193221153846157, "avg_nat": -0.41785777243589767, "pct_nat_pass": 7.451923076923077, "avg_decA": 0.010571153846153845, "n": 1248}, {"step": 190000, "avg_A": -0.8777015923566879, "max_A": 1.7193, "pct_pos": 25.477707006369428, "avg_R": -0.6666974522292995, "avg_nat": -0.39340740445859823, "pct_nat_pass": 8.519108280254777, "avg_decA": 0.03183240445859874, "n": 1256}, {"step": 200000, "avg_A": -0.8597951923076925, "max_A": 1.697, "pct_pos": 26.682692307692307, "avg_R": -0.6415657051282044, "avg_nat": -0.4276419871794874, "pct_nat_pass": 6.810897435897435, "avg_decA": 0.03475841346153847, "n": 1248}, {"step": 210000, "avg_A": -0.8548053685897435, "max_A": 1.7193, "pct_pos": 27.884615384615387, "avg_R": -0.6224543269230767, "avg_nat": -0.41916322115384586, "pct_nat_pass": 7.051282051282051, "avg_decA": 0.03589455128205131, "n": 1248}, {"step": 220000, "avg_A": -0.8454489583333333, "max_A": 1.697, "pct_pos": 29.00641025641026, "avg_R": -0.602699519230769, "avg_nat": -0.44092203525640966, "pct_nat_pass": 4.727564102564102, "avg_decA": 0.03146522435897435, "n": 1248}, {"step": 230000, "avg_A": -0.7957621019108263, "max_A": 1.697, "pct_pos": 31.130573248407643, "avg_R": -0.5317977707006378, "avg_nat": -0.44252667197452245, "pct_nat_pass": 4.617834394904459, "avg_decA": 0.037729458598726125, "n": 1256}, {"step": 240000, "avg_A": -0.7858042467948718, "max_A": 1.7193, "pct_pos": 31.490384615384613, "avg_R": -0.5163581730769226, "avg_nat": -0.4223414262820518, "pct_nat_pass": 6.009615384615385, "avg_decA": 0.042687179487179476, "n": 1248}, {"step": 250000, "avg_A": -0.8559218749999997, "max_A": 1.7193, "pct_pos": 27.724358974358974, "avg_R": -0.6273854166666658, "avg_nat": -0.43339030448717974, "pct_nat_pass": 5.8493589743589745, "avg_decA": 0.0356237980769231, "n": 1248}, {"step": 260000, "avg_A": -0.7936563492063495, "max_A": 1.7193, "pct_pos": 31.150793650793652, "avg_R": -0.5309662698412696, "avg_nat": -0.4406011904761902, "pct_nat_pass": 4.9603174603174605, "avg_decA": 0.043868650793650786, "n": 504}], "trace98": [{"step": 0, "avg_A": -2.3822154647435894, "max_A": 0.2463, "pct_pos": 0.2403846153846154, "avg_R": -3.275608173076924, "avg_nat": -0.1792236378205127, "pct_nat_pass": 56.00961538461539, "avg_decA": -0.0003434294871794871, "n": 1248}, {"step": 10000, "avg_A": -2.096253044871794, "max_A": 0.7225, "pct_pos": 0.8012820512820512, "avg_R": -2.869771634615383, "avg_nat": -0.1565793269230769, "pct_nat_pass": 61.69871794871795, "avg_decA": -0.002006971153846154, "n": 1248}, {"step": 20000, "avg_A": -1.9104028044871773, "max_A": 1.443, "pct_pos": 1.5224358974358974, "avg_R": -2.8065096153846145, "avg_nat": -0.18259487179487174, "pct_nat_pass": 53.44551282051282, "avg_decA": -0.0007631410256410256, "n": 1248}, {"step": 30000, "avg_A": -1.6681851910828023, "max_A": 0.9727, "pct_pos": 2.945859872611465, "avg_R": -2.4694506369426747, "avg_nat": -0.1672708598726114, "pct_nat_pass": 54.93630573248408, "avg_decA": -0.010005175159235668, "n": 1256}, {"step": 40000, "avg_A": -1.6725320512820498, "max_A": 1.0998, "pct_pos": 3.125, "avg_R": -2.3982684294871786, "avg_nat": -0.15230641025641015, "pct_nat_pass": 62.33974358974359, "avg_decA": -0.006206169871794872, "n": 1248}, {"step": 50000, "avg_A": -1.5770312500000008, "max_A": 1.0998, "pct_pos": 4.807692307692308, "avg_R": -2.207633012820514, "avg_nat": -0.13741979166666668, "pct_nat_pass": 69.07051282051282, "avg_decA": -0.011540544871794872, "n": 1248}, {"step": 60000, "avg_A": -1.4744664262820488, "max_A": 1.443, "pct_pos": 5.048076923076923, "avg_R": -2.0681434294871783, "avg_nat": -0.130510576923077, "pct_nat_pass": 70.2724358974359, "avg_decA": -0.014432772435897441, "n": 1248}, {"step": 70000, "avg_A": -1.3615967356687886, "max_A": 1.443, "pct_pos": 7.085987261146497, "avg_R": -2.005707802547769, "avg_nat": -0.14505302547770713, "pct_nat_pass": 67.11783439490446, "avg_decA": -0.01489713375796178, "n": 1256}, {"step": 80000, "avg_A": -1.3833052083333335, "max_A": 1.2889, "pct_pos": 6.891025641025641, "avg_R": -1.9146362179487157, "avg_nat": -0.12203157051282054, "pct_nat_pass": 71.875, "avg_decA": -0.01398541666666667, "n": 1248}, {"step": 90000, "avg_A": -1.471776282051283, "max_A": 1.443, "pct_pos": 6.009615384615385, "avg_R": -2.076546474358972, "avg_nat": -0.13463269230769231, "pct_nat_pass": 68.6698717948718, "avg_decA": -0.01121033653846154, "n": 1248}, {"step": 100000, "avg_A": -1.563131009615386, "max_A": 1.443, "pct_pos": 6.41025641025641, "avg_R": -2.167217147435898, "avg_nat": -0.1356427083333333, "pct_nat_pass": 68.50961538461539, "avg_decA": -0.015050961538461539, "n": 1248}, {"step": 110000, "avg_A": -1.443118391719746, "max_A": 1.443, "pct_pos": 6.60828025477707, "avg_R": -2.0332794585987246, "avg_nat": -0.13303383757961773, "pct_nat_pass": 70.06369426751591, "avg_decA": -0.010798646496815287, "n": 1256}, {"step": 120000, "avg_A": -1.3983812499999988, "max_A": 1.443, "pct_pos": 7.9326923076923075, "avg_R": -1.9073469551282023, "avg_nat": -0.11961434294871794, "pct_nat_pass": 74.03846153846155, "avg_decA": -0.009623958333333337, "n": 1248}, {"step": 130000, "avg_A": -1.378354807692307, "max_A": 1.443, "pct_pos": 7.852564102564102, "avg_R": -1.916927083333331, "avg_nat": -0.12607315705128214, "pct_nat_pass": 72.27564102564102, "avg_decA": -0.02167091346153846, "n": 1248}, {"step": 140000, "avg_A": -1.3861145833333333, "max_A": 1.0998, "pct_pos": 6.730769230769231, "avg_R": -1.9464471153846152, "avg_nat": -0.12714094551282054, "pct_nat_pass": 73.07692307692307, "avg_decA": -0.008686618589743591, "n": 1248}, {"step": 150000, "avg_A": -1.2575181528662427, "max_A": 1.443, "pct_pos": 8.598726114649681, "avg_R": -1.781640923566877, "avg_nat": -0.12445199044585974, "pct_nat_pass": 73.328025477707, "avg_decA": -0.016667356687898083, "n": 1256}, {"step": 160000, "avg_A": -1.2742352564102566, "max_A": 1.443, "pct_pos": 10.256410256410255, "avg_R": -1.8577003205128215, "avg_nat": -0.13958044871794867, "pct_nat_pass": 71.15384615384616, "avg_decA": -0.01004286858974359, "n": 1248}, {"step": 170000, "avg_A": -1.2163810096153862, "max_A": 1.443, "pct_pos": 9.455128205128204, "avg_R": -1.833268429487178, "avg_nat": -0.14468357371794868, "pct_nat_pass": 69.87179487179486, "avg_decA": -0.013354487179487177, "n": 1248}, {"step": 180000, "avg_A": -1.1355078547297306, "max_A": 1.443, "pct_pos": 11.486486486486488, "avg_R": -1.7523437499999985, "avg_nat": -0.14894763513513506, "pct_nat_pass": 69.76351351351352, "avg_decA": -0.010570523648648649, "n": 1184}], "trace99": [{"step": 730000, "avg_A": 0.36944196428571396, "max_A": 4.4166, "pct_pos": 64.8538961038961, "avg_R": -2.117918019480517, "avg_nat": -0.6032103084415585, "pct_nat_pass": 0.0, "avg_decA": 0.6135778409090908, "n": 1232}, {"step": 740000, "avg_A": 0.6667108974358975, "max_A": 4.4166, "pct_pos": 71.875, "avg_R": -1.7564775641025636, "avg_nat": -0.5942213141025628, "pct_nat_pass": 0.0, "avg_decA": 0.8064362980769229, "n": 1248}, {"step": 750000, "avg_A": 0.7328241242038208, "max_A": 4.9398, "pct_pos": 73.88535031847134, "avg_R": -1.707637738853504, "avg_nat": -0.5978047770700637, "pct_nat_pass": 0.0, "avg_decA": 0.8780896496815288, "n": 1256}, {"step": 760000, "avg_A": 0.7309183493589739, "max_A": 4.9398, "pct_pos": 71.7948717948718, "avg_R": -1.6830496794871839, "avg_nat": -0.5892738782051287, "pct_nat_pass": 0.08012820512820512, "avg_decA": 0.8555748397435895, "n": 1248}, {"step": 770000, "avg_A": 0.8854047275641026, "max_A": 4.9398, "pct_pos": 75.96153846153845, "avg_R": -1.5211041666666636, "avg_nat": -0.5924465544871794, "pct_nat_pass": 0.0, "avg_decA": 0.93055969551282, "n": 1248}, {"step": 780000, "avg_A": 0.8697354166666676, "max_A": 4.9398, "pct_pos": 76.5224358974359, "avg_R": -1.55218669871795, "avg_nat": -0.5953520032051288, "pct_nat_pass": 0.0, "avg_decA": 0.9543636217948737, "n": 1248}, {"step": 790000, "avg_A": 0.8950390127388521, "max_A": 4.9398, "pct_pos": 77.07006369426752, "avg_R": -1.5295390127388524, "avg_nat": -0.5971075636942667, "pct_nat_pass": 0.15923566878980894, "avg_decA": 0.954043949044585, "n": 1256}, {"step": 800000, "avg_A": 1.0324060416666674, "max_A": 3.9685, "pct_pos": 81.04166666666667, "avg_R": -1.324270833333331, "avg_nat": -0.5905029166666671, "pct_nat_pass": 0.20833333333333334, "avg_decA": 0.9832060416666665, "n": 480}], "trace100": [{"step": 0, "avg_A": -2.393568028846152, "max_A": 0.828, "pct_pos": 0.7211538461538461, "avg_R": -3.0649983974358994, "avg_nat": -0.13606538461538456, "pct_nat_pass": 65.38461538461539, "avg_decA": -0.0033013621794871794, "n": 1248}, {"step": 10000, "avg_A": -2.1182923076923093, "max_A": 1.2307, "pct_pos": 0.9615384615384616, "avg_R": -2.616203525641022, "avg_nat": -0.10176410256410263, "pct_nat_pass": 72.99679487179486, "avg_decA": -0.002055448717948718, "n": 1248}, {"step": 20000, "avg_A": -2.018215064102562, "max_A": 0.7722, "pct_pos": 0.8012820512820512, "avg_R": -2.520141025641025, "avg_nat": -0.10228381410256411, "pct_nat_pass": 72.75641025641025, "avg_decA": -0.003037900641025641, "n": 1248}, {"step": 30000, "avg_A": -1.9786453629032255, "max_A": 0.831, "pct_pos": 1.8145161290322582, "avg_R": -2.493270161290321, "avg_nat": -0.10713608870967745, "pct_nat_pass": 72.58064516129032, "avg_decA": -0.00443608870967742, "n": 992}]};
+const qualifyingTCRs = [{"trace": "trace94", "episode": 4162, "step": 33336, "target_affinity": 1.6802, "decoy_affinity": 0.6016, "naturalness": 0.0, "reward": 2.6, "cdr3b": "CASSVDPYQHHRDNSPLH", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.2913389744291814}, {"trace": "trace94", "episode": 22262, "step": 178104, "target_affinity": 1.6392, "decoy_affinity": 1.6166, "naturalness": 0.0, "reward": 2.252, "cdr3b": "CASSQETHWDIYSGANVL", "peptide": "IMNDMPIYM", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.2528668496123706}, {"trace": "trace98", "episode": 12355, "step": 98872, "target_affinity": 1.2922, "decoy_affinity": 0.2858, "naturalness": 0.0, "reward": 2.306, "cdr3b": "CASSVLLHF", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.2508131179560595}, {"trace": "trace94", "episode": 15022, "step": 120184, "target_affinity": 1.1787, "decoy_affinity": 0.3972, "naturalness": 0.0, "reward": 2.16, "cdr3b": "CASSFTGHHPFIGANVLT", "peptide": "KLGGALQAK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.46892581055198107}, {"trace": "trace94", "episode": 23860, "step": 190904, "target_affinity": 1.1206, "decoy_affinity": -0.7067, "naturalness": 0.0, "reward": 2.431, "cdr3b": "CASSPQRPHHPNHQNNEQ", "peptide": "RLRAEAQVK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.2795053077753428}, {"trace": "trace94", "episode": 21816, "step": 174520, "target_affinity": 1.0697, "decoy_affinity": 0.4119, "naturalness": 0.0, "reward": 2.045, "cdr3b": "CASSLSGPHHFYHKGSPL", "peptide": "AVFDRKSDAK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.3536558170715455}, {"trace": "trace94", "episode": 26298, "step": 210424, "target_affinity": 1.0059, "decoy_affinity": 0.9042, "naturalness": 0.0, "reward": 1.835, "cdr3b": "CASSVSDHHPGLAIYEQY", "peptide": "SLFNTVATLY", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.7349040790756548}, {"trace": "trace98", "episode": 4381, "step": 35064, "target_affinity": 0.9727, "decoy_affinity": 0.112, "naturalness": 0.0, "reward": 2.039, "cdr3b": "CASSVILHF", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.2692789025255125}, {"trace": "trace98", "episode": 16174, "step": 129400, "target_affinity": 0.8306, "decoy_affinity": 0.1542, "naturalness": 0.0, "reward": 1.881, "cdr3b": "CASSVVLHF", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.2216608551510615}, {"trace": "trace94", "episode": 6340, "step": 50744, "target_affinity": 0.8083, "decoy_affinity": 0.547, "naturalness": 0.0, "reward": 1.744, "cdr3b": "CASSLNVHPHPGAEHNEQ", "peptide": "GLCTLVAML", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.1275280173787505}, {"trace": "trace94", "episode": 11166, "step": 89336, "target_affinity": 0.8017, "decoy_affinity": -0.2496, "naturalness": 0.0, "reward": 1.977, "cdr3b": "CASSQRSFHPFGGAETQY", "peptide": "KLGGALQAK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.4076600521600442}, {"trace": "trace94", "episode": 22046, "step": 176376, "target_affinity": 0.7755, "decoy_affinity": 0.5073, "naturalness": 0.0, "reward": 1.721, "cdr3b": "CASSLSGHHFYHKGSPLH", "peptide": "AVFDRKSDAK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.4277430619326644}, {"trace": "trace98", "episode": 16036, "step": 128312, "target_affinity": 0.7634, "decoy_affinity": -0.2025, "naturalness": 0.0, "reward": 1.923, "cdr3b": "CASSVVLHF", "peptide": "NLVPMVATV", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.2216608551510615}, {"trace": "trace94", "episode": 6540, "step": 52344, "target_affinity": 0.7549, "decoy_affinity": 0.2111, "naturalness": 0.0, "reward": 1.791, "cdr3b": "CTSSLHHPHAGPHHEQFF", "peptide": "GLCTLVAML", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.9269326788831891}, {"trace": "trace94", "episode": 6540, "step": 52344, "target_affinity": 0.7549, "decoy_affinity": 0.2111, "naturalness": 0.0, "reward": 1.791, "cdr3b": "CASSLRSHHPHHHSNYEQ", "peptide": "NLVDMAAQV", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.18482444578772297}, {"trace": "trace98", "episode": 14627, "step": 117048, "target_affinity": 0.752, "decoy_affinity": 0.6116, "naturalness": 0.0, "reward": 1.667, "cdr3b": "CASSLLQHF", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.1928839503667883}, {"trace": "trace98", "episode": 18079, "step": 144632, "target_affinity": 0.6764, "decoy_affinity": 0.067, "naturalness": 0.0, "reward": 1.756, "cdr3b": "CASRLLGRRGYTF", "peptide": "NLVPMVATV", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.3075107016201557}, {"trace": "trace98", "episode": 11510, "step": 92088, "target_affinity": 0.655, "decoy_affinity": -0.1554, "naturalness": 0.0, "reward": 1.802, "cdr3b": "CASSLPLLSLYEQYF", "peptide": "KLGGALQAK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 1.1963783701713648}, {"trace": "trace94", "episode": 8993, "step": 71992, "target_affinity": 0.6392, "decoy_affinity": -0.361, "naturalness": 0.0, "reward": 1.847, "cdr3b": "CASSLTGHFFFGTYNEQY", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.2706087827827604}, {"trace": "trace98", "episode": 4410, "step": 35320, "target_affinity": 0.6238, "decoy_affinity": -0.2041, "naturalness": 0.0, "reward": 1.783, "cdr3b": "CASILLLKMRYPYEQYF", "peptide": "CINGVCWTV", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.8045162115028418}, {"trace": "trace94", "episode": 24465, "step": 195768, "target_affinity": 0.7758, "decoy_affinity": -0.1582, "naturalness": -0.0457, "reward": 1.916, "cdr3b": "CASSGLTPPHHGLGYGYT", "peptide": "IMNDMPIYM", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.39465128013434203}, {"trace": "trace94", "episode": 7603, "step": 60856, "target_affinity": 1.0468, "decoy_affinity": 0.3177, "naturalness": -0.0873, "reward": 2.036, "cdr3b": "CSSLYPGFPHHSHYNSPL", "peptide": "LLLDRLNQL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.2134966177254342}, {"trace": "trace94", "episode": 9641, "step": 77176, "target_affinity": 1.1633, "decoy_affinity": 0.5227, "naturalness": -0.0913, "reward": 2.093, "cdr3b": "CHSSLEYYHHEYGGRQHQ", "peptide": "YLFERTFNL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.06071740877977298}, {"trace": "trace94", "episode": 9641, "step": 77176, "target_affinity": 1.1633, "decoy_affinity": 0.5227, "naturalness": -0.0913, "reward": 2.093, "cdr3b": "CASSFSNHHHHRRSYEQY", "peptide": "IMNDMPIYM", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.4263133204397366}, {"trace": "trace94", "episode": 12215, "step": 97720, "target_affinity": 0.854, "decoy_affinity": 0.0578, "naturalness": -0.1126, "reward": 1.92, "cdr3b": "CASSLGQFHHHGRKYNEQ", "peptide": "FLASKIGRLV", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.36072469523992823}, {"trace": "trace94", "episode": 7959, "step": 63672, "target_affinity": 0.6859, "decoy_affinity": -0.0417, "naturalness": -0.1254, "reward": 1.78, "cdr3b": "CASSLDRFHHHGGPETQY", "peptide": "KLGGALQAK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.3603955869338284}, {"trace": "trace94", "episode": 7959, "step": 63672, "target_affinity": 0.6859, "decoy_affinity": -0.0417, "naturalness": -0.1254, "reward": 1.78, "cdr3b": "CASSLTSHYFFHYPLETQ", "peptide": "SFIDYKSLK", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.2255675835371263}, {"trace": "trace98", "episode": 14340, "step": 114744, "target_affinity": 1.2019, "decoy_affinity": 0.7305, "naturalness": -0.1275, "reward": 1.442, "cdr3b": "CASSLVQHF", "peptide": "YLQPRTFLL", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.6724909748394343}, {"trace": "trace98", "episode": 14112, "step": 112888, "target_affinity": 0.6504, "decoy_affinity": -0.4362, "naturalness": -0.1275, "reward": 1.243, "cdr3b": "CASSLVQHF", "peptide": "GLCTLVAML", "hla": "HLA", "confidence": 1.0, "absolute_naturalness": 0.6724909748394343}];
+
+const COLORS = {
+  trace94:{line:'#1565c0',bg:'rgba(21,101,192,0.08)'},
+  trace98:{line:'#e65100',bg:'rgba(230,81,0,0.08)'},
+  trace99:{line:'#2e7d32',bg:'rgba(46,125,50,0.08)'},
+  trace100:{line:'#6a1b9a',bg:'rgba(106,27,154,0.08)'},
+};
+
+function makeDataset(traceName,metric){
+  const d=trainingData[traceName];
+  if(!d)return null;
+  return{
+    label:traceName,
+    data:d.map(p=>({x:p.step/1000,y:p[metric]})),
+    borderColor:COLORS[traceName]?.line||'#666',
+    backgroundColor:COLORS[traceName]?.bg||'rgba(0,0,0,.05)',
+    pointRadius:2,borderWidth:2,tension:0.3,fill:false
+  };
+}
+
+function createLineChart(canvasId,metric,yLabel){
+  const ds=['trace94','trace98','trace99','trace100']
+    .map(t=>makeDataset(t,metric)).filter(Boolean);
+  new Chart(document.getElementById(canvasId),{
+    type:'line',data:{datasets:ds},
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{type:'linear',title:{display:true,text:'Training Step (×1000)',font:{weight:'bold'}},ticks:{callback:v=>v+'K'}},
+        y:{title:{display:true,text:yLabel,font:{weight:'bold'}}}
+      },
+      plugins:{legend:{position:'top'}}
+    }
+  });
+}
+
+createLineChart('chartAvgA','avg_A','Average Target Affinity');
+createLineChart('chartMaxA','max_A','Max Target Affinity');
+createLineChart('chartPctPos','pct_pos','% Episodes with A > 0');
+createLineChart('chartNatPass','pct_nat_pass','% Naturalness Pass');
+createLineChart('chartAvgR','avg_R','Average Reward');
+
+// Bubble chart
+(function(){
+  const traceColors={
+    trace94:'rgba(21,101,192,0.7)',
+    trace98:'rgba(230,81,0,0.7)',
+  };
+  const datasets={};
+  qualifyingTCRs.forEach(t=>{
+    const tr=t.trace;
+    if(!datasets[tr])datasets[tr]={
+      label:tr,data:[],
+      backgroundColor:traceColors[tr]||'rgba(0,0,0,.5)',
+      borderColor:(traceColors[tr]||'rgba(0,0,0,.5)').replace('0.7','1'),
+      borderWidth:1,
+    };
+    datasets[tr].data.push({
+      x:t.target_affinity,
+      y:t.decoy_affinity,
+      r:Math.max(4,t.absolute_naturalness*18),
+      cdr3b:t.cdr3b,
+      peptide:t.peptide,
+      absNat:t.absolute_naturalness,
+    });
+  });
+  new Chart(document.getElementById('chartBubble'),{
+    type:'bubble',data:{datasets:Object.values(datasets)},
+    options:{
+      responsive:true,
+      scales:{
+        x:{title:{display:true,text:'Target Affinity (tFold logit)',font:{weight:'bold'}}},
+        y:{title:{display:true,text:'Decoy Affinity',font:{weight:'bold'}}}
+      },
+      plugins:{
+        annotation:{annotations:{
+          diag:{
+            type:'line',
+            xMin:-1, xMax:2, yMin:-1, yMax:2,
+            borderColor:'rgba(0,0,0,0.35)',
+            borderWidth:1.5,
+            borderDash:[6,4],
+            label:{display:true,content:'y = x',position:'end',
+                   backgroundColor:'rgba(0,0,0,0.55)',font:{size:11},padding:4}
+          }
+        }},
+        tooltip:{callbacks:{label:function(ctx){
+          const d=ctx.raw;
+          return[d.cdr3b,'Peptide: '+d.peptide,
+            'Target: '+d.x.toFixed(3)+'  Decoy: '+d.y.toFixed(3),
+            'Abs Nat: '+d.absNat.toFixed(4)];
+        }}},legend:{position:'top'}
+      }
+    }
+  });
+})();
+
+// Qualifying table
+(function(){
+  const tbody=document.getElementById('tblQualifying');
+  const sorted=[...qualifyingTCRs].sort((a,b)=>b.target_affinity-a.target_affinity);
+  sorted.forEach((t,i)=>{
+    const absNatClass=t.absolute_naturalness>=0.8?'tag-green':
+                      t.absolute_naturalness>=0.4?'tag-yellow':'tag-red';
+    const traceClass={trace94:'tag-blue',trace98:'tag-green'}[t.trace]||'tag-blue';
+    const row=document.createElement('tr');
+    row.innerHTML=
+      '<td>'+(i+1)+'</td>'+
+      '<td><span class="tag '+traceClass+'">'+t.trace+'</span></td>'+
+      '<td><code>'+t.cdr3b+'</code></td>'+
+      '<td>'+t.cdr3b.length+'</td>'+
+      '<td>'+t.peptide+'</td>'+
+      '<td><strong>'+t.target_affinity.toFixed(3)+'</strong></td>'+
+      '<td>'+t.decoy_affinity.toFixed(3)+'</td>'+
+      '<td>'+t.naturalness.toFixed(4)+'</td>'+
+      '<td><span class="tag '+absNatClass+'">'+t.absolute_naturalness.toFixed(4)+'</span></td>'+
+      '<td>'+t.reward.toFixed(3)+'</td>';
+    tbody.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>

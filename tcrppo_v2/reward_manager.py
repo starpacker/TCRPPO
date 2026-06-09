@@ -88,7 +88,9 @@ class RewardManager:
         improve_low_init_min_delta: float = 0.05,
         improve_low_init_weight: float = 0.0,
         improve_low_init_max_penalty: Optional[float] = None,
+        pretrain_naturalness_only: bool = False,
     ):
+        self.pretrain_naturalness_only = pretrain_naturalness_only
         self.affinity_scorer = affinity_scorer
         self.decoy_scorer = decoy_scorer
         self.naturalness_scorer = naturalness_scorer
@@ -665,6 +667,19 @@ class RewardManager:
         target = target or peptide
         components = {}
 
+        # ---- Pretrain mode: reward = raw naturalness score (0~1) ----
+        if self.pretrain_naturalness_only and self.naturalness_scorer is not None:
+            raw = self.naturalness_scorer.score_raw(tcr)
+            components["naturalness_raw_combined"] = raw
+            components["affinity_raw"] = 0.0
+            components["initial_affinity"] = 0.0
+            components["affinity_step_delta"] = 0.0
+            components["affinity_sigmoid"] = 0.5
+            components["decoy_raw"] = 0.0
+            components["naturalness_raw"] = raw
+            components["diversity_raw"] = 0.0
+            return raw, components
+
         # Affinity
         if self.affinity_scorer is not None and self.reward_mode != "disabled":
             # For OOD penalty mode, use score_batch to get uncertainty
@@ -988,6 +1003,27 @@ class RewardManager:
         n = len(tcrs)
         targets = targets or peptides
         initial_tcrs = initial_tcrs or [None] * n
+
+        # ---- Pretrain mode: reward = raw naturalness score (0~1) ----
+        if self.pretrain_naturalness_only and self.naturalness_scorer is not None:
+            if hasattr(self.naturalness_scorer, 'score_raw_batch'):
+                raws = self.naturalness_scorer.score_raw_batch(tcrs)
+            else:
+                raws = [self.naturalness_scorer.score_raw(t) for t in tcrs]
+            all_rewards = raws
+            all_components = []
+            for raw in raws:
+                all_components.append({
+                    "naturalness_raw_combined": raw,
+                    "affinity_raw": 0.0,
+                    "initial_affinity": 0.0,
+                    "affinity_step_delta": 0.0,
+                    "affinity_sigmoid": 0.5,
+                    "decoy_raw": 0.0,
+                    "naturalness_raw": raw,
+                    "diversity_raw": 0.0,
+                })
+            return all_rewards, all_components
 
         all_rewards = []
         all_components = []

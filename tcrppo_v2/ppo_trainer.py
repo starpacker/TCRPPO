@@ -630,6 +630,10 @@ class PPOTrainer:
                 ergo_weight=ergo_weight,
             )
             print(f"  Cascade scorer (ERGO → tFold if score > {cascade_threshold})")
+        elif affinity_model == "none":
+            # Pretrain mode: no affinity scoring
+            affinity_scorer = None
+            print("  Affinity scorer: NONE (pretrain mode)")
         else:  # default: ergo
             from tcrppo_v2.scorers.affinity_ergo import AffinityERGOScorer
             model_file = os.path.join(ERGO_MODEL_DIR, "ae_mcpas1.pt")
@@ -934,6 +938,7 @@ class PPOTrainer:
             improve_low_init_min_delta=self.config.get("improve_low_init_min_delta", 0.05),
             improve_low_init_weight=self.config.get("improve_low_init_weight", 0.0),
             improve_low_init_max_penalty=self.config.get("improve_low_init_max_penalty"),
+            pretrain_naturalness_only=self.config.get("pretrain_naturalness_only", False),
         )
 
         pmhc_obs_transform = self._build_pmhc_obs_transform(esm_cache, pmhc_loader, targets)
@@ -957,6 +962,7 @@ class PPOTrainer:
             terminal_reward_only=self.config.get("terminal_reward_only", False),
             active_clipping=self.active_clipping,
             use_biochem_features=self.config.get("use_biochem_features", False),
+            include_state_scalars=self.config.get("include_state_scalars", False),
             allow_stop_at_step0=self.config.get("allow_stop_at_step0", False),
             stop_at_step0_min_init_affinity=self.config.get("stop_at_step0_min_init_affinity"),
             pmhc_obs_transform=pmhc_obs_transform,
@@ -969,6 +975,7 @@ class PPOTrainer:
             f"terminal_reward_only={self.config.get('terminal_reward_only', False)}, "
             f"active_clipping={self.active_clipping}, "
             f"use_biochem_features={self.config.get('use_biochem_features', False)}, "
+            f"include_state_scalars={self.config.get('include_state_scalars', False)}, "
             f"pmhc_transform={self.config.get('pmhc_embedding_transform', self.config.get('peptide_centering', 'none'))}"
         )
 

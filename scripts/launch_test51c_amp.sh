@@ -15,7 +15,7 @@ done
 
 echo "Checkpoint found! Launching test51c_amp..."
 
-CUDA_VISIBLE_DEVICES=2 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
+CUDA_VISIBLE_DEVICES=3 nohup $PYTHON -u tcrppo_v2/ppo_trainer.py \
     --config configs/test51c_amp.yaml \
     --run_name test51c_amp \
     --seed 42 \

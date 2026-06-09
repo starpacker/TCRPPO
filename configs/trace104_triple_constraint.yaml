@@ -1,0 +1,101 @@
+# trace104_triple_constraint: Resume trace61 + triple constraint (nat>0.7, target>0.6, decoy<0.6)
+#
+# Goal: Design TCRs that simultaneously satisfy:
+#   1. Naturalness > 0.7 (AE+GMM combined score)
+#   2. Target affinity > 0.6 (tFold logit)
+#   3. Max decoy affinity < 0.6
+#
+# Strategy:
+#   - Resume from trace61 (already has high affinity capability)
+#   - Use gate-based reward: only give positive reward when ALL 3 constraints satisfied
+#   - Strong penalty when any constraint violated
+#   - Reward = pass_bonus (if all pass) + individual penalties (if any fail)
+
+# Run settings
+seed: 104
+n_envs: 8
+total_steps: 100000
+device: "cuda"
+run_name: "trace104_triple_constraint"
+
+# Environment
+max_steps: 8
+max_tcr_len: 20
+min_tcr_len: 8
+ban_stop: true
+sub_only: false
+terminal_reward_only: true
+use_biochem_features: false  # MUST match trace61 ckpt
+include_state_scalars: true  # trace61 was trained with state scalars
+
+# Training
+batch_size: 256
+n_epochs: 4
+learning_rate: 0.0001
+gamma: 0.99
+gae_lambda: 0.95
+clip_range: 0.2
+clip_range_vf: null
+ent_coef: 0.001
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+# Reward mode: custom triple constraint
+reward_mode: "v2_simple_target_gated_decoy"  # Base mode with gating
+
+# Progressive triple constraint strategy:
+# Phase 1 (current): Learn A>0 first with relaxed gates
+# Phase 2 (manual switch): Raise gates progressively toward final goal
+# Final goal: Nat>0.7, Target>0.6, Decoy<0.6
+
+# Start with relaxed gates to allow learning
+naturalness_gate_affinity: false  # Disabled initially — use penalty only
+naturalness_gate_threshold: 0.5   # Will enable later at 0.5 → 0.6 → 0.7
+target_decoy_gate_logit: 0.0      # Start at 0.0 (learn A>0 first)
+target_pass_bonus: 2.0            # Moderate bonus (not all-or-nothing)
+
+# Weights — balanced for progressive learning
+w_affinity: 2.0      # Strong affinity signal
+w_decoy: 1.5         # Moderate decoy penalty (increases naturally when A rises)
+w_naturalness: 3.0   # Strong naturalness from start (AE+GMM threshold=0.7)
+w_diversity: 0.0
+
+# Naturalness — AE+GMM scorer (effective against poly-C)
+naturalness_scorer_type: "ae_gmm"
+naturalness_ae_model: "/share/liuyutian/TCRPPO/code/reward/ae_model"
+naturalness_gmm_model: "/share/liuyutian/TCRPPO/code/reward/gmm.pkl"
+naturalness_blosum: "/share/liuyutian/TCRPPO/code/blosum.txt"
+naturalness_ae_threshold: 0.7  # Gate threshold (combined AE+GMM score)
+
+# Decoy library
+decoy_library_path: "/share/liuyutian/pMHC_decoy_library"
+decoy_K: 8  # Use 8 decoys per target
+decoy_tau: 10.0
+decoy_tier_weights:
+  A: 1.0
+decoy_difficulty: "medium"  # Use medium decoys
+
+# Online TCR pool (resume from trace61)
+online_tcr_pool_start_step: 0      # Start immediately (already warm from trace61)
+online_tcr_pool_warmup_steps: 1    # No warmup needed
+online_tcr_pool_add_interval: 100
+online_tcr_pool_add_count: 4
+online_tcr_pool_capacity: 2000
+online_tcr_pool_sample_prob: 0.5
+online_tcr_pool_mutation_prob: 0.3
+online_tcr_pool_mutation_range: [1, 2]
+online_tcr_pool_min_hamming: 2
+
+# tFold affinity scorer
+affinity_scorer_type: "tfold"
+tfold_socket_path: "/tmp/tfold_server_trace104.sock"
+tfold_cache_path: "data/tfold_cache_trace104.db"
+tfold_timeout: 1800.0
+
+# Targets
+target_list: "data/peptides/trace_test_45.txt"
+
+# Logging
+log_interval: 100
+save_interval: 1000
+tensorboard: true

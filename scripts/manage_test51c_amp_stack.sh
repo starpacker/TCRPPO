@@ -9,20 +9,44 @@ ACTION="${1:-status}"
 TRACE_TAG="${2:-trace4}"
 GPU_ID="${3:-3}"
 
-RUN_NAME="test51c_amp_server_rerun_detached_${TRACE_TAG}"
+RUN_NAME_PREFIX="${RUN_NAME_PREFIX:-test51c_amp_server_rerun_detached}"
+LOG_PREFIX="${LOG_PREFIX:-test51c}"
+RUN_NAME="${RUN_NAME_PREFIX}_${TRACE_TAG}"
 LOG_DIR="${ROOT}/logs"
 STATE_DIR="${ROOT}/run_state"
 SOCKET_PATH="${SOCKET_PATH:-/tmp/tfold_server_${TRACE_TAG}.sock}"
 W_AFFINITY="${W_AFFINITY:-1.0}"
+W_DECOY="${W_DECOY:-0.0}"
 W_NATURALNESS="${W_NATURALNESS:-0.5}"
 W_DIVERSITY="${W_DIVERSITY:-0.2}"
 REWARD_MODE="${REWARD_MODE:-v2_no_decoy}"
 ENTROPY_COEF="${ENTROPY_COEF:-0.05}"
+TOTAL_TIMESTEPS="${TOTAL_TIMESTEPS:-2000000}"
+N_ENVS="${N_ENVS:-8}"
+LEARNING_RATE="${LEARNING_RATE:-3e-4}"
+HIDDEN_DIM="${HIDDEN_DIM:-512}"
+DISABLE_TFOLD_CACHE="${DISABLE_TFOLD_CACHE:-0}"
+MAX_STEPS="${MAX_STEPS:-8}"
+MIN_STEPS="${MIN_STEPS:-}"
+MIN_STEPS_PENALTY="${MIN_STEPS_PENALTY:-}"
+BAN_STOP="${BAN_STOP:-1}"
+SUB_ONLY="${SUB_ONLY:-0}"
+TERMINAL_REWARD_ONLY="${TERMINAL_REWARD_ONLY:-1}"
+ACTIVE_CLIPPING="${ACTIVE_CLIPPING:-0}"
+N_CONTRAST_DECOYS="${N_CONTRAST_DECOYS:-0}"
+CURRICULUM_L0="${CURRICULUM_L0:-0.5}"
+CURRICULUM_L1="${CURRICULUM_L1:-0.0}"
+CURRICULUM_L2="${CURRICULUM_L2:-0.5}"
+TRAIN_TARGETS="${TRAIN_TARGETS:-data/tfold_excellent_peptides.txt}"
+TFOLD_CACHE_PATH="${TFOLD_CACHE_PATH:-data/tfold_feature_cache.db}"
+DECOY_LIBRARY_PATH="${DECOY_LIBRARY_PATH:-/share/liuyutian/pMHC_decoy_library}"
+RESUME_FROM="${RESUME_FROM:-}"
+RESUME_RESET_OPTIMIZER="${RESUME_RESET_OPTIMIZER:-0}"
 CONFIG_RELATIVE="${CONFIG_PATH#${ROOT}/}"
 TRAIN_LOG="${LOG_DIR}/${RUN_NAME}_train.log"
-SERVER_LOG="${LOG_DIR}/test51c_tfold_amp_server_${TRACE_TAG}.log"
-COMPLETION_LOG="${LOG_DIR}/test51c_tfold_completion_${TRACE_TAG}.log"
-CONTROL_LOG="${LOG_DIR}/test51c_amp_stack_${TRACE_TAG}.launch.log"
+SERVER_LOG="${LOG_DIR}/${LOG_PREFIX}_tfold_amp_server_${TRACE_TAG}.log"
+COMPLETION_LOG="${LOG_DIR}/${LOG_PREFIX}_tfold_completion_${TRACE_TAG}.log"
+CONTROL_LOG="${LOG_DIR}/${LOG_PREFIX}_amp_stack_${TRACE_TAG}.launch.log"
 TRAIN_PID_FILE="${STATE_DIR}/${RUN_NAME}.trainer.pid"
 SERVER_PID_FILE="${STATE_DIR}/${RUN_NAME}.server.pid"
 LOCK_FILE="${STATE_DIR}/${RUN_NAME}.control.lock"
@@ -214,11 +238,39 @@ start_trainer() {
 
     : > "${TRAIN_LOG}"
 
-    log_control "Starting trainer run_name=${RUN_NAME} on GPU ${GPU_ID} reward_mode=${REWARD_MODE} entropy=${ENTROPY_COEF} config=${CONFIG_RELATIVE}"
+    log_control "Starting trainer run_name=${RUN_NAME} on GPU ${GPU_ID} reward_mode=${REWARD_MODE} entropy=${ENTROPY_COEF} total_timesteps=${TOTAL_TIMESTEPS} n_envs=${N_ENVS} max_steps=${MAX_STEPS} min_steps=${MIN_STEPS:-none} ban_stop=${BAN_STOP} sub_only=${SUB_ONLY} terminal_only=${TERMINAL_REWARD_ONLY} active_clipping=${ACTIVE_CLIPPING} decoy_w=${W_DECOY} n_decoys=${N_CONTRAST_DECOYS} curriculum=${CURRICULUM_L0}/${CURRICULUM_L1}/${CURRICULUM_L2} cache_disabled=${DISABLE_TFOLD_CACHE} resume_from=${RESUME_FROM:-none} reset_opt=${RESUME_RESET_OPTIMIZER} config=${CONFIG_RELATIVE}"
     (
         cd "${ROOT}"
         export CUDA_VISIBLE_DEVICES="${GPU_ID}"
         exec 9>&-
+        extra_args=()
+        if [[ "${DISABLE_TFOLD_CACHE}" == "1" ]]; then
+            extra_args+=(--disable_tfold_cache)
+        fi
+        if [[ "${BAN_STOP}" == "1" ]]; then
+            extra_args+=(--ban_stop)
+        fi
+        if [[ "${SUB_ONLY}" == "1" ]]; then
+            extra_args+=(--sub_only)
+        fi
+        if [[ "${TERMINAL_REWARD_ONLY}" == "1" ]]; then
+            extra_args+=(--terminal_reward_only)
+        fi
+        if [[ "${ACTIVE_CLIPPING}" == "1" ]]; then
+            extra_args+=(--active_clipping)
+        fi
+        if [[ -n "${MIN_STEPS}" ]]; then
+            extra_args+=(--min_steps "${MIN_STEPS}")
+        fi
+        if [[ -n "${MIN_STEPS_PENALTY}" ]]; then
+            extra_args+=(--min_steps_penalty "${MIN_STEPS_PENALTY}")
+        fi
+        if [[ -n "${RESUME_FROM}" ]]; then
+            extra_args+=(--resume_from "${RESUME_FROM}")
+        fi
+        if [[ "${RESUME_RESET_OPTIMIZER}" == "1" ]]; then
+            extra_args+=(--resume_reset_optimizer)
+        fi
         nohup setsid "${TRAIN_PYTHON}" -u tcrppo_v2/ppo_trainer.py \
             --config "${CONFIG_RELATIVE}" \
             --run_name "${RUN_NAME}" \
@@ -227,23 +279,24 @@ start_trainer() {
             --affinity_scorer tfold \
             --tfold_server_socket "${SOCKET_PATH}" \
             --encoder esm2 \
-            --total_timesteps 2000000 \
-            --n_envs 8 \
-            --learning_rate 3e-4 \
+            --total_timesteps "${TOTAL_TIMESTEPS}" \
+            --n_envs "${N_ENVS}" \
+            --learning_rate "${LEARNING_RATE}" \
             --entropy_coef "${ENTROPY_COEF}" \
-            --hidden_dim 512 \
-            --max_steps 8 \
-            --ban_stop \
-            --terminal_reward_only \
-            --n_contrast_decoys 0 \
+            --hidden_dim "${HIDDEN_DIM}" \
+            --max_steps "${MAX_STEPS}" \
+            --n_contrast_decoys "${N_CONTRAST_DECOYS}" \
             --w_affinity "${W_AFFINITY}" \
+            --w_decoy "${W_DECOY}" \
             --w_naturalness "${W_NATURALNESS}" \
             --w_diversity "${W_DIVERSITY}" \
-            --curriculum_l0 0.5 \
-            --curriculum_l1 0.0 \
-            --curriculum_l2 0.5 \
-            --train_targets data/tfold_excellent_peptides.txt \
-            --tfold_cache_path data/tfold_feature_cache.db \
+            --curriculum_l0 "${CURRICULUM_L0}" \
+            --curriculum_l1 "${CURRICULUM_L1}" \
+            --curriculum_l2 "${CURRICULUM_L2}" \
+            --train_targets "${TRAIN_TARGETS}" \
+            --tfold_cache_path "${TFOLD_CACHE_PATH}" \
+            --decoy_library_path "${DECOY_LIBRARY_PATH}" \
+            "${extra_args[@]}" \
             < /dev/null >> "${TRAIN_LOG}" 2>&1 &
         echo $! > "${TRAIN_PID_FILE}"
     )
@@ -300,7 +353,7 @@ print_status() {
     if [[ -n "${weights_line}" ]]; then
         echo "weights=${weights_line#*weights: }"
     else
-        echo "weights=affinity:${W_AFFINITY},naturalness:${W_NATURALNESS},diversity:${W_DIVERSITY}"
+        echo "weights=affinity:${W_AFFINITY},decoy:${W_DECOY},naturalness:${W_NATURALNESS},diversity:${W_DIVERSITY}"
     fi
     echo "trainer_pid=${trainer_pid:-none}"
     echo "trainer_alive=$([[ -n "${trainer_pid}" ]] && pid_alive "${trainer_pid}" && echo 1 || echo 0)"

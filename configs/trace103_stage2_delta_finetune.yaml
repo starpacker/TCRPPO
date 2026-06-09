@@ -1,0 +1,130 @@
+# trace103 Stage 2: Delta reward finetune from naturalness pretrain
+#
+# Strategy: Resume from stage1 (10k nat-pretrained checkpoint), switch to delta reward mode.
+# This solves the "absolute affinity often negative" problem by rewarding IMPROVEMENT.
+#
+# Key changes from stage1:
+#   - pretrain_naturalness_only: false (enable multi-objective)
+#   - use_delta_reward: true (CRITICAL!)
+#   - affinity_model: tfold (enable affinity scoring)
+#   - online_tcr_pool_enabled: true
+#   - target_pass_bonus: 3.0 (strong incentive for passing gate)
+#   - target_decoy_gate_logit: 0.0 (threshold)
+#
+# Why delta reward works:
+#   - Absolute: affinity = -2.0, nat = -0.3, reward = -2.0 + 8*(-0.3) = -4.4 (bad!)
+#   - Delta: delta_aff = +3.0 (improved from -5 to -2), reward = +3.0 + 8*(-0.3) = +0.6 (good!)
+
+total_timesteps: 1_000_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 0.00005  # 5e-5, lower than pretrain to preserve naturalness
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.02  # Higher exploration for multi-objective
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+use_biochem_features: false  # MUST match stage1
+include_state_scalars: true  # MUST match stage1
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# ====== STAGE 2: MULTI-OBJECTIVE WITH DELTA REWARD ======
+pretrain_naturalness_only: false  # Disable pretrain mode
+
+reward_mode: "v2_simple_target_gated_decoy"
+use_delta_reward: true  # CRITICAL: use improvement-based reward!
+
+# Balanced weights for delta mode
+w_affinity: 1.0
+w_decoy: 0.3
+w_naturalness: 8.0  # Strong naturalness weight to preserve pretrain gains
+w_diversity: 0.02
+
+# ====== TARGET GATE (threshold=0.0, bonus=3.0) ======
+target_decoy_gate_logit: 0.0  # Gate threshold
+target_pass_bonus: 3.0  # Strong bonus for passing gate
+decoy_affinity_penalty_weight: 0.3
+target_affinity_gate: 0.0
+target_affinity_bonus: 0.0
+
+# No hard naturalness gate (rely on weight instead)
+naturalness_gate_affinity: false
+naturalness_gate_threshold: 0.0
+
+# FP32 tFold
+affinity_model: "tfold"
+tfold_server_socket: "/tmp/tfold_server_trace103.sock"
+tfold_cache_path: "data/tfold_cache_trace103.db"
+
+# Decoy settings
+decoy_K: 2
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights: {A: 1, B: 1, D: 0, C: 0}
+decoy_unlock_schedule: {}
+decoy_difficulty: "easy"
+decoy_difficulty_schedule: {}
+
+# Naturalness — AE+GMM scorer (preserve from stage1)
+naturalness_scorer_type: "ae_gmm"
+naturalness_ae_model: "/share/liuyutian/TCRPPO/code/reward/ae_model"
+naturalness_gmm_model: "/share/liuyutian/TCRPPO/code/reward/gmm.pkl"
+naturalness_blosum: "/share/liuyutian/TCRPPO/code/blosum.txt"
+naturalness_ae_threshold: 0.8
+
+# Diversity
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# Pure L2 base
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
+
+# Online pool - enable in stage2
+online_tcr_pool_enabled: true
+online_tcr_pool_start_step: 0  # Start immediately in stage2
+online_tcr_pool_warmup_steps: 1
+online_tcr_pool_max_ratio: 0.5
+online_tcr_pool_max_per_target: 256
+online_tcr_pool_min_affinity: -10.0
+online_tcr_pool_max_decoy_violation: 999.0
+online_tcr_pool_min_hamming: 2
+online_tcr_pool_mutate_prob: 0.0
+online_tcr_pool_use_dynamic_bands: true
+online_tcr_pool_recent_window: 50
+
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+eval_interval: 50000
+eval_n_tcrs: 10
+eval_n_decoys: 5
+eval_abort_threshold: 0.40
+eval_warmup: 50000
+
+checkpoint_interval: 10000
+latest_checkpoint_interval: 2000
+milestones: [50000, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000]
+
+use_znorm: false

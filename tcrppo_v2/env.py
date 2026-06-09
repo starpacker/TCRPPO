@@ -42,6 +42,7 @@ class TCREditEnv:
         allow_stop_at_step0: bool = False,
         stop_at_step0_min_init_affinity: Optional[float] = None,
         pmhc_obs_transform: Optional[Dict[str, object]] = None,
+        include_state_scalars: bool = False,
     ):
         """Initialize environment.
 
@@ -84,6 +85,9 @@ class TCREditEnv:
         self.sub_only = sub_only
         self.terminal_reward_only = terminal_reward_only
         self.use_biochem_features = use_biochem_features
+        # Accepted for forward-compat with newer trainers; currently a no-op
+        # (obs is always [tcr_emb | pmhc_emb | optional biochem]).
+        self.include_state_scalars = include_state_scalars
         self.allow_stop_at_step0 = bool(allow_stop_at_step0)
         self.stop_at_step0_min_init_affinity = (
             None
@@ -95,7 +99,11 @@ class TCREditEnv:
         # State dimensions
         self.esm_dim = esm_cache.output_dim  # 1280
         biochem_dim = 8 if self.use_biochem_features else 0
-        self.obs_dim = self.esm_dim * 2 + biochem_dim
+        # Legacy state scalars (remaining_steps_norm, cumulative_delta) — only
+        # used to stay compatible with old checkpoints (trace61-era policies
+        # were trained with these two extras). New experiments leave it off.
+        state_scalar_dim = 2 if self.include_state_scalars else 0
+        self.obs_dim = self.esm_dim * 2 + biochem_dim + state_scalar_dim
 
         # Episode state
         self.tcr_seq: str = ""
@@ -373,6 +381,14 @@ class TCREditEnv:
         if self.use_biochem_features:
             biochem_feats = compute_biochem_features(self.tcr_seq)
             parts.append(torch.tensor(biochem_feats, device=tcr_emb.device, dtype=tcr_emb.dtype))
+        if self.include_state_scalars:
+            # Legacy 2-scalar tail: (remaining_steps_normalized, cumulative_delta).
+            # Kept solely for backward compatibility with trace61-era checkpoints.
+            remaining_norm = max(0.0, (self.max_steps - self.step_count) / max(1, self.max_steps))
+            parts.append(torch.tensor(
+                [remaining_norm, float(self.cumulative_delta)],
+                device=tcr_emb.device, dtype=tcr_emb.dtype,
+            ))
         return torch.cat(parts)
 
     def _transform_pmhc_obs(self, pmhc_emb: torch.Tensor) -> torch.Tensor:
@@ -461,14 +477,21 @@ class VecTCREditEnv:
         sub_only: bool = False,
         terminal_reward_only: bool = False,
         active_clipping: bool = False,
-        include_state_scalars: bool = True,
+        use_biochem_features: bool = False,
         allow_stop_at_step0: bool = False,
         stop_at_step0_min_init_affinity: Optional[float] = None,
         pmhc_obs_transform: Optional[Dict[str, object]] = None,
+        include_state_scalars: bool = False,
     ):
-        """Create n_envs parallel environments sharing scorers."""
+        """Create n_envs parallel environments sharing scorers.
+
+        Note: ``include_state_scalars`` is accepted for forward compatibility
+        with newer trainers but is currently a no-op (the per-env observation
+        is always [tcr_emb | pmhc_emb | optional biochem]).
+        """
         self.n_envs = n_envs
         self.active_clipping = active_clipping
+        self.include_state_scalars = include_state_scalars
         self.envs = [
             TCREditEnv(
                 esm_cache=esm_cache,
@@ -485,10 +508,11 @@ class VecTCREditEnv:
                 ban_stop=ban_stop,
                 sub_only=sub_only,
                 terminal_reward_only=terminal_reward_only,
-                include_state_scalars=include_state_scalars,
+                use_biochem_features=use_biochem_features,
                 allow_stop_at_step0=allow_stop_at_step0,
                 stop_at_step0_min_init_affinity=stop_at_step0_min_init_affinity,
                 pmhc_obs_transform=pmhc_obs_transform,
+                include_state_scalars=include_state_scalars,
             )
             for _ in range(n_envs)
         ]

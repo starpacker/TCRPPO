@@ -1,18 +1,12 @@
-# trace97_pretrain_then_finetune: Two-stage training with naturalness pretraining
+# trace97_pretrain_then_finetune: PRETRAIN ONLY — naturalness pretraining
 #
-# Stage 1 (Pretrain): Learn naturalness WITHOUT affinity scoring (0-200k steps)
-#   - Only AE+GMM naturalness reward (no tFold calls)
-#   - Model learns to generate natural TCR sequences
-#   - Save checkpoint at 200k steps as pretrain milestone
+# Reward = raw AE+GMM combined score (0~1), higher = more natural.
+# No affinity scoring, no bonus, no penalty transformation.
+# When satisfied, manually kill → load checkpoint → launch finetune separately.
 #
-# Stage 2 (Finetune): Full training with affinity + naturalness (200k-2M steps)
-#   - Enable tFold affinity scoring
-#   - Use all rewards (affinity, decoy, naturalness, diversity)
-#   - Start from pretrained weights
-#
-# All other settings match trace94
+# All other arch/env settings match trace94.
 
-total_timesteps: 2_000_000
+total_timesteps: 20_000
 n_envs: 8
 n_steps: 32
 batch_size: 256
@@ -40,33 +34,27 @@ esm_frozen: true
 esm_device: "cuda"
 esm_tcr_cache_size: 4096
 encoder: "esm2"
+use_biochem_features: true
 
-# Two-stage training configuration
+# ====== PRETRAIN MODE ======
+# This flag short-circuits reward_manager.compute_reward():
+#   reward = naturalness_scorer.score_raw(tcr)   # raw combined 0~1
 pretrain_naturalness_only: true
-pretrain_steps: 200000
-pretrain_checkpoint_path: "checkpoints/trace97_pretrain_200k.pt"
 
-# Same reward mode as trace94
+# reward_mode is irrelevant in pretrain (short-circuited), keep for reference
 reward_mode: "v2_simple_target_gated_decoy"
 use_delta_reward: false
 
-# Weights — same as trace94
+# Weights — irrelevant in pretrain, kept for finetune reference
 w_affinity: 1.0
 w_decoy: 0.3
 w_naturalness: 0.15
 w_diversity: 0.02
 
-# Gate settings (same as trace94)
-target_decoy_gate_logit: 0.0
-target_pass_bonus: 2.0
-decoy_affinity_penalty_weight: 0.3
+# No affinity model needed in pretrain
+affinity_model: "none"
 
-# tFold settings (will be enabled AFTER pretrain)
-affinity_model: "tfold"
-tfold_server_socket: "/tmp/tfold_server_trace97.sock"
-tfold_cache_path: "data/tfold_cache_trace97.db"
-
-# Decoy settings (same as trace94)
+# Decoy settings (inactive in pretrain, kept for reference)
 decoy_K: 2
 n_contrast_decoys: 0
 contrastive_agg: "mean"
@@ -76,14 +64,14 @@ decoy_unlock_schedule: {}
 decoy_difficulty: "easy"
 decoy_difficulty_schedule: {}
 
-# Naturalness — AE+GMM scorer
+# Naturalness — AE+GMM scorer (THE reward signal)
 naturalness_scorer_type: "ae_gmm"
 naturalness_ae_model: "/share/liuyutian/TCRPPO/code/reward/ae_model"
 naturalness_gmm_model: "/share/liuyutian/TCRPPO/code/reward/gmm.pkl"
 naturalness_blosum: "/share/liuyutian/TCRPPO/code/blosum.txt"
 naturalness_ae_threshold: 0.8
 
-# Diversity (unchanged)
+# Diversity
 diversity_buffer_size: 512
 diversity_similarity_threshold: 0.85
 
@@ -118,9 +106,8 @@ eval_abort_threshold: 0.40
 eval_warmup: 100000
 
 checkpoint_interval: 20000
-latest_checkpoint_interval: 2000
-# Add pretrain milestone at 200k
-milestones: [200000, 300000, 400000, 500000, 600000, 700000, 800000,
-  900000, 1000000, 1200000, 1400000, 1600000, 1800000, 2000000]
+latest_checkpoint_interval: 1000
+# Milestones — keep 7000 checkpoint for finetune
+milestones: [7000, 20000]
 
 use_znorm: false

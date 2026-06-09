@@ -1,0 +1,11 @@
+trace,alive,mean_affinity,last_step,num_peptides,peptide_max_affinities
+trace53_terminal_trace29_reward_L2only,True,,,0,{}
+trace61_dynamic_pool,True,,,0,{}
+trace62_multi_gates,True,,,0,{}
+trace70_gate_m1p5_from_trace61,True,,,0,{}
+trace72_delta_from_trace70,True,,,0,{}
+trace73_curriculum_exploration,True,,,0,{}
+trace78_aggressive_push,True,,,0,{}
+trace83_curated_from_trace73,True,,,0,{}
+trace84_push_to_zero,True,,,0,{}
+trace86_per_step_reward,True,,,0,{}

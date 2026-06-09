@@ -1,0 +1,33 @@
+{
+  "LLWRGSIYKL": [
+    {
+      "trace": "trace79_curated_targets",
+      "affinity": 0.6917370557785034,
+      "decoy_violation": 0.0,
+      "delta_affinity": 0.7885169461369514,
+      "step": 686392,
+      "target": "LLWRGSIYKL",
+      "tcr": "CAISIDHGSGNTQYFCCCCN"
+    },
+    {
+      "trace": "trace79_curated_targets",
+      "affinity": 0.6592490673065186,
+      "decoy_violation": 0.0,
+      "delta_affinity": 0.7560289576649666,
+      "step": 686392,
+      "target": "LLWRGSIYKL",
+      "tcr": "CAISIDHGSGNAQYFCCCCK"
+    }
+  ],
+  "LLLDRLNQL": [
+    {
+      "trace": "trace88_no_decoy_from_trace72",
+      "affinity": 0.7281202077865601,
+      "decoy_violation": 0.0,
+      "delta_affinity": 1.5649697184562683,
+      "step": 923000,
+      "target": "LLLDRLNQL",
+      "tcr": "CALNMGVRTEAAFYYCCCCF"
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+# trace103 Stage 1: Pure naturalness pretraining
+#
+# Strategy: Train ONLY on naturalness reward for 10k steps to build natural sequence foundation.
+# After 10k steps, manually switch to stage2 config for multi-objective finetune.
+#
+# Key settings:
+#   - pretrain_naturalness_only: true (short-circuit all other rewards)
+#   - Reward = raw AE+GMM combined score (0~1)
+#   - 10k steps = ~1250 episodes @ 8 envs
+
+total_timesteps: 10_000
+n_envs: 8
+n_steps: 32
+batch_size: 256
+n_epochs: 4
+learning_rate: 0.00015  # 1.5e-4
+gamma: 0.98
+gae_lambda: 0.95
+clip_range: 0.2
+entropy_coef: 0.012
+vf_coef: 0.5
+max_grad_norm: 0.5
+
+max_tcr_len: 20
+min_tcr_len: 8
+max_pep_len: 25
+max_steps_per_episode: 8
+max_steps: 8
+hla_pseudoseq_len: 34
+ban_stop: true
+terminal_reward_only: true
+use_biochem_features: false
+include_state_scalars: true
+
+hidden_dim: 512
+esm_model: "esm2_t33_650M_UR50D"
+esm_frozen: true
+esm_device: "cuda"
+esm_tcr_cache_size: 4096
+encoder: "esm2"
+
+# ====== STAGE 1: PRETRAIN MODE ======
+# This flag short-circuits reward_manager.compute_reward():
+#   reward = naturalness_scorer.score_raw(tcr)   # raw combined 0~1
+pretrain_naturalness_only: true
+
+# reward_mode is irrelevant in pretrain (short-circuited), kept for stage2 reference
+reward_mode: "v2_simple_target_gated_decoy"
+use_delta_reward: false  # Will be true in stage2
+
+# Weights — irrelevant in pretrain, kept for stage2 reference
+w_affinity: 1.0
+w_decoy: 0.3
+w_naturalness: 8.0
+w_diversity: 0.02
+
+# No affinity model needed in pretrain
+affinity_model: "none"
+
+# Decoy settings (inactive in pretrain)
+decoy_K: 2
+n_contrast_decoys: 0
+contrastive_agg: "mean"
+decoy_tau: 10.0
+decoy_tier_weights: {A: 1, B: 1, D: 0, C: 0}
+decoy_unlock_schedule: {}
+decoy_difficulty: "easy"
+decoy_difficulty_schedule: {}
+
+# Target gate (inactive in pretrain, will be used in stage2)
+target_decoy_gate_logit: 0.0
+target_pass_bonus: 3.0  # IMPORTANT: 3.0 bonus for stage2
+decoy_affinity_penalty_weight: 0.3
+target_affinity_gate: 0.0
+target_affinity_bonus: 0.0
+
+# No naturalness gate in pretrain (we're maximizing naturalness anyway)
+naturalness_gate_affinity: false
+naturalness_gate_threshold: 0.0
+
+# Naturalness — AE+GMM scorer (THE reward signal)
+naturalness_scorer_type: "ae_gmm"
+naturalness_ae_model: "/share/liuyutian/TCRPPO/code/reward/ae_model"
+naturalness_gmm_model: "/share/liuyutian/TCRPPO/code/reward/gmm.pkl"
+naturalness_blosum: "/share/liuyutian/TCRPPO/code/blosum.txt"
+naturalness_ae_threshold: 0.8
+
+# Diversity
+diversity_buffer_size: 512
+diversity_similarity_threshold: 0.85
+
+# Pure L2 base
+l0_mutation_range: [3, 5]
+l1_top_k: 500
+curriculum_schedule:
+  - {until: null, L0: 0.0, L1: 0.0, L2: 1.0}
+
+# Online pool settings (disabled during pretrain to avoid affinity computation)
+online_tcr_pool_enabled: false
+
+target_sampling: "uniform"
+train_targets: "data/tfold_excellent_peptides.txt"
+
+eval_interval: 50000
+eval_n_tcrs: 5
+eval_n_decoys: 0
+eval_abort_threshold: 0.40
+eval_warmup: 50000
+
+checkpoint_interval: 10000
+latest_checkpoint_interval: 1000
+# Keep 10k checkpoint for stage2
+milestones: [10000]
+
+use_znorm: false
